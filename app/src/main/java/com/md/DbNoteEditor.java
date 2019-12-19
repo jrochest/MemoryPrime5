@@ -25,6 +25,7 @@ import com.md.utils.ToastSingleton;
  */
 public class DbNoteEditor {
 
+	private static final String TAG = "DbNoteEditor";
 	private String currentId;
 
 	Activity context;
@@ -157,8 +158,6 @@ public class DbNoteEditor {
 		Cursor query = rawQuery("SELECT * FROM "
 				+ NotesProvider.DECKS_TABLE_NAME);
 
-
-
 		Vector<Deck> vector = new Vector<Deck>();
 		if (query == null) {
 			return vector;
@@ -185,7 +184,7 @@ public class DbNoteEditor {
 
 		try {
 			SQLiteDatabase checkDB = SQLiteDatabase
-					.openDatabase(DbContants.getFullPath(), null,
+					.openDatabase(DbContants.getDatabasePath(context), null,
 							SQLiteDatabase.OPEN_READWRITE);
 
 			query = checkDB.rawQuery(queryString, null);
@@ -629,7 +628,7 @@ public class DbNoteEditor {
 
 		try {
 			SQLiteDatabase checkDB = SQLiteDatabase.openDatabase(
-					DbContants.getFullPath(), null,
+					DbContants.getDatabasePath(context), null,
 					SQLiteDatabase.OPEN_READWRITE);
 
 			checkDB.insertOrThrow(NotesProvider.DECKS_TABLE_NAME, null, values);
@@ -644,7 +643,7 @@ public class DbNoteEditor {
 
 		try {
 			SQLiteDatabase checkDB = SQLiteDatabase.openDatabase(
-					DbContants.getFullPath(), null,
+					DbContants.getDatabasePath(context), null,
 					SQLiteDatabase.OPEN_READWRITE);
 
 			String cause = Deck._ID + " = " + deck.getId();
@@ -665,7 +664,7 @@ public class DbNoteEditor {
 
 		try {
 			SQLiteDatabase checkDB = SQLiteDatabase.openDatabase(
-					DbContants.getFullPath(), null,
+					DbContants.getDatabasePath(context), null,
 					SQLiteDatabase.OPEN_READWRITE);
 
 			String cause = Deck._ID + " = " + deck.getId();

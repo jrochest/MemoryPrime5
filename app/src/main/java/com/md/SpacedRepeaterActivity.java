@@ -14,17 +14,23 @@ import com.md.modesetters.SettingModeSetter;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.Menu;
+
+import androidx.documentfile.provider.DocumentFile;
 
 public class SpacedRepeaterActivity extends Activity {
     private static final String LOG_TAG = "SpacedRepeater";
@@ -39,17 +45,14 @@ public class SpacedRepeaterActivity extends Activity {
 
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
-        ActivityHelper activityHelper = new ActivityHelper();
-        activityHelper.commonActivitySetup(this);
+        if (DbContants.storagePath == null) {
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+            startActivityForResult(intent, 42);
+        }
 
-        // Normal mode.
-        CreateModeSetter.getInstance().setUp(this, modeHand);
-        BrowsingModeSetter.getInstance().setup(this, modeHand);
-        DeckChooseModeSetter.getInstance().setUp(this, modeHand);
-        LearningModeSetter.getInstance().setUp(this, modeHand);
-        DeckChooseModeSetter.getInstance().setupMode(this);
-        SettingModeSetter.getInstance().setup(this, modeHand);
-        CleanUpAudioFilesModeSetter.getInstance().setup(this, modeHand);
+        if (DbContants.databasePath == null) {
+            DbContants.getDatabasePath(this);
+        }
     }
 
     ModeHandler modeHand = new ModeHandler(this);
@@ -69,6 +72,31 @@ public class SpacedRepeaterActivity extends Activity {
 
         toneGenerator = new ToneGenerator(STREAM_MUSIC, 1);
     }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
+        if (resultCode == RESULT_OK) {
+
+            Uri treeUri = resultData.getData();
+            getContentResolver().takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            DocumentFile pickedDir = DocumentFile.fromTreeUri(this, treeUri);
+
+            DbContants.storagePath = pickedDir;
+
+            ActivityHelper activityHelper = new ActivityHelper();
+            activityHelper.commonActivitySetup(this);
+
+            // Normal mode.
+            CreateModeSetter.getInstance().setUp(this, modeHand);
+            BrowsingModeSetter.getInstance().setup(this, modeHand);
+            DeckChooseModeSetter.getInstance().setUp(this, modeHand);
+            LearningModeSetter.getInstance().setUp(this, modeHand);
+            DeckChooseModeSetter.getInstance().setupMode(this);
+            SettingModeSetter.getInstance().setup(this, modeHand);
+            CleanUpAudioFilesModeSetter.getInstance().setup(this, modeHand);
+        }
+    }
+
 
     @Override
     protected void onStop() {

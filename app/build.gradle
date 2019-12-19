@@ -28,4 +28,5 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
     implementation project(path: ':libGoogleAnalyticsServices')
     implementation project(path: ':quickaction')
+    implementation 'androidx.documentfile:documentfile:1.0.1'
 }

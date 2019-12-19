@@ -3,9 +3,12 @@ package com.md;
 import java.io.File;
 import java.io.IOException;
 
+import android.app.Activity;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaRecorder;
 import android.util.Log;
+
+import androidx.documentfile.provider.DocumentFile;
 
 import com.md.modesetters.CreateModeSetter;
 import com.md.utils.ToastSingleton;
@@ -13,7 +16,7 @@ import com.md.utils.ToastSingleton;
 public class AudioRecorder {
 
 	private MediaRecorder recorder = null;
-	private String path;
+	private DocumentFile path;
 	private final String originalFile;
 	boolean recorded = false;
 
@@ -32,16 +35,13 @@ public class AudioRecorder {
 	public void deleteFile() {
 		if (recorded) {
 			recorded = false;
-			File file = new File(this.path);
-			file.delete();
+			this.path.delete();
 		}
 	}
 
 	public static boolean deleteFile(String fileName) {
-
-		String path = AudioPlayer.sanitizePath(fileName);
-		File file = new File(path);
-		return file.delete();
+		DocumentFile path = AudioPlayer.sanitizePath(fileName);
+		return path.delete();
 
 	}
 
@@ -61,12 +61,11 @@ public class AudioRecorder {
 			}
 		}
 
-		File fileMp3 = new File(this.path);
-		if (!fileMp3.exists()) {
+		if (!this.path.exists()) {
 			ToastSingleton.getInstance().error(this.path + " does not exist!");
-		} else if (fileMp3.length() < 4_000) {
-			System.out.println("Length is: " + fileMp3.length());
-			fileMp3.delete();
+		} else if (this.path.length() < 4_000) {
+			System.out.println("Length is: " + this.path.length());
+			this.path.delete();
 		} else {
 			recorded = true;
 		}
@@ -83,8 +82,9 @@ public class AudioRecorder {
 		}
 
 		// make sure the directory we plan to store the recording in exists
-		File directory = new File(AudioPlayer.transformToM4a(this.path)).getParentFile();
-		if (!directory.exists() && !directory.mkdirs()) {
+		// TODOJ need to create parent.
+		if (this.path.exists()) {
+			// TODO create the directory!
 			throw new IOException("Path to file could not be created.");
 		}
 
@@ -97,7 +97,7 @@ public class AudioRecorder {
 			recorder.setAudioEncodingBitRate(128000);
 			recorder.setAudioSamplingRate(44100);
 
-			recorder.setOutputFile(AudioPlayer.transformToM4a(this.path));
+			//STOPSHIPrecorder.setOutputFile(this.path.getUri());
 			recorder.prepare();
 			recorder.start();
 
@@ -108,13 +108,13 @@ public class AudioRecorder {
 
 	}
 
-	public void playFile(CreateModeSetter createModeSetter, int currentIndex) {
+	public void playFile(CreateModeSetter createModeSetter, int currentIndex, Activity context) {
 		final AudioPlayer audioPlayer = AudioPlayer.getInstance();
 
 		OnCompletionListener listener = new MyOnCompletionListener(
 				createModeSetter, currentIndex);
 
-        audioPlayer.playFile(originalFile, listener);
+        audioPlayer.playFile(originalFile, listener, context);
 	}
 
 	public boolean isRecorded() {

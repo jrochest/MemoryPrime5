@@ -15,6 +15,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.documentfile.provider.DocumentFile;
+
 import java.io.File;
 import java.util.ArrayList;
 
@@ -124,10 +126,9 @@ public class CleanUpAudioFilesModeSetter extends ModeSetter {
 		// Call on background thread only!!!
 		int missingFileCount = 0;
 		for (String goodFiles : mGoodFiles) {
-			final String filePathString = AudioPlayer.sanitizePath(goodFiles);
-			File f = new File(filePathString);
+			final DocumentFile f = AudioPlayer.sanitizePath(goodFiles);;
 			if(!f.exists()) {
-				System.out.println("TODOJ missing file " + filePathString);
+				System.out.println("TODOJ missing file " + f);
 				missingFileCount++;
 			}
 		}
@@ -146,27 +147,27 @@ public class CleanUpAudioFilesModeSetter extends ModeSetter {
 			mMissingFileCountBefore = countValidGoodFiles();
 			publishProgress("Looking for all files...");
 
-			final File audioMemoDir = new File(DbContants.getAudioLocation());
-			final ArrayList<File> allFiles = getListFiles(audioMemoDir);
+			final DocumentFile[] allFiles = DbContants.getAudioLocation().listFiles();
 
 
 			// TODO(jrochest) Make a hashset of the all files. Sanitize the goods name and remove the
 			// matches from the bad all files. We might have to convert uses of files to Strings in
 			// the all files list.
 
-			final ArrayList<File> badFiles = new ArrayList<>();
-			final int allFilesNumber = allFiles.size();
-			for (File file : allFiles) {
+			final ArrayList<DocumentFile> badFiles = new ArrayList<>();
+			final int allFilesNumber = allFiles.length;
+			for (DocumentFile file : allFiles) {
 				mFilesSearched++;
 				maybeAddToBadFiles(file, badFiles);
 				if (mFilesSearched % 100 == 0) {
 					publishProgress("Checked " + mFilesSearched + " of " + allFilesNumber);
 				}
 			}
-			return badFiles;
+			//return badFiles;
+			return null;
 		}
 
-		private void maybeAddToBadFiles(File file, ArrayList<File> badFiles) {
+		private void maybeAddToBadFiles(DocumentFile file, ArrayList<DocumentFile> badFiles) {
 
 			final String fileName = file.getName();
 			for (String goodFile : mGoodFiles) {
