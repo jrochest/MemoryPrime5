@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:baselineAligned="false"
+    android:gravity="center"
+    android:layout_marginTop="?android:attr/actionBarSize"
+    android:layout_marginBottom="?android:attr/actionBarSize"
+    android:paddingTop="40dp"
+    android:orientation="vertical" >
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="5"
+        android:height="0dip"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/recordQuestionButton"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:text="Record Question"
+            android:textSize="22sp"
+            android:width="0dip" />
+
+        <Button
+            android:id="@+id/playQuestionButton"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:text="Play Question"
+            android:textSize="22sp"
+            android:width="0dip" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="5"
+        android:height="0dip"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/recordAnswerButton"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:text="Record Answer"
+            android:textSize="22sp"
+            android:width="0dip" />
+
+        <Button
+            android:id="@+id/playAnswerButton"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:text="Play \nAnswer"
+            android:textSize="22sp"
+            android:width="0dip" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="5"
+        android:height="0dip"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/restartQaButton"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:drawableLeft="@drawable/refresh"
+            android:text="Reset"
+            android:textSize="22sp"
+            android:width="0dip" />
+
+        <Button
+            android:id="@+id/saveQAButton"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:drawableLeft="@drawable/save"
+            android:text="Save Q&amp;A"
+            android:textSize="22sp"
+            android:width="0dip" />
+    </LinearLayout>
+
+</LinearLayout>

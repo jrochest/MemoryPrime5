@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MemoryPrime</string>
+    <!-- Must be the same as NotesProvider.AUTHORITY -->
+    <string name="dbprovider">test.provider.TestProvider</string>
+    <string name="dbprovidertest">test.provider.TestProvider</string>
+    <string name="dbprovidereal">com.md.provider.NotePad</string>
+    
+    <string name="ButtonWidth">120dip</string>
+    <string name="HalfButtonWidth">60dip</string>
+    <string name="menu_delete">Delete</string>
+    <string name="menu_insert">Add note</string>
+    <string name="menu_revert">Revert</string>
+    <string name="menu_discard">Discard</string>
+
+    <string name="resolve_edit">Edit note</string>
+    <string name="resolve_title">Edit title</string>  
+
+    <string name="title_create">Create note2</string>
+    <string name="title_edit">Edit note</string>
+	<string name="title_notes_list">Note pad</string>   
+	<string name="title_note">Note</string>  
+	<string name="title_edit_title">Note title:</string>  
+	 
+	<string name="live_folder_name">Notes</string>
+	
+	<string name="button_ok">OK</string>  
+	
+	<string name="error_title">Error</string>
+	<string name="error_message">Error loading note</string>
+    
+</resources>

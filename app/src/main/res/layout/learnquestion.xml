@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                                             xmlns:app="http://schemas.android.com/apk/res-auto"
+                                             xmlns:tools="http://schemas.android.com/tools"
+                                             android:id="@+id/learn_layout_root"
+                                             android:layout_width="fill_parent"
+                                             android:layout_height="fill_parent"
+                                             android:orientation="vertical"
+                                             android:background="#000000"
+                                             android:paddingTop="10dp"
+    >
+    <Button
+        style="@style/learn_button_style"
+        android:id="@+id/audio_focus_toggle"
+        android:text="Audio Focus"
+        app:layout_constraintLeft_toRightOf="@+id/rerecord"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toLeftOf="@+id/deleteButton"
+
+        app:layout_constraintVertical_weight="3"
+        app:layout_constraintTop_toBottomOf="@+id/gestures"/>
+
+    <Button
+        style="@style/learn_button_style"
+        android:id="@+id/rerecord"
+        android:text="Record"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/gestures"
+
+        app:layout_constraintVertical_weight="3"
+        app:layout_constraintRight_toLeftOf="@id/audio_focus_toggle"/>
+
+    <Button
+        style="@style/learn_button_style"
+        android:id="@+id/deleteButton"
+        android:text="Delete"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/gestures"
+
+        app:layout_constraintVertical_weight="3"
+        app:layout_constraintLeft_toRightOf="@+id/audio_focus_toggle"/>
+
+    <FrameLayout
+        android:id="@+id/gestures"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_margin="20dp"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintVertical_weight="7"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/new_note_button"
+        app:layout_constraintBottom_toTopOf="@id/audio_focus_toggle">
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/reviewNumber"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="6"
+                android:height="0dip"
+                android:text="reviewNumber"
+                android:textColor="#444444"
+                android:textSize="30sp"/>
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- Right side -->
+    <Button
+        style="@style/learn_button_style"
+        android:id="@+id/back_button"
+        android:text="Go back"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/gestures"
+        app:layout_constraintVertical_weight="3"
+        app:layout_constraintLeft_toRightOf="@+id/new_note_button"
+        />
+
+    <!-- Middle -->
+    <Button
+        style="@style/learn_button_style"
+        android:id="@+id/new_note_button"
+        android:text="New note"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/gestures"
+        app:layout_constraintVertical_weight="3"
+        app:layout_constraintRight_toLeftOf="@+id/back_button"
+        app:layout_constraintLeft_toRightOf="@+id/dim_screen_button"/>
+
+    <!-- Right side -->
+    <Button
+
+        style="@style/learn_button_style"
+        android:id="@+id/dim_screen_button"
+        android:text="Dim screen"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/gestures"
+        app:layout_constraintVertical_weight="3"
+        app:layout_constraintRight_toLeftOf="@+id/new_note_button"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	android:id="@+id/LinearLayout01"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_marginTop="?android:attr/actionBarSize"
+	android:orientation="vertical">
+	<Button
+        android:layout_marginTop="30dp"
+		android:id="@+id/addNew"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:text="Add New Deck"
+		android:textSize="20sp"
+		android:minHeight="80dip"
+		android:maxHeight="80dip" />
+	<TextView
+		android:id="@+id/loadingOrSelect"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="Loading decks: "
+		android:textSize="24sp" />
+	<ProgressBar
+		android:id="@+id/progressBar"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		style="?android:attr/progressBarStyleHorizontal" />
+	<ListView
+		android:id="@+id/ListView01"
+		android:layout_width="fill_parent"
+		android:layout_height="fill_parent"
+		android:textSize="16sp"
+		android:drawSelectorOnTop="true" />
+</LinearLayout>

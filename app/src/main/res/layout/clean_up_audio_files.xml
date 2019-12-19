@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:orientation="vertical" >
+    <TextView
+	android:id="@+id/current_status"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:paddingTop="100dp"
+	android:text="Debug" />
+	<TextView
+		android:id="@+id/good_files"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content" />
+	<TextView
+		android:id="@+id/missing_files"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content" />
+	<TextView
+		android:id="@+id/all_files"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"/>
+	<TextView
+		android:id="@+id/bad_files"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="Bad files count: " />
+	<Button android:id="@+id/runIt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Run it"
+            />
+</LinearLayout>

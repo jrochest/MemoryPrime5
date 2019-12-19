@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:textSize="30sp">
+	<item
+		android:id="@+id/learningModeMenuItem"
+		android:title="Learning"
+		android:icon="@android:drawable/ic_menu_mapmode"
+		android:showAsAction="always" />
+	<item
+		android:id="@+id/creationModeMenuItem"
+		android:title="New Note"
+		android:icon="@android:drawable/ic_menu_add"
+		android:showAsAction="always"/>
+	<item
+		android:id="@+id/selectDeckModeMenuItem"
+		android:title="Decks"
+		android:icon="@android:drawable/ic_menu_slideshow" />
+	<item
+		android:id="@+id/browseDeckModeMenuItem"
+		android:title="Browse"
+		android:icon="@android:drawable/ic_menu_view" />
+	<item
+		android:id="@+id/settings"
+		android:title="Settings" />
+	<item
+		android:id="@+id/clean_up_files"
+		android:title="Clean Up" />
+	<item
+		android:id="@+id/toggle_speaker"
+		android:icon="@android:drawable/ic_lock_silent_mode"
+		android:showAsAction="always"
+		android:title="Use phone speaker"/>
+
+	<item
+		android:id="@+id/dimMenuItem"
+		android:title="Dim Screen"
+		android:icon="@android:drawable/ic_lock_power_off" />
+</menu>

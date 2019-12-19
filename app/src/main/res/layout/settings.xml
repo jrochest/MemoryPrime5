@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+	android:paddingTop="100dp">
+	<ToggleButton
+		android:id="@+id/look_ahead"
+		android:textOff="Look ahead off"
+		android:textOn="Look ahead on"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:minHeight="100dp"
+		android:textSize="16sp"/>
+</LinearLayout>

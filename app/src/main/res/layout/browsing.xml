@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+	<LinearLayout
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_weight="5"
+		android:textSize="16sp"
+		android:height="0dip"
+		android:orientation="horizontal">
+		<Button
+			android:id="@+id/playQuestionButton"
+			android:layout_width="wrap_content"
+			android:layout_height="fill_parent"
+			android:text="Play Question"
+			android:layout_weight="1"
+			android:textSize="16sp"
+			android:width="0dip" />
+		<Button
+			android:id="@+id/playAnswerButton"
+			android:text="Play Answer"
+			android:layout_width="wrap_content"
+			android:layout_height="fill_parent"
+			android:layout_weight="1"
+			android:textSize="16sp"
+			android:width="0dip" />
+	</LinearLayout>
+	<LinearLayout
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_weight="5"
+		android:textSize="16sp"
+		android:height="0dip"
+		android:orientation="horizontal">
+		<Button
+			android:id="@+id/lastButton"
+			android:text="1 Note Backward"
+			android:layout_width="wrap_content"
+			android:layout_height="fill_parent"
+			android:layout_weight="1"
+			android:textSize="16sp"
+			android:width="0dip" />
+		<Button
+			android:id="@+id/nextButton"
+			android:text="1 Note Forward"
+			android:layout_width="wrap_content"
+			android:layout_height="fill_parent"
+			android:layout_weight="1"
+			android:textSize="16sp"
+			android:width="0dip" />
+	</LinearLayout>
+	<LinearLayout
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_weight="5"
+		android:textSize="16sp"
+		android:height="0dip"
+		android:orientation="horizontal">
+		<Button
+			android:id="@+id/lastButton10"
+			android:text="10 Notes Backward"
+			android:layout_width="wrap_content"
+			android:layout_height="fill_parent"
+			android:layout_weight="1"
+			android:textSize="16sp"
+			android:width="0dip" />
+		<Button
+			android:id="@+id/nextButton10"
+			android:text="10 Notes Forward"
+			android:layout_width="wrap_content"
+			android:layout_height="fill_parent"
+			android:layout_weight="1"
+			android:textSize="16sp"
+			android:width="0dip" />
+	</LinearLayout>
+	<LinearLayout
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_weight="5"
+		android:textSize="16sp"
+		android:height="0dip"
+		android:orientation="horizontal">
+		<Button
+			android:id="@+id/lastButton100"
+			android:text="100 Notes Backward"
+			android:layout_width="wrap_content"
+			android:layout_height="fill_parent"
+			android:layout_weight="1"
+			android:textSize="16sp"
+			android:width="0dip" />
+		<Button
+			android:id="@+id/nextButton100"
+			android:text="100 Notes Forward"
+			android:layout_width="wrap_content"
+			android:layout_height="fill_parent"
+			android:layout_weight="1"
+			android:textSize="16sp"
+			android:width="0dip" />
+	</LinearLayout>
+	<LinearLayout
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_weight="5"
+		android:textSize="16sp"
+		android:height="0dip"
+		android:orientation="horizontal">
+		<Button
+			android:id="@+id/updateAudio"
+			android:text="Update Note Audio"
+			android:layout_width="wrap_content"
+			android:layout_height="fill_parent"
+			android:layout_weight="1"
+			android:textSize="16sp"
+			android:width="0dip" />
+		<Button
+			android:id="@+id/deleteButton"
+			android:text="Delete Note"
+			android:layout_width="wrap_content"
+			android:layout_height="fill_parent"
+			android:layout_weight="1"
+			android:textSize="16sp"
+			android:width="0dip" />
+	</LinearLayout>
+	<LinearLayout
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_weight="5"
+		android:textSize="16sp"
+		android:height="0dip"
+		android:orientation="horizontal">
+		<ToggleButton
+			android:id="@+id/toggleMarked"
+			android:disabledAlpha="1.2"
+			android:textOff="All Notes"
+			android:textOn="Only Marked"
+			android:layout_width="wrap_content"
+			android:layout_height="fill_parent"
+			android:layout_weight="1"
+			android:textSize="16sp"
+			android:width="0dip" />
+		<ToggleButton
+			android:id="@+id/markButton"
+			android:disabledAlpha="1.2"
+			android:textOff="Mark This"
+			android:textOn="Unmark This"
+			android:layout_width="wrap_content"
+			android:layout_height="fill_parent"
+			android:layout_weight="1"
+			android:textSize="16sp"
+			android:width="0dip" />
+	</LinearLayout>
+	<TextView
+		android:id="@+id/qAStats"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text=""
+		android:layout_weight="35"
+		android:textSize="14sp"
+		android:height="0dip" />
+</LinearLayout>

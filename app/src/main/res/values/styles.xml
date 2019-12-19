@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Button" parent="@android:style/Widget.Button">
+	    <item name="android:gravity">center_vertical|center_horizontal</item>
+	    <item name="android:textColor">#FFFFFFFF</item>
+	    <item name="android:shadowColor">#FF000000</item>
+	    <item name="android:shadowDx">0</item>
+	    <item name="android:shadowDy">-1</item>
+	    <item name="android:shadowRadius">0.2</item>
+	    <item name="android:textSize">12dip</item>
+	    <item name="android:textStyle">normal</item>
+	    <item name="android:background">@drawable/btn_custom</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+    </style>
+    
+    <style name="ToggleButton" parent="@android:style/Widget.Button.Toggle">
+	    <item name="android:textColor">#FFFFFFFF</item>
+	    <item name="android:background">@drawable/btn_custom</item>
+    </style>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+
+    <style name="CustomWindowTitleBackground">
+           <item name="android:background">#000000</item>
+     </style>
+
+    <style name="learn_button_style">
+        <item name="android:textSize">20sp</item>
+        <item name="android:layout_height">0dp</item>
+        <item name="android:layout_width">0dp</item>
+        <item name="android:textColor">#555555</item>
+        <item name="android:background">@drawable/button_outline</item>
+        <item name="android:layout_marginLeft">5dp</item>
+        <item name="android:layout_marginRight">5dp</item>
+        <item name="android:padding">4dp</item>
+
+    </style>
+
+
+</resources>
