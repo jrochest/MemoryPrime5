@@ -185,7 +185,7 @@ public class DbNoteEditor {
 
 		try {
 			SQLiteDatabase checkDB = SQLiteDatabase
-					.openDatabase(DbContants.getFullPath(), null,
+					.openDatabase(DbContants.getDatabasePath(), null,
 							SQLiteDatabase.OPEN_READWRITE);
 
 			query = checkDB.rawQuery(queryString, null);
@@ -629,7 +629,7 @@ public class DbNoteEditor {
 
 		try {
 			SQLiteDatabase checkDB = SQLiteDatabase.openDatabase(
-					DbContants.getFullPath(), null,
+					DbContants.getDatabasePath(), null,
 					SQLiteDatabase.OPEN_READWRITE);
 
 			checkDB.insertOrThrow(NotesProvider.DECKS_TABLE_NAME, null, values);
@@ -644,7 +644,7 @@ public class DbNoteEditor {
 
 		try {
 			SQLiteDatabase checkDB = SQLiteDatabase.openDatabase(
-					DbContants.getFullPath(), null,
+					DbContants.getDatabasePath(), null,
 					SQLiteDatabase.OPEN_READWRITE);
 
 			String cause = Deck._ID + " = " + deck.getId();
@@ -665,7 +665,7 @@ public class DbNoteEditor {
 
 		try {
 			SQLiteDatabase checkDB = SQLiteDatabase.openDatabase(
-					DbContants.getFullPath(), null,
+					DbContants.getDatabasePath(), null,
 					SQLiteDatabase.OPEN_READWRITE);
 
 			String cause = Deck._ID + " = " + deck.getId();

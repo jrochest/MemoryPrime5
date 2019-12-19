@@ -37,6 +37,8 @@ public class SpacedRepeaterActivity extends Activity {
 
         super.onCreate(savedInstanceState);
 
+        DbContants.setup(this);
+
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
         ActivityHelper activityHelper = new ActivityHelper();
