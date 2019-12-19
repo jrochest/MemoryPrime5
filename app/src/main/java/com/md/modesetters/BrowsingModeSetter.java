@@ -170,7 +170,7 @@ public class BrowsingModeSetter extends ModeSetter implements
 
 				Note note = noteEditor.getNote();
 				if (note != null) {
-					AudioPlayer.getInstance().playFile(note.getAnswer(), null, context);
+					AudioPlayer.getInstance().playFile(note.getAnswer(), null);
 				}
 			}
 		});
@@ -183,7 +183,7 @@ public class BrowsingModeSetter extends ModeSetter implements
 				Note note = noteEditor.getNote();
 
 				if (note != null) {
-					AudioPlayer.getInstance().playFile(note.getQuestion(), null, context);
+					AudioPlayer.getInstance().playFile(note.getQuestion(), null);
 				}
 			}
 		});

@@ -1,14 +1,12 @@
 package com.md;
 
+import java.io.File;
 import java.io.IOException;
 
-import android.app.Activity;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.PlaybackParams;
 import android.media.audiofx.LoudnessEnhancer;
-
-import androidx.documentfile.provider.DocumentFile;
 
 import com.md.utils.ToastSingleton;
 
@@ -35,7 +33,7 @@ public class AudioPlayer implements OnCompletionListener, MediaPlayer.OnErrorLis
         return filename.replace(".mp3", "").replace(".wav", "").replace(".m4a", "");
     }
 
-    public static DocumentFile sanitizePath(String filename) {
+    public static String sanitizePath(String filename) {
 
         String basename = filename.replace(".mp3", "").replace(".wav", "").replace(".m4a", "");
 
@@ -56,22 +54,24 @@ public class AudioPlayer implements OnCompletionListener, MediaPlayer.OnErrorLis
             zeroPadding = "";
         }
 
-        String uniquePathToString = zeroPadding + whichDirToPutIn;
+        String uniquePathToString = zeroPadding + whichDirToPutIn + "/";
 
+        filename = DbContants.getAudioLocation() + uniquePathToString + filename;
+
+        // TODO
         if (!filename.contains("wav") && !filename.contains("mp3")  && !filename.contains("m4a")) {
             filename += ".mp3";
         }
 
-        return DbContants.getAudioLocation().findFile(uniquePathToString).findFile(filename);
+        return filename;
     }
 
     /**
      * @param originalFile name of the file, without the save path
      * @param firedOnceCompletionListener
-     * @param context
      */
     public synchronized void playFile(String originalFile,
-                                      @Nullable OnCompletionListener firedOnceCompletionListener, Activity context) {
+            @Nullable OnCompletionListener firedOnceCompletionListener) {
 
         if (originalFile == null) {
             ToastSingleton.getInstance().error("Null file path. You should probably delete this note Jacob.");
@@ -82,9 +82,11 @@ public class AudioPlayer implements OnCompletionListener, MediaPlayer.OnErrorLis
 
         mFiredOnceCompletionListener = firedOnceCompletionListener;
 
-        DocumentFile path = sanitizePath(originalFile);
+        String path = sanitizePath(originalFile);
 
-        if (!path.exists()) {
+        File audioFile = new File(path);
+
+        if (!audioFile.exists()) {
             ToastSingleton.getInstance().error(path + " does not exist.");
             return;
         }
@@ -92,7 +94,7 @@ public class AudioPlayer implements OnCompletionListener, MediaPlayer.OnErrorLis
         mp = new MediaPlayer();
 
         try {
-            mp.setDataSource(context, path.getUri());
+            mp.setDataSource(path);
             loudnessEnhancer = new LoudnessEnhancer(mp.getAudioSessionId());
             loudnessEnhancer.setTargetGain(700);
             loudnessEnhancer.setEnabled(true);

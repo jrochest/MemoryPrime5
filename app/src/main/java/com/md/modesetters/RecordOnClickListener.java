@@ -13,6 +13,7 @@ import com.md.ActivityHelper;
 import com.md.AudioPlayer;
 import com.md.AudioRecorder;
 import com.md.DbNoteEditor;
+import com.md.SpacedRepeaterActivity;
 import com.md.provider.Note;
 
 public class RecordOnClickListener implements OnTouchListener {
@@ -61,7 +62,7 @@ public class RecordOnClickListener implements OnTouchListener {
 														.getInstance()
 														.playFile(
 																audioRecorder
-																		.getOriginalFile(), null, context);
+																		.getOriginalFile(), null);
 
 												System.err.println("TEMP: "
 														+ mNote);

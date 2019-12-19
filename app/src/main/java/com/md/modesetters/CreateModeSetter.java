@@ -332,9 +332,9 @@ public class CreateModeSetter extends ModeSetter {
 				stopImage, null, null, null);
 
 		if (currentIndex == ANSWER_INDEX) {
-			answer.playFile(this, currentIndex, mActivity);
+			answer.playFile(this, currentIndex);
 		} else {
-			question.playFile(this, currentIndex, mActivity);
+			question.playFile(this, currentIndex);
 		}
 	}
 

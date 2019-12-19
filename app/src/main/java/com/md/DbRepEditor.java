@@ -47,7 +47,7 @@ public class DbRepEditor {
 		values.put(AbstractRep.TIME_STAMP_MS, rep.getTimeStampMs());
 
 		SQLiteDatabase db = SQLiteDatabase
-				.openDatabase(DbContants.getDatabasePath(context), null,
+				.openDatabase(DbContants.getFullPath(), null,
 						SQLiteDatabase.OPEN_READWRITE);
 
 		long rowId = db.insert(REPS_TABLE_NAME, AbstractRep.INTERVAL, values);

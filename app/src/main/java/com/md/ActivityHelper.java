@@ -21,7 +21,7 @@ import com.md.utils.ToastSingleton;
 
 public class ActivityHelper {
 	public void commonActivitySetup(Activity activity) {
-		File theFile = new File(DbContants.getDatabasePath(null));
+		File theFile = new File(DbContants.getFullPath());
 		File parentFile = new File(theFile.getParent());
 
 		if (!parentFile.exists()) {

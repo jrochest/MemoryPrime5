@@ -16,6 +16,7 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.provider.LiveFolders;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.md.provider.AbstractDeck;
 import com.md.provider.AbstractNote;
@@ -49,7 +50,7 @@ public class NotesProvider extends ContentProvider {
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
 		DatabaseHelper(Context context) {
-			super(context, DbContants.getDatabasePath(context), null, DATABASE_VERSION);
+			super(context, DbContants.getFullPath(), null, DATABASE_VERSION);
 
 		}
 
