@@ -25,7 +25,7 @@ import com.md.provider.Note;
 
 public class NotesProvider extends ContentProvider {
 
-	public static final String AUTHORITY = "test.provider.TestProvider";
+	public static final String AUTHORITY = "com.jrochest.mp";
 
 	private static final String TAG = "DbInteraction";
 

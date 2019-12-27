@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">MemoryPrime</string>
-    <!-- Must be the same as NotesProvider.AUTHORITY -->
-    <string name="dbprovider">test.provider.TestProvider</string>
-    <string name="dbprovidertest">test.provider.TestProvider</string>
-    <string name="dbprovidereal">com.md.provider.NotePad</string>
-    
     <string name="ButtonWidth">120dip</string>
     <string name="HalfButtonWidth">60dip</string>
     <string name="menu_delete">Delete</string>

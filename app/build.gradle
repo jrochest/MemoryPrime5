@@ -7,8 +7,8 @@ android {
         applicationId "com.jrochest.mp"
         minSdkVersion 25
         targetSdkVersion 29
-        versionCode 10103
-        versionName '1.1.3'
+        versionCode 10104
+        versionName '1.1.4'
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         proguardFiles 'proguard-rules.pro'
     }
@@ -19,10 +19,11 @@ android {
             debuggable false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.debug
+            applicationIdSuffix = '.release'
         }
         debug {
             debuggable = true
-            applicationIdSuffix = 'debug'
+            applicationIdSuffix = '.debug'
         }
     }
 }

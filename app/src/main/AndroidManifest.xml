@@ -33,7 +33,6 @@
         </activity>
         <provider
             android:name="NotesProvider"
-            android:authorities="test.provider.TestProvider" />
-
+            android:authorities="com.jrochest.mp" />
         </application>
 </manifest>
