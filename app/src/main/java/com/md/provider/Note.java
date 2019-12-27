@@ -1,6 +1,7 @@
 package com.md.provider;
 
 import android.provider.BaseColumns;
+import android.util.Log;
 
 import com.md.CategorySingleton;
 
@@ -9,10 +10,12 @@ import com.md.CategorySingleton;
  */
 public final class Note extends AbstractNote implements BaseColumns, Cloneable {
 
+	private static final String TAG = "NOTE";
+
 	public Note(int grade, int id, String question, String answer,
-			int category, boolean unseen, boolean marked, float easiness,
-			int acq_reps, int ret_reps, int lapses, int acq_reps_since_lapse,
-			int ret_reps_since_lapse, int last_rep, int next_rep) {
+				int category, boolean unseen, boolean marked, float easiness,
+				int acq_reps, int ret_reps, int lapses, int acq_reps_since_lapse,
+				int ret_reps_since_lapse, int last_rep, int next_rep) {
 		super();
 		this.grade = grade;
 		this.id = id;
@@ -251,8 +254,10 @@ public final class Note extends AbstractNote implements BaseColumns, Cloneable {
 			// Shouldn't happen, but build in a safeguard.
 
 			if (new_interval == 0) {
-				// TODO we need to get sysout working.
-				System.out.println("Internal error: new interval was zero.");
+				if (Log.isLoggable(TAG, Log.ERROR)) {
+					Log.e(TAG, "Internal error: new interval was zero.");
+				}
+				System.out.println();
 				new_interval = scheduled_interval;
 			}
 
