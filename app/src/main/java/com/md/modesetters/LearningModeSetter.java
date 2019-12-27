@@ -244,7 +244,6 @@ public class LearningModeSetter extends ModeSetter implements
         if (shouldUpdateQuestion) {
             updateVal();
         }
-        // STOPSHIP(jrochest) Why is this hack needed?
         memoryDroid.setContentView(R.layout.learnquestion);
         applyDim(mIsDimmed);
         questionMode = true;
