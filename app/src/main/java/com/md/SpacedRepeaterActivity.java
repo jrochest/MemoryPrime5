@@ -1,17 +1,5 @@
 package com.md;
 
-import static android.media.AudioManager.STREAM_MUSIC;
-import static android.media.ToneGenerator.TONE_CDMA_DIAL_TONE_LITE;
-
-import com.google.analytics.tracking.android.EasyTracker;
-import com.md.modesetters.BrowsingModeSetter;
-import com.md.modesetters.CleanUpAudioFilesModeSetter;
-import com.md.modesetters.CreateModeSetter;
-import com.md.modesetters.DeckChooseModeSetter;
-import com.md.modesetters.LearningModeSetter;
-import com.md.modesetters.ModeSetter;
-import com.md.modesetters.SettingModeSetter;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -25,6 +13,17 @@ import android.os.SystemClock;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.Menu;
+
+import com.md.modesetters.BrowsingModeSetter;
+import com.md.modesetters.CleanUpAudioFilesModeSetter;
+import com.md.modesetters.CreateModeSetter;
+import com.md.modesetters.DeckChooseModeSetter;
+import com.md.modesetters.LearningModeSetter;
+import com.md.modesetters.ModeSetter;
+import com.md.modesetters.SettingModeSetter;
+
+import static android.media.AudioManager.STREAM_MUSIC;
+import static android.media.ToneGenerator.TONE_CDMA_DIAL_TONE_LITE;
 
 public class SpacedRepeaterActivity extends Activity {
     private static final String LOG_TAG = "SpacedRepeater";
@@ -67,15 +66,12 @@ public class SpacedRepeaterActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
-        EasyTracker.getInstance(this).activityStart(this);
-
         toneGenerator = new ToneGenerator(STREAM_MUSIC, 1);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        EasyTracker.getInstance(this).activityStop(this);
         if (toneGenerator != null) {
             toneGenerator.release();
             toneGenerator = null;

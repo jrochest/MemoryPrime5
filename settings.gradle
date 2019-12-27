@@ -1,2 +1,2 @@
-include ':app', ':libGoogleAnalyticsServices', ':quickaction'
+include ':app', ':quickaction'
 rootProject.name='MemoryPrime'

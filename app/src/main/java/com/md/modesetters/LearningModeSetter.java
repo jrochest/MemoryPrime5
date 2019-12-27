@@ -1,9 +1,5 @@
 package com.md.modesetters;
 
-import static android.media.AudioManager.STREAM_MUSIC;
-
-import java.util.concurrent.TimeUnit;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -18,8 +14,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.google.analytics.tracking.android.EasyTracker;
-import com.google.analytics.tracking.android.MapBuilder;
 import com.md.AudioPlayer;
 import com.md.DbNoteEditor;
 import com.md.DbRepEditor;
@@ -31,6 +25,10 @@ import com.md.provider.AbstractRep;
 import com.md.provider.Note;
 import com.md.utils.ScreenDimmer;
 import com.md.utils.ToastSingleton;
+
+import java.util.concurrent.TimeUnit;
+
+import static android.media.AudioManager.STREAM_MUSIC;
 
 public class LearningModeSetter extends ModeSetter implements
         ItemDeletedHandler {
@@ -310,20 +308,6 @@ public class LearningModeSetter extends ModeSetter implements
     }
 
     private void updateScoreAndMoveToNext(Activity context, int newGrade) {
-
-        // May return null if a EasyTracker has not yet been initialized with a
-        // property ID.
-        EasyTracker easyTracker = EasyTracker.getInstance(context);
-
-        // MapBuilder.createEvent().build() returns a Map of event fields and values
-        // that are set and sent with the hit.
-        easyTracker.send(MapBuilder.createEvent(
-                "learning", // Event category (required)
-                "score", // Event action (required)
-                newGrade > 3 ? "good" : "bad", // Event label
-                (long) newGrade) // Event value
-                .build());
-
         if (currentNote != null) {
             applyGradeStatic(context, newGrade, currentNote);
             ToastSingleton.getInstance().msg("Easiness: " + currentNote.getEasiness() + " Interval " + currentNote.getInterval());

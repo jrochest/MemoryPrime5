@@ -1,25 +1,17 @@
 package com.md.modesetters;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Vector;
-
-import net.londatiga.android.ActionItem;
-import net.londatiga.android.QuickAction;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.AdapterView.OnItemLongClickListener;
 
-import com.google.analytics.tracking.android.EasyTracker;
-import com.google.analytics.tracking.android.MapBuilder;
 import com.md.CategorySingleton;
 import com.md.DbNoteEditor;
 import com.md.ModeHandler;
@@ -31,6 +23,13 @@ import com.md.modesetters.deckchoose.DeckNameUpdater;
 import com.md.modesetters.deckchoose.InsertNewHandler;
 import com.md.provider.Deck;
 import com.md.utils.ToastSingleton;
+
+import net.londatiga.android.ActionItem;
+import net.londatiga.android.QuickAction;
+
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Vector;
 
 public class DeckChooseModeSetter extends ModeSetter {
 
@@ -228,40 +227,7 @@ public class DeckChooseModeSetter extends ModeSetter {
 						deckCount);
 
 				publishProgessVisible(deckInfo);
-
-
-				try {
-					EasyTracker easyTracker = EasyTracker.getInstance(mActivity);
-					mTotalNotes += deckInfo.getDeckCount();
-
-					// MapBuilder.createEvent().build() returns a Map of event fields and values
-					// that are set and sent with the hit.
-					easyTracker.send(MapBuilder.createEvent(
-							"DeckSize", // Event category (required)
-							"count", // Event action (required)
-							deckInfo.getName(), // Event label
-							new Long(deckInfo.getDeckCount())) // Event value
-							.build());
-
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-
 			}
-
-			try {
-				EasyTracker easyTracker = EasyTracker.getInstance(mActivity);
-				easyTracker.send(MapBuilder.createEvent(
-						"AllNotesSize", // Event category (required)
-						"count", // Event action (required)
-						"All", // Event label
-						new Long(mTotalNotes)) // Event value
-						.build());
-
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
 			return null;
 		}
 	}
