@@ -140,7 +140,8 @@ public class SpacedRepeaterActivity extends Activity {
     private long mPressGroupLastPressEventMs = 0;
     private static final long PRESS_GROUP_MAX_GAP_MS_BLUETOOTH = 400L;
     // Jacob can consistently press every 180ms. With training we can probably drop this down.
-    public static final long PRESS_GROUP_MAX_GAP_MS_SCREEN = 250L;
+    // But on cold days 250 is hard to achieve.
+    public static final long PRESS_GROUP_MAX_GAP_MS_SCREEN = 300L;
 
     private int mPressGroupCount = 0;
     private int mPressSequenceNumber = 0;
