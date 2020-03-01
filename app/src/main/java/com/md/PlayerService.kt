@@ -33,23 +33,16 @@ class PlayerService : Service() {
         super.onCreate()
         mediaSession = MediaSessionCompat(this, "PlayerService")
 
-
         val mediaSession = mediaSession!!
 
         mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or
                 MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS)
 
-
-
-
-
         mediaSession.setCallback(object : MediaSessionCompat.Callback() {
             override fun onPlay() {
                 super.onPlay()
                 println("TODOJ onPlay called")
-                setPlaybackState(PlaybackStateCompat.STATE_BUFFERING)
-                //setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
-
+                setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
             }
 
             override fun onSkipToNext() {
@@ -97,7 +90,7 @@ class PlayerService : Service() {
         }
         //mediaSession.setPlaybackToRemote(myVolumeProvider)
         mediaSession.isActive = true
-        setPlaybackState(PlaybackStateCompat.STATE_STOPPED)
+        setPlaybackState(PlaybackStateCompat.STATE_PAUSED)
     }
 
     override fun onBind(intent: Intent): IBinder? {

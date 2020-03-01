@@ -83,6 +83,8 @@ class SpacedRepeaterActivity : Activity(), TapUiHandler {
 
     override fun onResume() {
         super.onResume()
+        // This is also needed to keep audio focus.
+        keepHeadphoneAlive()
     }
 
     override fun onDestroy() {
@@ -94,7 +96,9 @@ class SpacedRepeaterActivity : Activity(), TapUiHandler {
 
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) {}
 
-        override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {}
+        override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
+            println("TODOJ " + state?.playbackState)
+        }
     }
 
     var modeHand = ModeHandler(this)
