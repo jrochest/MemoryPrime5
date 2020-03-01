@@ -4,7 +4,6 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -26,7 +25,7 @@ class SpacedRepeaterActivity : Activity() {
     private var toneGenerator: ToneGenerator? = null
     private var mRemoteControlResponder: ComponentName? = null
     private var mAudioManager: AudioManager? = null
-
+    private var mediaController: MediaControllerCompat? = null
 
     /** Called when the activity is first created.  */
     public override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,7 +45,7 @@ class SpacedRepeaterActivity : Activity() {
         CleanUpAudioFilesModeSetter.getInstance().setup(this, modeHand)
         mAudioManager = this.getSystemService(
                 Context.AUDIO_SERVICE) as AudioManager
-        startService(Intent(this, PlayerService::class.java))
+        //startService(Intent(this, PlayerService::class.java))
 
         mediaBrowser = MediaBrowserCompat(
         this,
@@ -54,26 +53,36 @@ class SpacedRepeaterActivity : Activity() {
         connectionCallbacks,
         null)
 
+        if (!mediaBrowser.isConnected) {
+            mediaBrowser.connect()
+        }
     }
 
     private val connectionCallbacks = object : MediaBrowserCompat.ConnectionCallback() {
+
+
+        override fun onConnectionSuspended() {     println("TODOJ onConnectionSuspended!!!")}
+
+        override fun onConnectionFailed() { println("TODOJ onConnectionFailed!!!")}
+
         override fun onConnected() {
+            println("TODOJ Connected!!!")
 
             // Get the token for the MediaSession
             mediaBrowser.sessionToken.also { token ->
-
+                println("TODOJ Setting controller!!!")
                 // Create a MediaControllerCompat
-                val mediaController = MediaControllerCompat(
+                mediaController = MediaControllerCompat(
                         this@SpacedRepeaterActivity, // Context
                         token
-                )
+                ).apply {
+                    // Save the controller
+                    MediaControllerCompat.setMediaController(this@SpacedRepeaterActivity, this)
+                    // Register a Callback to stay in sync
+                    registerCallback(controllerCallback)
+                    transportControls.prepare()
+                }
 
-                // Save the controller
-                MediaControllerCompat.setMediaController(this@SpacedRepeaterActivity, mediaController)
-
-                mediaController.transportControls.play()
-                // Register a Callback to stay in sync
-                mediaController.registerCallback(controllerCallback)
             }
         }
     }
@@ -82,13 +91,24 @@ class SpacedRepeaterActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+
         // This is also needed to keep audio focus.
         keepHeadphoneAlive()
+        mediaController?.transportControls?.prepare()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        mediaController?.transportControls?.stop()
+        if (toneGenerator != null) {
+            toneGenerator!!.release()
+            toneGenerator = null
+        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-
+        mediaBrowser.disconnect()
     }
 
     private var controllerCallback = object : MediaControllerCompat.Callback() {

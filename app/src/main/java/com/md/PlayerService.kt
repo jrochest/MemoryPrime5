@@ -2,14 +2,18 @@ package com.md
 
 import android.app.Service
 import android.content.Intent
+import android.os.Bundle
 import android.os.IBinder
+import android.service.media.MediaBrowserService
+import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import androidx.media.MediaBrowserServiceCompat
 import androidx.media.VolumeProviderCompat
 import androidx.media.session.MediaButtonReceiver
 import com.md.modesetters.LearningModeSetter
 
-class PlayerService : Service() {
+class PlayerService : MediaBrowserServiceCompat() {
     private var mediaSession: MediaSessionCompat? = null
     var position = 10L
 
@@ -32,7 +36,10 @@ class PlayerService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        mediaSession = MediaSessionCompat(this, "PlayerService")
+        mediaSession = MediaSessionCompat(this, "PlayerService").also {
+            sessionToken = it.sessionToken
+        }
+
 
         val mediaSession = mediaSession!!
 
@@ -41,10 +48,18 @@ class PlayerService : Service() {
         mediaSession.setCallback(object : MediaSessionCompat.Callback() {
             override fun onPlay() {
                 super.onPlay()
+                mediaSession.isActive = true
                 println("TODOJ onPlay called")
                 setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
                 // Good.
                 handleTapCount(1)
+            }
+
+            override fun onPrepare() {
+                super.onPrepare()
+                mediaSession.isActive = true
+                println("TODOJ onPrepare called")
+                setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
             }
 
             override fun onSkipToNext() {
@@ -58,6 +73,7 @@ class PlayerService : Service() {
             // Note we don't any info about bluetooth device in:
             // mediaButtonEvent.getParcelableExtra(Intent.EXTRA_KEY_EVENT) as KeyEvent
             override fun onMediaButtonEvent(mediaButtonEvent: Intent?): Boolean {
+                println("TODOJ mediaButtonEvent called")
                 return super.onMediaButtonEvent(mediaButtonEvent)
             }
 
@@ -79,19 +95,35 @@ class PlayerService : Service() {
                 // Good grade.
                 handleTapCount(1)
             }
+
+
+            override fun onStop() {
+                super.onStop()
+                println("TODOJ stopped called")
+                setPlaybackState(PlaybackStateCompat.STATE_STOPPED)
+                // Don't take media events while activity stopped.
+                //mediaSession.isActive = false
+            }
         })
 
         mediaSession.isActive = true
         setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
     }
 
+    override fun onLoadChildren(parentId: String, result: Result<MutableList<MediaBrowserCompat.MediaItem>>) {
+        println("TODOJ send back onLoadChildren empty list!")
+        result.sendResult(mutableListOf())
+    }
+
+    override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot? {
+        // Let everyone connect!
+        println("TODOJ connected to me root!")
+        return BrowserRoot("Good", null)
+    }
+
     private fun handleTapCount(tapCount: Int) {
         val learningModeSetter = LearningModeSetter.getInstance() ?: return
         learningModeSetter.handleTapCount(tapCount)
-    }
-
-    override fun onBind(intent: Intent): IBinder? {
-        return null
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
