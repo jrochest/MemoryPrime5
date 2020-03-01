@@ -250,7 +250,7 @@ class SpacedRepeaterActivity : Activity() {
             println("TODOJ received actual count $mPressGroupCount")
             when (mPressGroupCount) {
                 1 -> modeSetter.proceed()
-                // This takes a different second based on whether it is a q or answer.
+                // This takes a different action based on whether it is a question or answer.
                 2 -> modeSetter.secondaryAction()
                 3 -> modeSetter.undo()
                 4 ->  // Reset!
