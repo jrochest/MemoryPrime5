@@ -64,7 +64,6 @@ class PlayerService : Service() {
 
             }
 
-
             override fun onPause() {
                 super.onPause()
                 println("TODOJ pause called")
@@ -72,18 +71,6 @@ class PlayerService : Service() {
             }
         })
 
-        //this will only work on Lollipop and up, see https://code.google.com/p/android/issues/detail?id=224134
-        val myVolumeProvider: VolumeProviderCompat = object : VolumeProviderCompat(VOLUME_CONTROL_RELATIVE,  /*max volume*/100,  /*initial volume level*/50) {
-            override fun onAdjustVolume(direction: Int) {
-                println("TODOJ got a volume direction $direction")
-                /*
-                -1 -- volume down
-                1 -- volume up
-                0 -- volume button released
-                 */
-            }
-        }
-        //mediaSession.setPlaybackToRemote(myVolumeProvider)
         mediaSession.isActive = true
         setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
     }
