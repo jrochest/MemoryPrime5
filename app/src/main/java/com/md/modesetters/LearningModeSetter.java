@@ -230,6 +230,14 @@ public class LearningModeSetter extends ModeSetter implements
         mActivity.keepHeadphoneAlive();
     }
 
+    public void secondaryAction() {
+        if (questionMode) {
+            handleReplay();
+        } else {
+            proceedFailure();
+        }
+    }
+
     public void proceed() {
         ScreenDimmer.getInstance().keepScreenOn(mActivity);
         if (questionMode) {

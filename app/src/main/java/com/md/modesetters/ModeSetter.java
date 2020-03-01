@@ -69,6 +69,8 @@ public abstract class ModeSetter {
     }
 
     public void proceed() {
+        // If play is pressed setup learning mode.
+        LearningModeSetter.getInstance().setupMode(mActivity);
     }
 
     public void undo() {
@@ -86,4 +88,8 @@ public abstract class ModeSetter {
     }
 
     public void mark() {}
+
+    public void secondaryAction() {
+
+    }
 }

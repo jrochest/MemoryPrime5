@@ -248,16 +248,15 @@ class SpacedRepeaterActivity : Activity() {
                 return@Runnable
             }
             println("TODOJ received actual count $mPressGroupCount")
-            mPressGroupCount = 10
             when (mPressGroupCount) {
-                1 -> modeSetter.handleReplay()
-                2 -> modeSetter.proceed()
-                3 -> modeSetter.proceedFailure()
-                4 -> modeSetter.undo()
-                5 ->  // Reset!
+                1 -> modeSetter.proceed()
+                // This takes a different second based on whether it is a q or answer.
+                2 -> modeSetter.secondaryAction()
+                3 -> modeSetter.undo()
+                4 ->  // Reset!
                     modeSetter.setupMode(this@SpacedRepeaterActivity)
-                6 -> modeSetter.toggleDim()
-                7 -> modeSetter.mark()
+                5 -> modeSetter.toggleDim()
+                6 -> modeSetter.mark()
                 else -> {
                 }
             }
