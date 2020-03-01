@@ -4,6 +4,9 @@
         android:name="android.permission.RECORD_AUDIO" />
     <uses-permission
         android:name="android.permission.VIBRATE" />
+    <!-- Added for the media button receiver -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
     <application
@@ -27,6 +30,12 @@
                     android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- TODO(jrochest) Maybe remove this because we switched to media session -->
+        <receiver android:name="RemoteControlReceiver">
+            <intent-filter android:priority="100000">
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
         <provider
             android:name="NotesProvider"
             android:authorities="com.jrochest.mp" />

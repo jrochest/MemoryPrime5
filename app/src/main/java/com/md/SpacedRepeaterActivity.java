@@ -2,7 +2,10 @@ package com.md;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
@@ -25,10 +28,13 @@ import com.md.modesetters.SettingModeSetter;
 import static android.media.AudioManager.STREAM_MUSIC;
 import static android.media.ToneGenerator.TONE_CDMA_DIAL_TONE_LITE;
 
-public class SpacedRepeaterActivity extends Activity {
+public class SpacedRepeaterActivity extends Activity implements TapUiHandler {
     private static final String LOG_TAG = "SpacedRepeater";
 
     private ToneGenerator toneGenerator = null;
+    private ComponentName mRemoteControlResponder;
+    private AudioManager mAudioManager;
+
 
     /** Called when the activity is first created. */
     @Override
@@ -38,7 +44,7 @@ public class SpacedRepeaterActivity extends Activity {
 
         DbContants.setup(this);
 
-        setVolumeControlStream(AudioManager.STREAM_MUSIC);
+        setVolumeControlStream(STREAM_MUSIC);
 
         ActivityHelper activityHelper = new ActivityHelper();
         activityHelper.commonActivitySetup(this);
@@ -51,6 +57,35 @@ public class SpacedRepeaterActivity extends Activity {
         DeckChooseModeSetter.getInstance().setupMode(this);
         SettingModeSetter.getInstance().setup(this, modeHand);
         CleanUpAudioFilesModeSetter.getInstance().setup(this, modeHand);
+
+        mAudioManager = (AudioManager) this.getSystemService(
+                Context.AUDIO_SERVICE);
+
+        mRemoteControlResponder = new ComponentName(getPackageName(),
+                RemoteControlReceiver.class.getName());
+
+
+        IntentFilter filter = new IntentFilter(Intent.ACTION_MEDIA_BUTTON);
+        RemoteControlReceiver r = new RemoteControlReceiver();
+        filter.setPriority(1000);
+        registerReceiver(r, filter);
+
+        ///mRemoteControlResponder.setTapHandler(this);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        mAudioManager.registerMediaButtonEventReceiver(
+                mRemoteControlResponder);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mAudioManager.unregisterMediaButtonEventReceiver(
+                mRemoteControlResponder);
     }
 
     ModeHandler modeHand = new ModeHandler(this);
@@ -168,6 +203,7 @@ public class SpacedRepeaterActivity extends Activity {
     };
 
     public boolean onKeyUp(int keyCode, KeyEvent event) {
+        System.out.println("TODOJ key up event" + event);
         final ModeSetter modeSetter = modeHand.whoseOnTop();
         // BR301 sends an enter command, which we want to ignore.
         if (keyCode == KeyEvent.KEYCODE_ENTER) {
@@ -193,6 +229,8 @@ public class SpacedRepeaterActivity extends Activity {
      */
     @Override
     public boolean onKeyDown(int keyCode, final KeyEvent event) {
+        System.out.println("TODOJ key down event" + event);
+
         final ModeSetter modeSetter = modeHand.whoseOnTop();
 
         System.out.println("TODOJ event" + event);
@@ -216,17 +254,18 @@ public class SpacedRepeaterActivity extends Activity {
         }
 
         final long eventTimeMs = event.getEventTime();
-        return handleRhythmUiTaps(modeSetter, eventTimeMs, PRESS_GROUP_MAX_GAP_MS_BLUETOOTH);
+        return handleRhythmUiTaps(modeSetter, eventTimeMs, PRESS_GROUP_MAX_GAP_MS_BLUETOOTH, false);
     }
 
-    public boolean handleRhythmUiTaps(final ModeSetter modeSetter, long eventTimeMs, long pressGroupMaxGapMs) {
+    @Override
+    public boolean handleRhythmUiTaps(final ModeSetter modeSetter, long eventTimeMs, long pressGroupMaxGapMs, boolean isBluetoothDoublePress) {
         final long currentTimeMs = SystemClock.uptimeMillis();
         if (mPressGroupLastPressMs == 0) {
-            mPressGroupCount = 1;
+            mPressGroupCount = isBluetoothDoublePress ? 2 : 1;
             System.out.println("New Press group.");
         } else if (mPressGroupLastPressEventMs + pressGroupMaxGapMs < eventTimeMs) {
             // Too much time has ellapsed start a new press group.
-            mPressGroupCount = 1;
+            mPressGroupCount = isBluetoothDoublePress ? 2 : 1; // Count the first double press, but not the subsequent.
             System.out.println("New Press group. Expiring old one.");
         } else {
             System.out.println("Time diff: " + (currentTimeMs - mPressGroupLastPressMs));
@@ -256,6 +295,9 @@ public class SpacedRepeaterActivity extends Activity {
                 if (mPressSequenceNumber != currentSequenceNumber) {
                     return;
                 }
+                System.out.println("TODOJ received actual count " + mPressGroupCount);
+                // To disable modification for testing do: mPressGroupCount = 10;
+
                 switch (mPressGroupCount) {
                     case 1:
                         modeSetter.handleReplay();
