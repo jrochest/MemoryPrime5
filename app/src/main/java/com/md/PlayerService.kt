@@ -49,16 +49,12 @@ class PlayerService : Service() {
                 super.onSkipToNext()
                 println("TODOJ next called")
                 setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
-
             }
 
-
+            // Note we don't any info about bluetooth device in:
+            // mediaButtonEvent.getParcelableExtra(Intent.EXTRA_KEY_EVENT) as KeyEvent
             override fun onMediaButtonEvent(mediaButtonEvent: Intent?): Boolean {
-
-                println("TODOJ received event $mediaButtonEvent")
                 return super.onMediaButtonEvent(mediaButtonEvent)
-
-
             }
 
             override fun onSkipToPrevious() {
@@ -72,8 +68,7 @@ class PlayerService : Service() {
             override fun onPause() {
                 super.onPause()
                 println("TODOJ pause called")
-                setPlaybackState(PlaybackStateCompat.STATE_PAUSED)
-
+                setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
             }
         })
 
@@ -90,7 +85,7 @@ class PlayerService : Service() {
         }
         //mediaSession.setPlaybackToRemote(myVolumeProvider)
         mediaSession.isActive = true
-        setPlaybackState(PlaybackStateCompat.STATE_PAUSED)
+        setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
     }
 
     override fun onBind(intent: Intent): IBinder? {
