@@ -7,6 +7,7 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.media.VolumeProviderCompat
 import androidx.media.session.MediaButtonReceiver
+import com.md.modesetters.LearningModeSetter
 
 class PlayerService : Service() {
     private var mediaSession: MediaSessionCompat? = null
@@ -42,12 +43,16 @@ class PlayerService : Service() {
                 super.onPlay()
                 println("TODOJ onPlay called")
                 setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
+                // Good.
+                handleTapCount(1)
             }
 
             override fun onSkipToNext() {
                 super.onSkipToNext()
                 println("TODOJ next called")
                 setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
+                // Go back
+                handleTapCount(3)
             }
 
             // Note we don't any info about bluetooth device in:
@@ -61,6 +66,8 @@ class PlayerService : Service() {
                 println("TODOJ prev called")
                 setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
 
+                // Bad in answer, repeat in question
+                handleTapCount(2)
             }
 
             override fun onPause() {
@@ -69,11 +76,18 @@ class PlayerService : Service() {
                 // Always set to playing because if we do pause next and prev actions are not sent
                 // by the bluetooth headphones, both vistas and jabra elite 75T active.
                 setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
+                // Good grade.
+                handleTapCount(1)
             }
         })
 
         mediaSession.isActive = true
         setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
+    }
+
+    private fun handleTapCount(tapCount: Int) {
+        val learningModeSetter = LearningModeSetter.getInstance() ?: return
+        learningModeSetter.handleTapCount(tapCount)
     }
 
     override fun onBind(intent: Intent): IBinder? {

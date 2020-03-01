@@ -5,7 +5,6 @@ import android.app.AlertDialog
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -23,7 +22,7 @@ import android.view.Menu
 import com.md.modesetters.*
 
 
-class SpacedRepeaterActivity : Activity(), TapUiHandler {
+class SpacedRepeaterActivity : Activity() {
     private var toneGenerator: ToneGenerator? = null
     private var mRemoteControlResponder: ComponentName? = null
     private var mAudioManager: AudioManager? = null
@@ -213,16 +212,17 @@ class SpacedRepeaterActivity : Activity(), TapUiHandler {
             return true
         }
         val eventTimeMs = event.eventTime
-        return handleRhythmUiTaps(modeSetter, eventTimeMs, PRESS_GROUP_MAX_GAP_MS_BLUETOOTH, false)
+        return handleRhythmUiTaps(modeSetter, eventTimeMs, PRESS_GROUP_MAX_GAP_MS_BLUETOOTH)
     }
 
-    override fun handleRhythmUiTaps(modeSetter: ModeSetter, eventTimeMs: Long, pressGroupMaxGapMs: Long, isBluetoothDoublePress: Boolean): Boolean {
+    @JvmOverloads
+    fun handleRhythmUiTaps(modeSetter: ModeSetter, eventTimeMs: Long, pressGroupMaxGapMs: Long, tapCount: Int = 1): Boolean {
         val currentTimeMs = SystemClock.uptimeMillis()
         if (mPressGroupLastPressMs == 0L) {
-            mPressGroupCount = if (isBluetoothDoublePress) 2 else 1
+            mPressGroupCount = tapCount
             println("New Press group.")
         } else if (mPressGroupLastPressEventMs + pressGroupMaxGapMs < eventTimeMs) { // Too much time has ellapsed start a new press group.
-            mPressGroupCount = if (isBluetoothDoublePress) 2 else 1 // Count the first double press, but not the subsequent.
+            mPressGroupCount = tapCount // Count the first double press, but not the subsequent.
             println("New Press group. Expiring old one.")
         } else {
             println("Time diff: " + (currentTimeMs - mPressGroupLastPressMs))
@@ -248,6 +248,7 @@ class SpacedRepeaterActivity : Activity(), TapUiHandler {
                 return@Runnable
             }
             println("TODOJ received actual count $mPressGroupCount")
+            mPressGroupCount = 10
             when (mPressGroupCount) {
                 1 -> modeSetter.handleReplay()
                 2 -> modeSetter.proceed()
@@ -309,6 +310,7 @@ class SpacedRepeaterActivity : Activity(), TapUiHandler {
     companion object {
         private const val LOG_TAG = "SpacedRepeater"
         const val PRESS_GROUP_MAX_GAP_MS_BLUETOOTH = 400L
+        const val PRESS_GROUP_MAX_GAP_MS_INSTANT = 100L
         // Jacob can consistently press every 180ms. With training we can probably drop this down.
 // But on cold days 250 is hard to achieve.
         const val PRESS_GROUP_MAX_GAP_MS_SCREEN = 300L

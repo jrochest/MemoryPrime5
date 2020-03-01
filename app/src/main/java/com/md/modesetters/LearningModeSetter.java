@@ -3,7 +3,6 @@ package com.md.modesetters;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.gesture.GestureLibraries;
 import android.gesture.GestureLibrary;
 import android.media.ToneGenerator;
@@ -30,7 +29,7 @@ import com.md.utils.ToastSingleton;
 import java.util.concurrent.TimeUnit;
 
 import static android.media.AudioManager.STREAM_MUSIC;
-import static com.md.SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_BLUETOOTH;
+import static com.md.SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_INSTANT;
 
 public class LearningModeSetter extends ModeSetter implements
         ItemDeletedHandler {
@@ -93,7 +92,7 @@ public class LearningModeSetter extends ModeSetter implements
         gestures.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mActivity.handleRhythmUiTaps(LearningModeSetter.this, SystemClock.uptimeMillis(), SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN, false);
+                mActivity.handleRhythmUiTaps(LearningModeSetter.this, SystemClock.uptimeMillis(), SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN);
             }
         });
 
@@ -163,31 +162,8 @@ public class LearningModeSetter extends ModeSetter implements
         });
     }
 
-    public void actionMediaButton(Intent intent) {
-        if (memoryDroid.isDestroyed() || memoryDroid.isFinishing()) {
-            return;
-        }
-
-        KeyEvent event = (KeyEvent)intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
-
-        if (event == null) {
-            return;
-        }
-
-        if (event.getAction() != KeyEvent.ACTION_DOWN) {
-            return;
-        }
-
-        // Repeat count is always 0 for the Vistas.
-        // Event time is always zero.
-
-        int keyCode = event.getKeyCode();
-        System.out.println("TODOJ received a down with type: " + keyCode);
-        // Vistas turn double press into a next by some configuration.
-        boolean isDoublePress = keyCode == KeyEvent.KEYCODE_MEDIA_NEXT;
-
-
-        memoryDroid.handleRhythmUiTaps(this, SystemClock.uptimeMillis(), PRESS_GROUP_MAX_GAP_MS_BLUETOOTH, isDoublePress);
+    public void handleTapCount(int count) {
+        memoryDroid.handleRhythmUiTaps(this, SystemClock.uptimeMillis(), PRESS_GROUP_MAX_GAP_MS_INSTANT, count);
     }
 
     /**
