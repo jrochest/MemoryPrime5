@@ -95,6 +95,10 @@ class SpacedRepeaterActivity : Activity() {
         // This is also needed to keep audio focus.
         keepHeadphoneAlive()
         mediaController?.transportControls?.prepare()
+
+        val modeSetter = modeHand.whoseOnTop() ?: return
+        // Take back media session focus if we lost it.
+        modeSetter.handleReplay()
     }
 
     override fun onPause() {

@@ -102,7 +102,7 @@ class PlayerService : MediaBrowserServiceCompat() {
                 println("TODOJ stopped called")
                 setPlaybackState(PlaybackStateCompat.STATE_STOPPED)
                 // Don't take media events while activity stopped.
-                //mediaSession.isActive = false
+                mediaSession.isActive = false
             }
         })
 
