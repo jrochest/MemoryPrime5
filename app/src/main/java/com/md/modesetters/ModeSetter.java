@@ -76,6 +76,8 @@ public abstract class ModeSetter {
     public void undo() {
     }
 
+    public void resetActivity() {}
+
     public void handleReplay() {
     }
 

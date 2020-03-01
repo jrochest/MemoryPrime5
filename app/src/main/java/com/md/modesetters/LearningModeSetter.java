@@ -410,8 +410,14 @@ public class LearningModeSetter extends ModeSetter implements
             RevisionQueue.getInstance().add(lastNote);
             setupAnswerMode(context);
             lastNote = null;
-
+        } else {
+            // If nothing to undo then just reset
+            resetActivity();
         }
+    }
+
+    public void resetActivity() {
+        setupMode(mActivity);
     }
 
     private void undoThisQuestion(final Activity context) {

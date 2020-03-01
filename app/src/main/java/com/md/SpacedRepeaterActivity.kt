@@ -277,8 +277,7 @@ class SpacedRepeaterActivity : Activity() {
                 // This takes a different action based on whether it is a question or answer.
                 2 -> modeSetter.secondaryAction()
                 3 -> modeSetter.undo()
-                4 ->  // Reset!
-                    modeSetter.setupMode(this@SpacedRepeaterActivity)
+                4 -> modeSetter.resetActivity()
                 5 -> modeSetter.toggleDim()
                 6 -> modeSetter.mark()
                 else -> {
