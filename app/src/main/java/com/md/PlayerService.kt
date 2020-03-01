@@ -35,8 +35,7 @@ class PlayerService : Service() {
 
         val mediaSession = mediaSession!!
 
-        mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or
-                MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS)
+        // Note we don't se flags because they are all automatically enabled.
 
         mediaSession.setCallback(object : MediaSessionCompat.Callback() {
             override fun onPlay() {
@@ -67,6 +66,8 @@ class PlayerService : Service() {
             override fun onPause() {
                 super.onPause()
                 println("TODOJ pause called")
+                // Always set to playing because if we do pause next and prev actions are not sent
+                // by the bluetooth headphones, both vistas and jabra elite 75T active.
                 setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
             }
         })
