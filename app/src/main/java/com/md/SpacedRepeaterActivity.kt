@@ -279,9 +279,10 @@ class SpacedRepeaterActivity : Activity() {
                 // This takes a different action based on whether it is a question or answer.
                 2 -> modeSetter.secondaryAction()
                 3 -> modeSetter.undo()
-                4 -> modeSetter.resetActivity()
-                5 -> modeSetter.toggleDim()
-                6 -> modeSetter.mark()
+                4 -> AudioPlayer.instance.shouldRepeat = false
+                5 -> modeSetter.resetActivity()
+                6 -> modeSetter.toggleDim()
+                7 -> modeSetter.mark()
                 else -> {
                 }
             }
