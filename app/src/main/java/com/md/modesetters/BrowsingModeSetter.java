@@ -170,12 +170,12 @@ public class BrowsingModeSetter extends ModeSetter implements
 
 				Note note = noteEditor.getNote();
 				if (note != null) {
-					AudioPlayer.getInstance().playFile(note.getAnswer(), null);
+					AudioPlayer.getInstance().playFile(note.getAnswer(), null, true);
 				}
 			}
 		});
 
-		Button playQuestionButton = (Button) memoryDroid
+		Button playQuestionButton = memoryDroid
 				.findViewById(R.id.playQuestionButton);
 		playQuestionButton.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
@@ -183,7 +183,7 @@ public class BrowsingModeSetter extends ModeSetter implements
 				Note note = noteEditor.getNote();
 
 				if (note != null) {
-					AudioPlayer.getInstance().playFile(note.getQuestion(), null);
+					AudioPlayer.getInstance().playFile(note.getQuestion(), null, true);
 				}
 			}
 		});
