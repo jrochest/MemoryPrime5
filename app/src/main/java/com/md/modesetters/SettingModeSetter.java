@@ -1,19 +1,12 @@
 package com.md.modesetters;
 
-import com.md.AudioPlayer;
-import com.md.CategorySingleton;
-import com.md.CreateModeData;
-import com.md.DbNoteEditor;
-import com.md.ModeHandler;
-import com.md.NoteEditorListener;
-import com.md.R;
-import com.md.provider.Note;
-
 import android.app.Activity;
 import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
 import android.widget.ToggleButton;
+
+import com.md.CategorySingleton;
+import com.md.ModeHandler;
+import com.md.R;
 
 public class SettingModeSetter extends ModeSetter implements
 		ItemDeletedHandler {
@@ -21,7 +14,6 @@ public class SettingModeSetter extends ModeSetter implements
 	private static SettingModeSetter instance = null;
 
 	protected SettingModeSetter() {
-
 	}
 
 	public static SettingModeSetter getInstance() {
@@ -41,10 +33,9 @@ public class SettingModeSetter extends ModeSetter implements
 	}
 
 	private void setupSettings(final Activity activity) {
-		final ToggleButton markButton = (ToggleButton) activity
-				.findViewById(R.id.look_ahead);
-
+		final ToggleButton markButton = activity.findViewById(R.id.look_ahead);
 		final CategorySingleton instance = CategorySingleton.getInstance();
+
 		markButton.setChecked(instance.getLookAheadDays() != 0);
 		markButton.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
@@ -52,6 +43,17 @@ public class SettingModeSetter extends ModeSetter implements
 				instance.setLookAheadDays(checked ? 1 : 0);
 			}
 		});
+
+		final ToggleButton repeatButton = activity.findViewById(R.id.repeat);
+		repeatButton.setChecked(instance.shouldRepeat());
+		repeatButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				instance.setRepeat(!repeatButton.isChecked());
+			}
+		});
+
+
+
 	}
 
 	@Override

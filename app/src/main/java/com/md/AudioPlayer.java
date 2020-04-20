@@ -99,7 +99,7 @@ public class AudioPlayer implements OnCompletionListener, MediaPlayer.OnErrorLis
             loudnessEnhancer.setTargetGain(700);
             loudnessEnhancer.setEnabled(true);
 
-            mp.setPlaybackParams(new PlaybackParams().setSpeed(1.5f));
+            mp.setPlaybackParams(new PlaybackParams().setSpeed(1.7f));
             mp.prepare();
         } catch (IllegalArgumentException e) {
             // TODO Auto-generated catch block
@@ -135,7 +135,11 @@ public class AudioPlayer implements OnCompletionListener, MediaPlayer.OnErrorLis
             mFiredOnceCompletionListener.onCompletion(mp);
             mFiredOnceCompletionListener = null;
         }
-        cleanUp();
+        if (CategorySingleton.getInstance().shouldRepeat()) {
+            mp.seekTo(0);
+        } else {
+            cleanUp();
+        }
     }
 
     @Override

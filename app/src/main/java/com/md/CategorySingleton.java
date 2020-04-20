@@ -15,6 +15,7 @@ public class CategorySingleton {
 	private int daysSinceStart;
 
 	private int mLookAheadDays = 0;
+	private boolean shouldRepeat = true;
 
 	protected CategorySingleton() {
 		daysSinceStart = getTodayInDaysSinceStart();
@@ -53,6 +54,14 @@ public class CategorySingleton {
 	public void setDeckInfo(DeckInfo deckInfo) {
 		this.mCurrentDeck = deckInfo.getCategory();
 		this.deck = deckInfo.getDeck();
+	}
+
+	public boolean shouldRepeat() {
+		return shouldRepeat;
+	}
+
+	public void setRepeat(boolean value) {
+		shouldRepeat = value;
 	}
 
 	private static final int INITIAL_CATEGORY = -1;

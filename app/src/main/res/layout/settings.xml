@@ -4,12 +4,22 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
 	android:paddingTop="100dp">
+
 	<ToggleButton
 		android:id="@+id/look_ahead"
-		android:textOff="Look ahead off"
-		android:textOn="Look ahead on"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:minHeight="100dp"
-		android:textSize="16sp"/>
+		android:textOff="Look ahead off"
+		android:textOn="Look ahead on"
+		android:textSize="16sp" />
+
+	<ToggleButton
+		android:id="@+id/repeat"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:minHeight="100dp"
+		android:textOff="Repeat off"
+		android:textOn="Repeat on"
+		android:textSize="16sp" />
 </LinearLayout>
