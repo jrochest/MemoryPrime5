@@ -260,7 +260,7 @@ public class LearningModeSetter extends ModeSetter implements
         questionMode = true;
 
         if (currentNote != null) {
-            AudioPlayer.getInstance().playFile(currentNote.getQuestion(), null);
+            AudioPlayer.getInstance().playFile(currentNote.getQuestion(), null, true);
         } else {
             if (mActivity instanceof SpacedRepeaterActivity) {
                 // Release audio focus since the dialog prevents keyboards from controlling memprime.
@@ -302,7 +302,7 @@ public class LearningModeSetter extends ModeSetter implements
         applyDim(mIsDimmed);
 
         if (currentNote != null) {
-            AudioPlayer.getInstance().playFile(currentNote.getAnswer(), null);
+            AudioPlayer.getInstance().playFile(currentNote.getAnswer(), null, true);
         }
 
         commonLayoutSetup();
@@ -382,14 +382,14 @@ public class LearningModeSetter extends ModeSetter implements
     private void replayA() {
         ScreenDimmer.getInstance().keepScreenOn(mActivity);
         if (currentNote != null) {
-            AudioPlayer.getInstance().playFile(currentNote.getAnswer(), null);
+            AudioPlayer.getInstance().playFile(currentNote.getAnswer(), null, true);
         }
     }
 
     private void replay() {
         ScreenDimmer.getInstance().keepScreenOn(mActivity);
         if (currentNote != null) {
-            AudioPlayer.getInstance().playFile(currentNote.getQuestion(), null);
+            AudioPlayer.getInstance().playFile(currentNote.getQuestion(), null, true);
         }
     }
 

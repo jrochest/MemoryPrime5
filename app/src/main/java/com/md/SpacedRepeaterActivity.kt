@@ -103,6 +103,8 @@ class SpacedRepeaterActivity : Activity() {
 
     override fun onPause() {
         super.onPause()
+        // Hiding stops the repeat playback in learning mode.
+        AudioPlayer.instance.shouldRepeat = false
         mediaController?.transportControls?.stop()
         if (toneGenerator != null) {
             toneGenerator!!.release()

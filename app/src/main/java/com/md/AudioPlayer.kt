@@ -9,7 +9,7 @@ import java.io.File
 import java.io.IOException
 
 class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
-    private var learningMode: Boolean = false;
+    var shouldRepeat: Boolean = false;
     private var mp: MediaPlayer? = null
     private var mFiredOnceCompletionListener: OnCompletionListener? = null
     private var loudnessEnhancer: LoudnessEnhancer? = null
@@ -17,17 +17,18 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
      * @param originalFile name of the file, without the save path
      * @param firedOnceCompletionListener
      */
-    @Synchronized
     @JvmOverloads
     fun playFile(originalFile: String?,
                  firedOnceCompletionListener: OnCompletionListener? = null,  learningMode: Boolean = false) {
-        this.learningMode = learningMode
+        shouldRepeat = learningMode
 
         if (originalFile == null) {
             ToastSingleton.getInstance().error("Null file path. You should probably delete this note Jacob.")
             return
         }
+
         cleanUp()
+        // Note: noise supressor seem to fail and say not enough memory. NoiseSuppressor.
         mFiredOnceCompletionListener = firedOnceCompletionListener
         val path = sanitizePath(originalFile)
         val audioFile = File(path)
@@ -35,34 +36,35 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
             ToastSingleton.getInstance().error("$path does not exist.")
             return
         }
-        mp = MediaPlayer()
+
+        val mediaPlayer = MediaPlayer()
+        mp = mediaPlayer
         try {
-            mp!!.setDataSource(path)
-            loudnessEnhancer = LoudnessEnhancer(mp!!.audioSessionId)
+            mediaPlayer.setDataSource(path)
+            loudnessEnhancer = LoudnessEnhancer(mediaPlayer.audioSessionId)
             loudnessEnhancer!!.setTargetGain(700)
             loudnessEnhancer!!.enabled = true
-            mp!!.playbackParams = PlaybackParams().setSpeed(1.5f)
-            mp!!.prepare()
-        } catch (e: IllegalArgumentException) { // TODO Auto-generated catch block
+            mediaPlayer.playbackParams = PlaybackParams().setSpeed(1.5f)
+            mediaPlayer.prepare()
+        } catch (e: IllegalArgumentException) {
             e.printStackTrace()
-        } catch (e: IllegalStateException) { // TODO Auto-generated catch block
+        } catch (e: IllegalStateException) {
             e.printStackTrace()
-        } catch (e: IOException) { // TODO Auto-generated catch block
+        } catch (e: IOException) {
             e.printStackTrace()
         }
-        mp!!.setOnErrorListener(this)
-        mp!!.setOnCompletionListener(this)
-        mp!!.start()
+        mediaPlayer.setOnErrorListener(this)
+        mediaPlayer.setOnCompletionListener(this)
+        mediaPlayer.start()
     }
 
-    @Synchronized
     fun cleanUp() {
-        if (mp != null) {
-            mp!!.stop()
+        val mediaPlayer = mp ?: return
+        mp = null
+        mediaPlayer.stop()
             // Once the MP is released it can't be used again.
-            mp!!.release()
-            mp = null
-        }
+        mediaPlayer.release()
+
         if (loudnessEnhancer != null) {
             loudnessEnhancer!!.release()
             loudnessEnhancer = null
@@ -74,8 +76,9 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
             mFiredOnceCompletionListener!!.onCompletion(mp)
             mFiredOnceCompletionListener = null
         }
-        if (CategorySingleton.getInstance().shouldRepeat() && learningMode) {
+        if (CategorySingleton.getInstance().shouldRepeat() && shouldRepeat) {
             mp.seekTo(0)
+            mp.start()
         } else {
             cleanUp()
         }
@@ -88,16 +91,8 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
     }
 
     companion object {
-        // Note: noise supressor seem to fail and say not enough memory. NoiseSuppressor.
         @JvmStatic
-        var instance: AudioPlayer? = null
-            get() {
-                if (field == null) {
-                    field = AudioPlayer()
-                }
-                return field
-            }
-            private set
+        val instance: AudioPlayer by lazy {  AudioPlayer() }
 
         @JvmStatic
         fun transformToM4a(filename: String): String {
