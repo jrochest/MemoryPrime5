@@ -14,15 +14,19 @@ object ZipManager {
             val data = ByteArray(BUFFER)
             for (i in _files.indices) {
                 Log.v("Compress", "Adding: " + _files[i])
-                val fi = FileInputStream(_files[i])
-                origin = BufferedInputStream(fi, BUFFER)
-                val entry = ZipEntry(_files[i].substring(_files[i].lastIndexOf("/") + 1))
-                out.putNextEntry(entry)
-                var count: Int = 0
-                while (origin.read(data, 0, BUFFER).also { count = it } != -1) {
-                    out.write(data, 0, count)
+                try {
+                    val fi = FileInputStream(_files[i])
+                    origin = BufferedInputStream(fi, BUFFER)
+                    val entry = ZipEntry(_files[i].substring(_files[i].lastIndexOf("/") + 1))
+                    out.putNextEntry(entry)
+                    var count: Int = 0
+                    while (origin.read(data, 0, BUFFER).also { count = it } != -1) {
+                        out.write(data, 0, count)
+                    }
+                    origin.close()
+                } catch (e: FileNotFoundException){
+                    Log.e("Compress", "failed to open " + _files[i])
                 }
-                origin.close()
             }
             out.flush()
             out.close()
