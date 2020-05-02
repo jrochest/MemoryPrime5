@@ -3,6 +3,7 @@ package com.md
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.ComponentName
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
@@ -346,63 +347,18 @@ class SpacedRepeaterActivity : Activity() {
         const val PRESS_GROUP_MAX_GAP_MS_INSTANT = 100L
 
         // Jacob can consistently press every 180ms. With training we can probably drop this down.
-// But on cold days 250 is hard to achieve.
+        // But on cold days 250 is hard to achieve.
         const val PRESS_GROUP_MAX_GAP_MS_SCREEN = 300L
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
         super.onActivityResult(requestCode, resultCode, data)
-        //if ok user selected a file
-        if (resultCode == RESULT_OK) {
-            val sourceTreeUri: Uri = data.data ?: return
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                getContentResolver().takePersistableUriPermission(sourceTreeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
 
+        if (resultCode != RESULT_OK) return
 
-                filesDir.listFiles().forEach {
-                    if (it.isDirectory && it.name.equals("com.md.MemoryPrime")) {
-                        val filesToZip = mutableListOf<String>()
-                        it.listFiles().forEach { databaseOrAudioDirectory ->
-                            if (databaseOrAudioDirectory.isDirectory) {
-                                databaseOrAudioDirectory.listFiles().forEach { audioDirs ->
-                                    if (audioDirs.isDirectory) {
-                                        audioDirs.listFiles().forEach { audioFile ->
-                                            // Audio files
-                                            filesToZip.add(audioFile.path)
-                                        }
-                                    }
-                                }
-                            } else {
-                                // Database and numbered directories.
-                                filesToZip.add(databaseOrAudioDirectory.path)
-                            }
-                        }
-
-                        val tempZipFile = File(filesDir, "backup.zip")
-                        ZipManager.zip(filesToZip.toTypedArray(), tempZipFile.path)
-
-                        contentResolver.openFileDescriptor(sourceTreeUri, "w")?.use {
-                            val output = FileOutputStream(it.fileDescriptor) ?: return@use
-                            val input = FileInputStream(tempZipFile)
-                            val buf = ByteArray(1024)
-                            var len: Int
-                            while (input.read(buf).also { len = it } > 0) {
-                                output.write(buf, 0, len)
-                            }
-                            output.close()
-                            input.close()
-
-                        }
-
-                        tempZipFile.deleteOnExit()
-
-
-                    }
-                }
-            }
-
-
-        }
+        // if ok user selected a file
+        if (BackupToUsbManager.createAndWriteZipBackup(this, data, requestCode, contentResolver)) return
     }
+
 }
 

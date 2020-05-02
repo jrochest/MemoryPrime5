@@ -7,12 +7,10 @@ import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
 object ZipManager {
-    fun zip(_files: Array<String>, zipFileName: String) {
+    fun zip(_files: Array<String>, dest: FileOutputStream) {
         try {
             var origin: BufferedInputStream
-            val dest = FileOutputStream(zipFileName)
-            val out = ZipOutputStream(BufferedOutputStream(
-                    dest))
+            val out = ZipOutputStream(BufferedOutputStream(dest))
             val data = ByteArray(BUFFER)
             for (i in _files.indices) {
                 Log.v("Compress", "Adding: " + _files[i])

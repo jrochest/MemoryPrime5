@@ -63,7 +63,7 @@ public class ActivityHelper {
 			@Override
 			public boolean onMenuItemClick(MenuItem item) {
 
-				BackupToUsbManager.INSTANCE.backupToUsb(activity);
+				BackupToUsbManager.INSTANCE.openZipFileDocument(activity);
 
 				return true;
 			}
