@@ -3,7 +3,6 @@ package com.md
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.ComponentName
-import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
@@ -11,8 +10,6 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.AudioManager.OnAudioFocusChangeListener
 import android.media.ToneGenerator
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.SystemClock
@@ -23,7 +20,6 @@ import android.support.v4.media.session.PlaybackStateCompat
 import android.view.KeyEvent
 import android.view.Menu
 import com.md.modesetters.*
-import java.io.*
 
 
 class SpacedRepeaterActivity : Activity(), ToneManager {
@@ -64,8 +60,6 @@ class SpacedRepeaterActivity : Activity(), ToneManager {
     }
 
     private val connectionCallbacks = object : MediaBrowserCompat.ConnectionCallback() {
-
-
         override fun onConnectionSuspended() {
             println("TODOJ onConnectionSuspended!!!")
         }
