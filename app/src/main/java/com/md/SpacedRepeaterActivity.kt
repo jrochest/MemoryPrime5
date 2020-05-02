@@ -386,14 +386,14 @@ class SpacedRepeaterActivity : Activity() {
                         ZipManager.zip(filesToZip.toTypedArray(), tempZipFile.path)
 
                         contentResolver.openFileDescriptor(sourceTreeUri, "w")?.use {
-                            val output = FileOutputStream(it.fileDescriptor)
-                            val input: FileInputStream = FileInputStream(tempZipFile)
+                            val output = FileOutputStream(it.fileDescriptor) ?: return@use
+                            val input = FileInputStream(tempZipFile)
                             val buf = ByteArray(1024)
                             var len: Int
                             while (input.read(buf).also { len = it } > 0) {
-                                output!!.write(buf, 0, len)
+                                output.write(buf, 0, len)
                             }
-                            output!!.close()
+                            output.close()
                             input.close()
 
                         }
