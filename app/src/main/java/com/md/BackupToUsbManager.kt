@@ -2,7 +2,6 @@ package com.md
 
 import android.app.Activity
 import android.content.ContentResolver
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.core.app.ActivityCompat.startActivityForResult
@@ -42,14 +41,14 @@ object BackupToUsbManager {
         )
 
         GlobalScope.launch(Dispatchers.Main) {
-            context.backupDoneTone()
+            context.backupTone()
 
             val deferred = async(Dispatchers.IO) {
-                backupOnBackground(contentResolver, sourceTreeUri, context.filesDir)
+                backupOnBackground(contentResolver, sourceTreeUri, context.filesDir, context)
             }
 
             ToastSingleton.getInstance().msg("finished backup with" + deferred.await())
-            context.backupDoneTone()
+            context.backupTone()
         }
 
         return true
@@ -57,7 +56,7 @@ object BackupToUsbManager {
 
     }
 
-    private suspend fun backupOnBackground(contentResolver: ContentResolver, sourceTreeUri: Uri, filesDir: File) {
+    private suspend fun backupOnBackground(contentResolver: ContentResolver, sourceTreeUri: Uri, filesDir: File, toneManager: ToneManager) {
         filesDir.listFiles().forEach {
             if (it.isDirectory && it.name == "com.md.MemoryPrime") {
                 val dirsToZip = mutableListOf<File>()
@@ -83,7 +82,7 @@ object BackupToUsbManager {
 
                 contentResolver.openFileDescriptor(sourceTreeUri, "w")?.use {
                     val output = FileOutputStream(it.fileDescriptor) ?: return@use
-                    MemPrimeManager.zip(filesToZip, dirsToZip, output)
+                    MemPrimeManager.zip(filesToZip, dirsToZip, output, toneManager)
                 }
             }
         }

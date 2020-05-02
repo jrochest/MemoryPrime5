@@ -4,7 +4,6 @@ import android.util.Log
 import com.md.utils.ToastSingleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.io.*
 import java.util.zip.ZipEntry
@@ -23,7 +22,7 @@ object MemPrimeManager {
         return absoluteFile.path.replaceBefore("com.md.MemoryPrime", "")
     }
 
-    suspend fun zip(files: MutableList<File>, dirs: MutableList<File>, dest: FileOutputStream) {
+    suspend fun zip(files: MutableList<File>, dirs: MutableList<File>, dest: FileOutputStream, toneManager: ToneManager) {
         try {
             var origin: BufferedInputStream
             val out = ZipOutputStream(BufferedOutputStream(dest))
@@ -63,6 +62,7 @@ object MemPrimeManager {
                     Log.e("Compress", "failed to open " + file)
 
                     GlobalScope.launch(Dispatchers.Main) {
+                        toneManager.errorTone()
                         ToastSingleton.getInstance().error("error backing up" + file)
                     }
 
