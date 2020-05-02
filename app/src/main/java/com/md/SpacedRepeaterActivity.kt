@@ -4,11 +4,14 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.AudioManager.OnAudioFocusChangeListener
 import android.media.ToneGenerator
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.SystemClock
@@ -16,9 +19,14 @@ import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import android.util.Log
 import android.view.KeyEvent
 import android.view.Menu
 import com.md.modesetters.*
+import java.io.*
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 
 
 class SpacedRepeaterActivity : Activity() {
@@ -48,10 +56,10 @@ class SpacedRepeaterActivity : Activity() {
         //startService(Intent(this, PlayerService::class.java))
 
         mediaBrowser = MediaBrowserCompat(
-        this,
-        ComponentName(this, PlayerService::class.java),
-        connectionCallbacks,
-        null)
+                this,
+                ComponentName(this, PlayerService::class.java),
+                connectionCallbacks,
+                null)
 
         if (!mediaBrowser.isConnected) {
             mediaBrowser.connect()
@@ -61,9 +69,13 @@ class SpacedRepeaterActivity : Activity() {
     private val connectionCallbacks = object : MediaBrowserCompat.ConnectionCallback() {
 
 
-        override fun onConnectionSuspended() {     println("TODOJ onConnectionSuspended!!!")}
+        override fun onConnectionSuspended() {
+            println("TODOJ onConnectionSuspended!!!")
+        }
 
-        override fun onConnectionFailed() { println("TODOJ onConnectionFailed!!!")}
+        override fun onConnectionFailed() {
+            println("TODOJ onConnectionFailed!!!")
+        }
 
         override fun onConnected() {
             println("TODOJ Connected!!!")
@@ -336,8 +348,131 @@ class SpacedRepeaterActivity : Activity() {
         private const val LOG_TAG = "SpacedRepeater"
         const val PRESS_GROUP_MAX_GAP_MS_BLUETOOTH = 400L
         const val PRESS_GROUP_MAX_GAP_MS_INSTANT = 100L
+
         // Jacob can consistently press every 180ms. With training we can probably drop this down.
 // But on cold days 250 is hard to achieve.
         const val PRESS_GROUP_MAX_GAP_MS_SCREEN = 300L
     }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+        super.onActivityResult(requestCode, resultCode, data)
+        //if ok user selected a file
+        if (resultCode == RESULT_OK) {
+            val sourceTreeUri: Uri = data.data ?: return
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                getContentResolver().takePersistableUriPermission(sourceTreeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+
+
+                filesDir.listFiles().forEach {
+                    if (it.isDirectory && it.name.equals("com.md.MemoryPrime")) {
+                        val filesToZip = mutableListOf<String>()
+                        it.listFiles().forEach { databaseOrAudioDirectory ->
+                            if (databaseOrAudioDirectory.isDirectory) {
+                                databaseOrAudioDirectory.listFiles().forEach { audioDirs ->
+                                    if (audioDirs.isDirectory) {
+                                        audioDirs.listFiles().forEach { audioFile ->
+                                            // Audio files
+                                            filesToZip.add(audioFile.path)
+                                        }
+                                    }
+                                }
+                            } else {
+                                // Database and numbered directories.
+                                filesToZip.add(databaseOrAudioDirectory.path)
+                            }
+                        }
+
+                        val tempZipFile = File(filesDir, "backup.zip")
+                        ZipManager.zip(filesToZip.toTypedArray(), tempZipFile.path)
+
+                        contentResolver.openFileDescriptor(sourceTreeUri, "w")?.use {
+                            val output = FileOutputStream(it.fileDescriptor)
+                            val input: FileInputStream = FileInputStream(tempZipFile)
+                            val buf = ByteArray(1024)
+                            var len: Int
+                            while (input.read(buf).also { len = it } > 0) {
+                                output!!.write(buf, 0, len)
+                            }
+                            output!!.close()
+                            input.close()
+
+                        }
+
+                        tempZipFile.deleteOnExit()
+
+
+                    }
+                }
+            }
+
+
+        }
+    }
 }
+
+object ZipManager {
+    fun zip(_files: Array<String>, zipFileName: String) {
+        try {
+            var origin: BufferedInputStream
+            val dest = FileOutputStream(zipFileName)
+            val out = ZipOutputStream(BufferedOutputStream(
+                    dest))
+            val data = ByteArray(BUFFER)
+            for (i in _files.indices) {
+                Log.v("Compress", "Adding: " + _files[i])
+                val fi = FileInputStream(_files[i])
+                origin = BufferedInputStream(fi, BUFFER)
+                val entry = ZipEntry(_files[i].substring(_files[i].lastIndexOf("/") + 1))
+                out.putNextEntry(entry)
+                var count: Int = 0
+                while (origin.read(data, 0, BUFFER).also { count = it } != -1) {
+                    out.write(data, 0, count)
+                }
+                origin.close()
+            }
+            out.flush()
+            out.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun unzip(_zipFile: String?, _targetLocation: String) {
+        //create target location folder if not exist
+        dirChecker(_targetLocation)
+        try {
+            val fin = FileInputStream(_zipFile)
+            val zin = ZipInputStream(fin)
+            var ze: ZipEntry? = null
+            while (zin.getNextEntry().also({ ze = it }) != null) {
+
+                val ze = ze ?: continue
+                //create dir if required while unzipping
+                if (ze.isDirectory()) {
+                    dirChecker(ze.getName())
+                } else {
+                    val fout = FileOutputStream(_targetLocation + ze.getName())
+                    var c: Int = zin.read()
+                    while (c != -1) {
+                        fout.write(c)
+                        c = zin.read()
+                    }
+                    zin.closeEntry()
+                    fout.close()
+                }
+            }
+            zin.close()
+        } catch (e: Exception) {
+            println(e)
+        }
+    }
+
+    private fun dirChecker(dir: String) {
+        val f = File(dir)
+        if (!f.isDirectory()) {
+            f.mkdirs()
+        }
+    }
+    private const val BUFFER = 80000
+}
+

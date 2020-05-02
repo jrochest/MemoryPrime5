@@ -31,9 +31,11 @@
 		android:icon="@android:drawable/ic_lock_silent_mode"
 		android:showAsAction="always"
 		android:title="Use phone speaker"/>
-
 	<item
 		android:id="@+id/dimMenuItem"
 		android:title="Dim Screen"
 		android:icon="@android:drawable/ic_lock_power_off" />
+	<item
+		android:id="@+id/backup"
+		android:title="Backup to USB"/>
 </menu>

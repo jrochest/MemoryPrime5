@@ -24,6 +24,7 @@ public class ActivityHelper {
 		File theFile = new File(DbContants.getDatabasePath());
 		File parentFile = new File(theFile.getParent());
 
+
 		if (!parentFile.exists()) {
 			parentFile.mkdirs();
 		}
@@ -57,6 +58,16 @@ public class ActivityHelper {
 			}
 		});
 
+
+		menu.findItem(R.id.backup).setOnMenuItemClickListener(new OnMenuItemClickListener() {
+			@Override
+			public boolean onMenuItemClick(MenuItem item) {
+
+				BackupToUsbManager.INSTANCE.backupToUsb(activity);
+
+				return true;
+			}
+		});
 
 		addMenu(menu, R.id.creationModeMenuItem, CreateModeSetter.getInstance(), activity);
 		addMenu(menu, R.id.browseDeckModeMenuItem, BrowsingModeSetter.getInstance(), activity);

@@ -5,6 +5,8 @@
     <uses-permission
         android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <!-- For writing to USB OTG device -->
+    <uses-permission android:name="android.permission.WRITE_MEDIA_STORAGE"/>
 
     <application
         android:allowBackup="true"
