@@ -75,6 +75,10 @@ object MemPrimeManager {
         }
     }
 
+    /**
+     * I am not sure if this works well with the zip function because the zip function originally
+     * only supported flat zips.
+     */
     fun unzip(_zipFile: String?, _targetLocation: String) {
         //create target location folder if not exist
         dirChecker(_targetLocation)

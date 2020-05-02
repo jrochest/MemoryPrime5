@@ -24,7 +24,6 @@ import com.md.modesetters.*
 
 class SpacedRepeaterActivity : Activity(), ToneManager {
     private var toneGenerator: ToneGenerator? = null
-    private var mRemoteControlResponder: ComponentName? = null
     private var mAudioManager: AudioManager? = null
     private var mediaController: MediaControllerCompat? = null
 
