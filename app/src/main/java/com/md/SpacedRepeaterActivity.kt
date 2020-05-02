@@ -336,6 +336,11 @@ class SpacedRepeaterActivity : Activity() {
         toneGenerator!!.startTone(ToneGenerator.TONE_CDMA_DIAL_TONE_LITE,  /* Two minutes */1000 * 60 * 2)
     }
 
+    fun backupDoneTone() {
+        // keep the headphones turned on by playing an almost silent sound n seconds.
+        ToneGenerator(AudioManager.STREAM_MUSIC, 80).startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD,  /* half second */500)
+    }
+
     fun maybeDim() {
         val modeSetter = modeHand.whoseOnTop()
         modeSetter.toggleDim()

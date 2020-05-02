@@ -27,7 +27,7 @@ object BackupToUsbManager {
 
 
     fun createAndWriteZipBackup(
-            context: Context,
+            context: SpacedRepeaterActivity,
             data: Intent,
             requestCode: Int,
             contentResolver: ContentResolver
@@ -42,13 +42,14 @@ object BackupToUsbManager {
         )
 
         GlobalScope.launch(Dispatchers.Main) {
+            context.backupDoneTone()
 
             val deferred = async(Dispatchers.IO) {
                 backupOnBackground(contentResolver, sourceTreeUri, context.filesDir)
             }
 
             ToastSingleton.getInstance().msg("finished backup with" + deferred.await())
-
+            context.backupDoneTone()
         }
 
         return true
@@ -56,29 +57,33 @@ object BackupToUsbManager {
 
     }
 
-    private fun backupOnBackground(contentResolver: ContentResolver, sourceTreeUri: Uri, filesDir: File) {
+    private suspend fun backupOnBackground(contentResolver: ContentResolver, sourceTreeUri: Uri, filesDir: File) {
         filesDir.listFiles().forEach {
             if (it.isDirectory && it.name == "com.md.MemoryPrime") {
-                val filesToZip = mutableListOf<String>()
+                val dirsToZip = mutableListOf<File>()
+                val filesToZip = mutableListOf<File>()
                 it.listFiles().forEach { databaseOrAudioDirectory ->
                     if (databaseOrAudioDirectory.isDirectory) {
+                        dirsToZip.add(databaseOrAudioDirectory)
                         databaseOrAudioDirectory.listFiles().forEach { audioDirs ->
                             if (audioDirs.isDirectory) {
+                                dirsToZip.add(audioDirs)
                                 System.out.println("Adding dir" + audioDirs.path)
                                 audioDirs.listFiles().forEach { audioFile ->
                                     // Audio files
-                                    filesToZip.add(audioFile.path)
+                                    filesToZip.add(audioFile)
                                 }
                             }
                         }
                     } else {
                         // Files only. No directories
-                        filesToZip.add(databaseOrAudioDirectory.path)
+                        filesToZip.add(databaseOrAudioDirectory)
                     }
                 }
+
                 contentResolver.openFileDescriptor(sourceTreeUri, "w")?.use {
                     val output = FileOutputStream(it.fileDescriptor) ?: return@use
-                    ZipManager.zip(filesToZip.toTypedArray(), output)
+                    MemPrimeManager.zip(filesToZip, dirsToZip, output)
                 }
             }
         }

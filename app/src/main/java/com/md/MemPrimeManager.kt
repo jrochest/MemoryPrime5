@@ -1,31 +1,71 @@
 package com.md
 
 import android.util.Log
+import com.md.utils.ToastSingleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import java.io.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
-object ZipManager {
-    fun zip(_files: Array<String>, dest: FileOutputStream) {
+object MemPrimeManager {
+
+    private fun convertToZipDir(absoluteDir: File) : String {
+        val relativeDir = absoluteDir.path.replaceBefore(
+                "com.md.MemoryPrime", "")
+        return "$relativeDir/"
+    }
+
+    private fun convertToZipFile(absoluteFile: File) : String {
+        return absoluteFile.path.replaceBefore("com.md.MemoryPrime", "")
+    }
+
+    suspend fun zip(files: MutableList<File>, dirs: MutableList<File>, dest: FileOutputStream) {
         try {
             var origin: BufferedInputStream
             val out = ZipOutputStream(BufferedOutputStream(dest))
+
+            dirs.forEach {
+                out.putNextEntry(ZipEntry(convertToZipDir(it)))
+            }
+
+            var count = 0
             val data = ByteArray(BUFFER)
-            for (i in _files.indices) {
-                Log.v("Compress", "Adding: " + _files[i])
+            val size = files.size
+            files.forEach { file ->
+                Log.v("Compress", "Adding: " + file)
                 try {
-                    val fi = FileInputStream(_files[i])
+                    val fi = FileInputStream(file)
                     origin = BufferedInputStream(fi, BUFFER)
-                    val entry = ZipEntry(_files[i].substring(_files[i].lastIndexOf("/") + 1))
+                    val entry = ZipEntry(convertToZipFile(file))
                     out.putNextEntry(entry)
-                    var count: Int = 0
-                    while (origin.read(data, 0, BUFFER).also { count = it } != -1) {
+                    while (true) {
+                        val count = origin.read(data, 0, BUFFER)
+                        if (count == -1) {
+                            break
+                        }
                         out.write(data, 0, count)
                     }
                     origin.close()
+
+                    count++
+
+                    if (count % 1000 == 0) {
+                        GlobalScope.launch(Dispatchers.Main) {
+                            ToastSingleton.getInstance().msg("Memprime backed up " + count + " of " + size)
+                        }
+                    }
+
                 } catch (e: FileNotFoundException){
-                    Log.e("Compress", "failed to open " + _files[i])
+                    Log.e("Compress", "failed to open " + file)
+
+                    GlobalScope.launch(Dispatchers.Main) {
+                        ToastSingleton.getInstance().error("error backing up" + file)
+                    }
+
                 }
             }
             out.flush()
