@@ -37,7 +37,6 @@ public class RecordOnClickListener implements OnTouchListener {
 			try {
 				switch (event.getAction()) {
 				case MotionEvent.ACTION_DOWN: {
-					ActivityHelper.modifySpeakerOutput(context, true);
 					audioRecorder = new AudioRecorder(System.currentTimeMillis()+".m4a");
 					audioRecorder.start();
 					return true;

@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu
 	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:textSize="30sp">
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:textSize="40sp">
 	<item
 		android:id="@+id/learningModeMenuItem"
 		android:title="Learning"
 		android:icon="@android:drawable/ic_menu_mapmode"
-		android:showAsAction="always" />
+		app:showAsAction="always" />
 	<item
 		android:id="@+id/creationModeMenuItem"
 		android:title="New Note"
 		android:icon="@android:drawable/ic_menu_add"
-		android:showAsAction="always"/>
+		app:showAsAction="always" />
 	<item
 		android:id="@+id/selectDeckModeMenuItem"
 		android:title="Decks"
@@ -31,6 +32,22 @@
 		android:title="Dim Screen"
 		android:icon="@android:drawable/ic_lock_power_off" />
 	<item
+		android:icon="@android:drawable/ic_menu_save"
 		android:id="@+id/backup"
 		android:title="Backup to USB"/>
+	<item
+		android:icon="@android:drawable/btn_minus"
+		android:id="@+id/small_timer"
+		android:title="7 minute timer"
+		app:showAsAction="ifRoom" />
+	<item
+		android:icon="@android:drawable/btn_plus"
+		android:id="@+id/large_timer"
+		android:title="20 minute timer"
+		app:showAsAction="ifRoom" />
+	<item
+		android:icon="@android:drawable/ic_menu_close_clear_cancel"
+		android:id="@+id/cancel_timer"
+		android:title="cancel timer"
+		app:showAsAction="ifRoom" />
 </menu>

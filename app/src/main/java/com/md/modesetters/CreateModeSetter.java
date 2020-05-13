@@ -454,7 +454,6 @@ public class CreateModeSetter extends ModeSetter {
 						if (questionIndex == ANSWER_INDEX) {
 							String answerName = currentTimeMillis + ".m4a";
 							answer = new AudioRecorder(answerName);
-							ActivityHelper.modifySpeakerOutput(mActivity, true);
 							try {
 								answer.start();
 							} catch (IOException e) {
@@ -465,7 +464,6 @@ public class CreateModeSetter extends ModeSetter {
 						} else {
 							String questionName = currentTimeMillis + ".m4a";
 							question = new AudioRecorder(questionName);
-							ActivityHelper.modifySpeakerOutput(mActivity, true);
 							try {
 								question.start();
 							} catch (IOException e) {

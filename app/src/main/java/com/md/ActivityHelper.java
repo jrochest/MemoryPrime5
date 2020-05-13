@@ -20,6 +20,9 @@ import com.md.modesetters.SettingModeSetter;
 import com.md.utils.ToastSingleton;
 
 public class ActivityHelper {
+
+	TimerManager timerManager = new TimerManager();
+
 	public void commonActivitySetup(Activity activity) {
 		File theFile = new File(DbContants.getDatabasePath());
 		File parentFile = new File(theFile.getParent());
@@ -52,9 +55,23 @@ public class ActivityHelper {
 		menu.findItem(R.id.backup).setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			@Override
 			public boolean onMenuItemClick(MenuItem item) {
-
 				BackupToUsbManager.INSTANCE.openZipFileDocument(activity);
+				return true;
+			}
+		});
 
+		menu.findItem(R.id.large_timer).setOnMenuItemClickListener(new OnMenuItemClickListener() {
+			@Override
+			public boolean onMenuItemClick(MenuItem item) {
+				timerManager.addTimer(20);
+				return true;
+			}
+		});
+
+		menu.findItem(R.id.small_timer).setOnMenuItemClickListener(new OnMenuItemClickListener() {
+			@Override
+			public boolean onMenuItemClick(MenuItem item) {
+				timerManager.addTimer(7);
 				return true;
 			}
 		});
