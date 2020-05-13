@@ -27,11 +27,6 @@
 		android:id="@+id/clean_up_files"
 		android:title="Clean Up" />
 	<item
-		android:id="@+id/toggle_speaker"
-		android:icon="@android:drawable/ic_lock_silent_mode"
-		android:showAsAction="always"
-		android:title="Use phone speaker"/>
-	<item
 		android:id="@+id/dimMenuItem"
 		android:title="Dim Screen"
 		android:icon="@android:drawable/ic_lock_power_off" />

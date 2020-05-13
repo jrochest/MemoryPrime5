@@ -49,16 +49,6 @@ public class ActivityHelper {
 			}
 		});
 
-		MenuItem toggleSpeakerItem = menu.findItem(R.id.toggle_speaker);
-		toggleSpeakerItem.setOnMenuItemClickListener(new OnMenuItemClickListener() {
-			@Override
-			public boolean onMenuItemClick(MenuItem item) {
-				modifySpeakerOutput(activity, false);
-				return true;
-			}
-		});
-
-
 		menu.findItem(R.id.backup).setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			@Override
 			public boolean onMenuItemClick(MenuItem item) {
@@ -76,19 +66,6 @@ public class ActivityHelper {
 		addMenu(menu, R.id.selectDeckModeMenuItem, DeckChooseModeSetter.getInstance(), activity);
 		addMenu(menu, R.id.settings, SettingModeSetter.getInstance(), activity);
 		addMenu(menu, R.id.clean_up_files, CleanUpAudioFilesModeSetter.getInstance(), activity);
-	}
-
-	public static void modifySpeakerOutput(Activity activity, boolean forceToNormal) {
-		final AudioManager audioManager = (AudioManager) activity.getSystemService(
-                Context.AUDIO_SERVICE);
-		if (audioManager.isSpeakerphoneOn() || forceToNormal) {
-			// For phone speaker(loudspeaker)
-			audioManager.setMode(AudioManager.MODE_NORMAL);
-			audioManager.setSpeakerphoneOn(false);
-        } else {
-			audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-			audioManager.setSpeakerphoneOn(true);
-        }
 	}
 
 	private void addMenu(Menu menu, int item, final ModeSetter ms,
