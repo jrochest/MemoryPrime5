@@ -23,7 +23,8 @@ class TimerManager {
         roundCounter = numberOfRounds * 2 + 1
         timer = object : CountDownTimer(intervalMillis * roundCounter, intervalMillis) {
             override fun onTick(millisUntilFinished: Long) {
-                if (roundCounter == 0)
+                if (roundCounter == 0) return
+
                 toneGenerator.startTone(ToneGenerator.TONE_CDMA_NETWORK_CALLWAITING,300)
                 ToastSingleton.getInstance().msg("Rounds: " + roundCounter--)
             }
