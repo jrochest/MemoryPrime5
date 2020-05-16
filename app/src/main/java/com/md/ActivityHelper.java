@@ -76,6 +76,14 @@ public class ActivityHelper {
 			}
 		});
 
+		menu.findItem(R.id.cancel_timer).setOnMenuItemClickListener(new OnMenuItemClickListener() {
+			@Override
+			public boolean onMenuItemClick(MenuItem item) {
+				timerManager.cancelTimer();
+				return true;
+			}
+		});
+
 		addMenu(menu, R.id.creationModeMenuItem, CreateModeSetter.getInstance(), activity);
 		addMenu(menu, R.id.browseDeckModeMenuItem, BrowsingModeSetter.getInstance(), activity);
 		addMenu(menu, R.id.learningModeMenuItem, LearningModeSetter.getInstance(), activity);
