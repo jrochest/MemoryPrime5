@@ -25,7 +25,7 @@ class TimerManager {
             override fun onTick(millisUntilFinished: Long) {
                 if (roundCounter == 0)
                 toneGenerator.startTone(ToneGenerator.TONE_CDMA_NETWORK_CALLWAITING,300)
-                ToastSingleton.getInstance().msg("Rounds left: " + roundCounter--)
+                ToastSingleton.getInstance().msg("Rounds: " + roundCounter--)
             }
 
             override fun onFinish() {
