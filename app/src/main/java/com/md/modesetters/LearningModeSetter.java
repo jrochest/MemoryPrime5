@@ -36,6 +36,7 @@ public class LearningModeSetter extends ModeSetter implements
 
     private static LearningModeSetter instance = null;
     private GestureLibrary mLibrary;
+    final ToneGenerator toneGenerator = new ToneGenerator(STREAM_MUSIC, 95);
 
     protected LearningModeSetter() {
     }
@@ -215,17 +216,7 @@ public class LearningModeSetter extends ModeSetter implements
             proceed(mActivity);
         } else {
             updateScoreAndMoveToNext(mActivity, 1);
-            final ToneGenerator toneGenerator = new ToneGenerator(STREAM_MUSIC, 80);
-            toneGenerator.startTone(ToneGenerator.TONE_CDMA_ABBR_ALERT, 50);
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    if (mActivity.isDestroyed()) {
-                        return;
-                    }
-                    toneGenerator.release();
-                }
-            }, 1);
+            toneGenerator.startTone(ToneGenerator.TONE_DTMF_1, 100);
         }
         mActivity.keepHeadphoneAlive();
     }

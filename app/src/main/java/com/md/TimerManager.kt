@@ -11,7 +11,7 @@ class TimerManager {
     private val intervalMillis = 30000L
     private var roundCounter = 0
 
-    val toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 90)
+    val toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 95)
 
     fun cancelTimer() {
         timer?.cancel()
@@ -28,7 +28,7 @@ class TimerManager {
             }
 
             override fun onFinish() {
-                toneGenerator.startTone(ToneGenerator.TONE_CDMA_NETWORK_CALLWAITING,800)
+                toneGenerator.startTone(ToneGenerator.TONE_SUP_INTERCEPT,800)
                 ToastSingleton.getInstance().msg("Timer finished")
                 timer = null
             }
