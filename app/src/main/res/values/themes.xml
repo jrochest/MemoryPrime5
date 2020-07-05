@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="MpTheme" parent="@android:style/Theme">
+    <style name="MpTheme" parent="Theme.AppCompat">
         <item name="android:dialogTheme">@style/MpTheme.Dialog</item>
         <item name="android:alertDialogTheme">@style/MpTheme.Dialog</item>
     </style>
@@ -9,9 +9,8 @@
         <item name="android:buttonStyle">@style/MpTheme.Dialog.Button</item>
     </style>
 
-    <style name="MpTheme.Dialog.Button" parent="@android:style/Widget.Button">
-        <item name="android:textSize">100sp</item>
+    <style name="MpTheme.Dialog.Button" parent="@android:style/Widget.Material.Button">
+        <item name="android:textSize">23sp</item>
         <item name="android:textAllCaps">true</item>
-        item
     </style>
 </resources>

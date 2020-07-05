@@ -1,6 +1,7 @@
 package com.md.modesetters;
 
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.view.View;
 import android.widget.AdapterView;
@@ -11,6 +12,8 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
 
 import com.md.CategorySingleton;
 import com.md.DbNoteEditor;
@@ -103,45 +106,30 @@ public class DeckChooseModeSetter extends ModeSetter {
 		OnItemClickListener onItemClickListener = new OnItemClickListenerImplementation(
 				memoryDroid);
 		getListView().setOnItemClickListener(onItemClickListener);
-
 		OnItemLongClickListener onItemLongClickListener = new OnItemLongClickListener() {
 
 			@Override
-			public boolean onItemLongClick(AdapterView<?> av, View v,
-					int index, long arg) {
-
-				if (loadComplete) {
-
-					DeckInfo deckInfo = deckInfoMap.get(Integer
-							.valueOf((int) arg));
-
-					QuickAction qa = new QuickAction(v);
-
-					View.OnClickListener listenerNewName = new DeckNameUpdater(
-							memoryDroid, deckInfo, qa, instance);
-					View.OnClickListener listenerDelete = new DeckDeleter(
-							memoryDroid, deckInfo, qa, instance);
-
-					View.OnClickListener listenerLoad = new DeckClickLoader(
-							memoryDroid, deckInfo, qa, instance);
-
-					addAction(qa, "Delete", listenerDelete);
-					addAction(qa, "Rename", listenerNewName);
-					addAction(qa, "Load", listenerLoad);
-
-					qa.show();
-
+			public boolean onItemLongClick(AdapterView<?> av, final View v,
+										   int index, long arg) {
+				if (!loadComplete) {
+					return true;
 				}
+				final DeckInfo deckInfo = deckInfoMap.get((int) arg);
+				AlertDialog.Builder alert = new AlertDialog.Builder(memoryDroid);
+				alert.setTitle("Choose action or press off screen");
+				alert.setPositiveButton("Rename", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						new DeckNameUpdater(memoryDroid, deckInfo, instance).onClick(v);
+					}
+				});
+
+				alert.setNegativeButton("Delete", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						new DeckDeleter(memoryDroid, deckInfo, instance).onClick(v);
+					}
+				});
+				alert.show();
 				return true;
-			}
-
-			private void addAction(QuickAction qa, String actionName,
-					View.OnClickListener listener) {
-				final ActionItem chart = new ActionItem();
-
-				chart.setTitle(actionName);
-				chart.setOnClickListener(listener);
-				qa.addActionItem(chart);
 			}
 		};
 
