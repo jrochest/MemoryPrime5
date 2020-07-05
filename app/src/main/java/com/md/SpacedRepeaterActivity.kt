@@ -19,10 +19,11 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.view.KeyEvent
 import android.view.Menu
+import androidx.appcompat.app.AppCompatActivity
 import com.md.modesetters.*
 
 
-class SpacedRepeaterActivity : Activity(), ToneManager {
+class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
     private var toneGenerator: ToneGenerator? = null
     private var mAudioManager: AudioManager? = null
     private var mediaController: MediaControllerCompat? = null
@@ -354,10 +355,12 @@ class SpacedRepeaterActivity : Activity(), ToneManager {
         const val PRESS_GROUP_MAX_GAP_MS_SCREEN = 300L
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (resultCode != RESULT_OK) return
+
+        if (data == null) return
 
         // if ok user selected a file
         if (BackupToUsbManager.createAndWriteZipBackup(this, data, requestCode, contentResolver)) return

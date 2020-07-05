@@ -22,10 +22,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.debug
             applicationIdSuffix = '.release'
+            manifestPlaceholders.appName = "MemoryPrime"
         }
         debug {
             debuggable = true
             applicationIdSuffix = '.debug'
+            manifestPlaceholders.appName = "MemDebugPrime"
         }
     }
 }

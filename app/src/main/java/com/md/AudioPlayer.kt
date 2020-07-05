@@ -1,8 +1,8 @@
 package com.md
 
 import android.media.MediaPlayer
+import android.media.MediaPlayer.MEDIA_ERROR_UNKNOWN
 import android.media.MediaPlayer.OnCompletionListener
-import android.media.PlaybackParams
 import android.media.audiofx.LoudnessEnhancer
 import com.md.utils.ToastSingleton
 import java.io.File
@@ -13,19 +13,25 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
     private var mp: MediaPlayer? = null
     private var mFiredOnceCompletionListener: OnCompletionListener? = null
     private var loudnessEnhancer: LoudnessEnhancer? = null
+    private var lastFile: String? = null
+
     /**
      * @param originalFile name of the file, without the save path
      * @param firedOnceCompletionListener
      */
     @JvmOverloads
-    fun playFile(originalFile: String?,
-                 firedOnceCompletionListener: OnCompletionListener? = null,  learningMode: Boolean = false) {
-        shouldRepeat = learningMode
+    fun playFile(originalFile: String? = lastFile,
+                 firedOnceCompletionListener: OnCompletionListener? = null,
+                 learningMode: Boolean = false,
+                 playbackSpeed: Float = 1.5f) {
 
         if (originalFile == null) {
             ToastSingleton.getInstance().error("Null file path. You should probably delete this note Jacob.")
             return
         }
+
+        lastFile = originalFile
+        shouldRepeat = learningMode
 
         cleanUp()
         // Note: noise supressor seem to fail and say not enough memory. NoiseSuppressor.
@@ -44,8 +50,14 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
             loudnessEnhancer = LoudnessEnhancer(mediaPlayer.audioSessionId)
             loudnessEnhancer!!.setTargetGain(700)
             loudnessEnhancer!!.enabled = true
-            mediaPlayer.playbackParams = PlaybackParams().setSpeed(1.5f)
-            mediaPlayer.prepare()
+
+            mediaPlayer.setOnErrorListener(this)
+            mediaPlayer.setOnCompletionListener(this)
+            mediaPlayer.setOnPreparedListener({
+                setSpeed(mediaPlayer, playbackSpeed)
+                mediaPlayer.start()
+            })
+            mediaPlayer.prepareAsync()
         } catch (e: IllegalArgumentException) {
             e.printStackTrace()
         } catch (e: IllegalStateException) {
@@ -53,9 +65,11 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
         } catch (e: IOException) {
             e.printStackTrace()
         }
-        mediaPlayer.setOnErrorListener(this)
-        mediaPlayer.setOnCompletionListener(this)
-        mediaPlayer.start()
+
+    }
+
+    private fun setSpeed(mediaPlayer: MediaPlayer, playbackSpeed: Float) {
+        mediaPlayer.playbackParams = mediaPlayer.playbackParams.setSpeed(playbackSpeed)
     }
 
     fun cleanUp() {
@@ -84,9 +98,15 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
         }
     }
 
-    override fun onError(mp: MediaPlayer, what: Int, extra: Int): Boolean {
+    override fun onError(mediaPlayer: MediaPlayer, what: Int, extra: Int): Boolean {
         println("TODOJ error during playback what=$what")
-        cleanUp()
+        if (MEDIA_ERROR_UNKNOWN == what) {
+            cleanUp()
+            playFile(playbackSpeed = 1f)
+        } else {
+            cleanUp()
+        }
+
         return true
     }
 
