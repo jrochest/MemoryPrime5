@@ -22,6 +22,7 @@ class TimerManager {
         timer = object : CountDownTimer(intervalMillis * roundCounter, intervalMillis) {
             override fun onTick(millisUntilFinished: Long) {
                 if (roundCounter == 0) return
+                roundCounter--
                 speak("Rounds $roundCounter")
             }
 
