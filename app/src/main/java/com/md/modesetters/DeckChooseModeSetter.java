@@ -20,15 +20,11 @@ import com.md.DbNoteEditor;
 import com.md.ModeHandler;
 import com.md.R;
 import com.md.RevisionQueue;
-import com.md.modesetters.deckchoose.DeckClickLoader;
 import com.md.modesetters.deckchoose.DeckDeleter;
 import com.md.modesetters.deckchoose.DeckNameUpdater;
 import com.md.modesetters.deckchoose.InsertNewHandler;
 import com.md.provider.Deck;
 import com.md.utils.ToastSingleton;
-
-import net.londatiga.android.ActionItem;
-import net.londatiga.android.QuickAction;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
