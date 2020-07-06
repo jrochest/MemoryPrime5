@@ -7,8 +7,6 @@ import com.md.utils.ToastSingleton
 
 class TimerManager {
     private var timer : CountDownTimer? = null
-
-    private val intervalMillis = 30000L
     private var roundCounter = 0
 
     val toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 95)
@@ -17,7 +15,8 @@ class TimerManager {
         timer?.cancel()
     }
 
-    fun addTimer(numberOfRounds: Int) {
+    fun addTimer(numberOfRounds: Int, intervalSeconds: Int) {
+        val intervalMillis = intervalSeconds * 1000L
         toneGenerator.startTone(ToneGenerator.TONE_CDMA_NETWORK_CALLWAITING, 300)
         cancelTimer()
         roundCounter = numberOfRounds * 2 + 1

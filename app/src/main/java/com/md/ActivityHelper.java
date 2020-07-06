@@ -63,15 +63,24 @@ public class ActivityHelper {
 		menu.findItem(R.id.large_timer).setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			@Override
 			public boolean onMenuItemClick(MenuItem item) {
-				timerManager.addTimer(20);
+				timerManager.addTimer(7, 30);
 				return true;
 			}
 		});
 
+		menu.findItem(R.id.medium_timer).setOnMenuItemClickListener(new OnMenuItemClickListener() {
+			@Override
+			public boolean onMenuItemClick(MenuItem item) {
+				timerManager.addTimer(9, 30);
+				return true;
+			}
+		});
+
+
 		menu.findItem(R.id.small_timer).setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			@Override
 			public boolean onMenuItemClick(MenuItem item) {
-				timerManager.addTimer(7);
+				timerManager.addTimer(10, 120);
 				return true;
 			}
 		});

@@ -35,14 +35,19 @@
 		android:id="@+id/backup"
 		android:title="Backup to USB"/>
 	<item
-		android:icon="@android:drawable/btn_minus"
 		android:id="@+id/small_timer"
-		android:title="7 minute timer"
+		android:icon="@android:drawable/btn_minus"
+		android:title="14 rounds by 30 seconds"
 		app:showAsAction="ifRoom" />
 	<item
-		android:icon="@android:drawable/btn_plus"
+		android:id="@+id/medium_timer"
+		android:icon="@android:drawable/btn_minus"
+		android:title="18 rounds by 30 seconds"
+		app:showAsAction="ifRoom" />
+	<item
 		android:id="@+id/large_timer"
-		android:title="20 minute timer"
+		android:icon="@android:drawable/btn_plus"
+		android:title="20 rounds 2 minutes each"
 		app:showAsAction="ifRoom" />
 	<item
 		android:icon="@android:drawable/ic_menu_close_clear_cancel"
