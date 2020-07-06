@@ -57,6 +57,8 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
         if (!mediaBrowser.isConnected) {
             mediaBrowser.connect()
         }
+
+        TtsSpeaker.setup(this.applicationContext)
     }
 
     private val connectionCallbacks = object : MediaBrowserCompat.ConnectionCallback() {

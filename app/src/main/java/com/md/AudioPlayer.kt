@@ -4,6 +4,7 @@ import android.media.MediaPlayer
 import android.media.MediaPlayer.MEDIA_ERROR_UNKNOWN
 import android.media.MediaPlayer.OnCompletionListener
 import android.media.audiofx.LoudnessEnhancer
+import com.md.modesetters.TtsSpeaker
 import com.md.utils.ToastSingleton
 import java.io.File
 import java.io.IOException
@@ -101,9 +102,11 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
     override fun onError(mediaPlayer: MediaPlayer, what: Int, extra: Int): Boolean {
         println("TODOJ error during playback what=$what")
         if (MEDIA_ERROR_UNKNOWN == what) {
+            TtsSpeaker.speak("play error. speed")
             cleanUp()
             playFile(playbackSpeed = 1f)
         } else {
+            TtsSpeaker.speak("play error. code $what")
             cleanUp()
         }
 

@@ -1,15 +1,11 @@
 package com.md
 
-import android.app.Service
 import android.content.Intent
 import android.os.Bundle
-import android.os.IBinder
-import android.service.media.MediaBrowserService
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.media.MediaBrowserServiceCompat
-import androidx.media.VolumeProviderCompat
 import androidx.media.session.MediaButtonReceiver
 import com.md.modesetters.LearningModeSetter
 

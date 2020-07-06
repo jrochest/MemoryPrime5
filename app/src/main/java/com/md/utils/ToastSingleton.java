@@ -12,6 +12,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.md.R;
+import com.md.modesetters.TtsSpeaker;
 
 public class ToastSingleton {
     private static ToastSingleton instance = null;
@@ -37,6 +38,7 @@ public class ToastSingleton {
     }
 
     public void error(String msg) {
+        TtsSpeaker.speak("Error " + msg);
         msgCommon("Error: " + msg, 12);
     }
 

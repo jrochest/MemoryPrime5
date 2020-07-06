@@ -35,8 +35,6 @@ public class LearningModeSetter extends ModeSetter implements
         ItemDeletedHandler {
 
     private static LearningModeSetter instance = null;
-    private GestureLibrary mLibrary;
-    final ToneGenerator toneGenerator = new ToneGenerator(STREAM_MUSIC, 95);
 
     protected LearningModeSetter() {
     }
@@ -55,11 +53,6 @@ public class LearningModeSetter extends ModeSetter implements
     public void setUp(SpacedRepeaterActivity memoryDroid, ModeHandler modeHand) {
         parentSetup(memoryDroid, modeHand);
         this.memoryDroid = memoryDroid;
-        mLibrary = GestureLibraries.fromRawResource(this.memoryDroid,
-                R.raw.gestures);
-        if (!mLibrary.load()) {
-            System.out.println("Error loading libraries.");
-        }
     }
 
     private static Note lastNote;
@@ -216,7 +209,7 @@ public class LearningModeSetter extends ModeSetter implements
             proceed(mActivity);
         } else {
             updateScoreAndMoveToNext(mActivity, 1);
-            toneGenerator.startTone(ToneGenerator.TONE_DTMF_1, 100);
+            TtsSpeaker.speak("not remembered");
         }
         mActivity.keepHeadphoneAlive();
     }
@@ -259,7 +252,8 @@ public class LearningModeSetter extends ModeSetter implements
             }
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
 
-            builder.setMessage("Great job! No more notes to study today.")
+            TtsSpeaker.speak("Great job! Deck done.");
+            builder.setMessage("Great job! Deck done.")
                     .setCancelable(false)
                     .setNeutralButton("Ok",
                             new DialogInterface.OnClickListener() {

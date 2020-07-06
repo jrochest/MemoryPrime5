@@ -5,6 +5,7 @@ import android.content.ContentResolver
 import android.content.Intent
 import android.net.Uri
 import androidx.core.app.ActivityCompat.startActivityForResult
+import com.md.modesetters.TtsSpeaker
 import com.md.utils.ToastSingleton
 import kotlinx.coroutines.*
 import java.io.File
@@ -47,7 +48,7 @@ object BackupToUsbManager {
                 backupOnBackground(contentResolver, sourceTreeUri, context.filesDir, context)
             }
 
-            ToastSingleton.getInstance().msg("finished backup with" + deferred.await())
+            TtsSpeaker.speak("backup finished" + deferred.await())
             context.backupTone()
         }
 

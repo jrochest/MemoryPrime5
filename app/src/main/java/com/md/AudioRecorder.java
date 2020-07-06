@@ -8,6 +8,7 @@ import android.media.MediaRecorder;
 import android.util.Log;
 
 import com.md.modesetters.CreateModeSetter;
+import com.md.modesetters.TtsSpeaker;
 import com.md.utils.ToastSingleton;
 
 public class AudioRecorder {
