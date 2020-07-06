@@ -23,7 +23,7 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
     @JvmOverloads
     fun playFile(originalFile: String? = lastFile,
                  firedOnceCompletionListener: OnCompletionListener? = null,
-                 learningMode: Boolean = false,
+                 shouldRepeat: Boolean = false,
                  playbackSpeed: Float = 1.5f) {
 
         if (originalFile == null) {
@@ -32,7 +32,7 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
         }
 
         lastFile = originalFile
-        shouldRepeat = learningMode
+        this.shouldRepeat = shouldRepeat
 
         cleanUp()
         // Note: noise supressor seem to fail and say not enough memory. NoiseSuppressor.
@@ -100,11 +100,11 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
     }
 
     override fun onError(mediaPlayer: MediaPlayer, what: Int, extra: Int): Boolean {
-        println("TODOJ error during playback what=$what")
+        println("TODOJ error during playback what=$what extra $extra $lastFile")
         if (MEDIA_ERROR_UNKNOWN == what) {
             TtsSpeaker.speak("play error. speed")
             cleanUp()
-            playFile(playbackSpeed = 1f)
+            playFile(playbackSpeed = 1f, shouldRepeat = true)
         } else {
             TtsSpeaker.speak("play error. code $what")
             cleanUp()
@@ -145,7 +145,6 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
             }
             val uniquePathToString = "$zeroPadding$whichDirToPutIn/"
             filename = DbContants.getAudioLocation() + uniquePathToString + filename
-            // TODO
             if (!filename.contains("wav") && !filename.contains("mp3") && !filename.contains("m4a")) {
                 filename += ".mp3"
             }
