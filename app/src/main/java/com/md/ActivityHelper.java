@@ -60,6 +60,15 @@ public class ActivityHelper {
 			}
 		});
 
+		menu.findItem(R.id.restore).setOnMenuItemClickListener(new OnMenuItemClickListener() {
+			@Override
+			public boolean onMenuItemClick(MenuItem item) {
+				RestoreFromZipManager.INSTANCE.openZipFileDocument(activity);
+				return true;
+			}
+		});
+
+
 		menu.findItem(R.id.small_timer).setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			@Override
 			public boolean onMenuItemClick(MenuItem item) {

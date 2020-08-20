@@ -33,7 +33,7 @@
 	<item
 		android:icon="@android:drawable/ic_menu_save"
 		android:id="@+id/backup"
-		android:title="Backup to USB"/>
+		android:title="Create zip backup."/>
 	<item
 		android:id="@+id/small_timer"
 		android:icon="@android:drawable/btn_minus"
@@ -54,4 +54,8 @@
 		android:id="@+id/cancel_timer"
 		android:title="cancel timer"
 		app:showAsAction="ifRoom" />
+	<item
+		android:icon="@android:drawable/ic_menu_save"
+		android:id="@+id/restore"
+		android:title="Restore from zip. Requires clearing storage first"/>
 </menu>

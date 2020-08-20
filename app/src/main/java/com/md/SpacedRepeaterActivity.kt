@@ -1,6 +1,5 @@
 package com.md
 
-import android.app.Activity
 import android.app.AlertDialog
 import android.content.ComponentName
 import android.content.Context
@@ -365,7 +364,9 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
         if (data == null) return
 
         // if ok user selected a file
-        if (BackupToUsbManager.createAndWriteZipBackup(this, data, requestCode, contentResolver)) return
+        if (requestCode == BackupToUsbManager.REQUEST_CODE && BackupToUsbManager.createAndWriteZipBackup(this, data, requestCode, contentResolver)) return
+
+        if (requestCode == RestoreFromZipManager.REQUEST_CODE && RestoreFromZipManager.restoreFromZip(this, data, requestCode, contentResolver)) return
     }
 
 }
