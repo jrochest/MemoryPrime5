@@ -65,11 +65,7 @@ public class LearningModeSetter extends ModeSetter implements
     private boolean questionMode = true;
 
     public void setupModeImpl(final Activity context) {
-
         originalSize = RevisionQueue.getInstance().getSize();
-
-        //repCounter = 0;
-        // missCounter = 0;
 
         lastNote = null;
 
@@ -77,7 +73,6 @@ public class LearningModeSetter extends ModeSetter implements
 
         // Let's just load up the learn question also to get it ready.
         setupQuestionMode(context);
-
     }
 
     private void commonLayoutSetup() {
