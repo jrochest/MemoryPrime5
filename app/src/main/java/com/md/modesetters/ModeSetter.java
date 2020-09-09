@@ -24,6 +24,7 @@ public abstract class ModeSetter {
             deckChooser.loadDeck(defaultDeck);
         }
         setupModeImpl(context);
+        updateShouldRepeat();
     }
 
     public abstract void setupModeImpl(final Activity context);
@@ -31,8 +32,6 @@ public abstract class ModeSetter {
     public void parentSetup(final Activity context, ModeHandler modeHand) {
         this.mActivity = (SpacedRepeaterActivity) context;
         this.modeHand = modeHand;
-
-        updateShouldRepeat();
     }
 
     protected void updateShouldRepeat() {
