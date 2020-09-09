@@ -5,6 +5,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 
+import com.md.AudioPlayer;
 import com.md.CategorySingleton;
 import com.md.ModeHandler;
 import com.md.SpacedRepeaterActivity;
@@ -30,6 +31,13 @@ public abstract class ModeSetter {
     public void parentSetup(final Activity context, ModeHandler modeHand) {
         this.mActivity = (SpacedRepeaterActivity) context;
         this.modeHand = modeHand;
+
+        updateShouldRepeat();
+    }
+
+    protected void updateShouldRepeat() {
+        // Hiding stops the repeat playback in all besides learning mode.
+        AudioPlayer.getInstance().setShouldRepeat(false);
     }
 
     protected void commonSetup(final Activity context, int view) {

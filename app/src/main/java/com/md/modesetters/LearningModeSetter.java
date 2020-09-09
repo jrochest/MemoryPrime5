@@ -75,6 +75,10 @@ public class LearningModeSetter extends ModeSetter implements
         setupQuestionMode(context);
     }
 
+    protected void updateShouldRepeat() {
+        AudioPlayer.getInstance().setShouldRepeat(true);
+    }
+
     private void commonLayoutSetup() {
         ViewGroup gestures = this.memoryDroid
                 .findViewById(R.id.gestures);
