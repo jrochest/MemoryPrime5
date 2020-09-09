@@ -94,7 +94,7 @@ public class AudioRecorder {
 			recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
 			recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
 			recorder.setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC);
-			recorder.setAudioChannels(1);
+			recorder.setAudioChannels(2);
 			recorder.setAudioEncodingBitRate(128000);
 			recorder.setAudioSamplingRate(44100);
 
