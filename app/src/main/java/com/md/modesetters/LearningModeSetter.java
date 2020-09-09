@@ -209,7 +209,7 @@ public class LearningModeSetter extends ModeSetter implements
             proceed(mActivity);
         } else {
             updateScoreAndMoveToNext(mActivity, 1);
-            TtsSpeaker.speak("not remembered");
+            TtsSpeaker.speak("Bad");
         }
         mActivity.keepHeadphoneAlive();
     }
