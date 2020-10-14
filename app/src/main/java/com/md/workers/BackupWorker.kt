@@ -5,7 +5,6 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.md.workers.BackupToUsbManager.createAndWriteZipBackToPreviousLocation
 
-
 class BackupWorker(private val appContext: Context, workerParams: WorkerParameters):
         Worker(appContext, workerParams) {
     override fun doWork(): Result {

@@ -62,7 +62,7 @@ public class ActivityHelper {
 		menu.findItem(R.id.backup_previous_location).setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			@Override
 			public boolean onMenuItemClick(MenuItem item) {
-				BackupToUsbManager.INSTANCE.createAndWriteZipBackToPreviousLocation(activity, activity.getContentResolver());
+				BackupToUsbManager.INSTANCE.createAndWriteZipBackToPreviousLocation(activity, activity.getContentResolver(), true);
 				return true;
 			}
 		});

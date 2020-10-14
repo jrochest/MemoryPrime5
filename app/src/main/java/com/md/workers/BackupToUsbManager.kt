@@ -7,6 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.work.*
+import androidx.work.impl.model.WorkTypeConverters.NetworkTypeIds.NOT_REQUIRED
 import com.md.MemPrimeManager
 import com.md.SpacedRepeaterActivity
 import com.md.modesetters.TtsSpeaker
@@ -37,7 +38,8 @@ object BackupToUsbManager {
 
     fun createAndWriteZipBackToPreviousLocation(
             context: Context,
-            contentResolver: ContentResolver
+            contentResolver: ContentResolver,
+            shouldSpeak: Boolean = false
     ): Boolean {
         val sharedPref = context.getSharedPreferences(BACKUP_LOCATION_FILE, Context.MODE_PRIVATE)
         val previousBackupLocation = sharedPref.getString(BACKUP_LOCATION_KEY, null)
@@ -47,8 +49,8 @@ object BackupToUsbManager {
             return false
         }
         Uri.parse(previousBackupLocation)
+        backupToUri(context, contentResolver, Uri.parse(previousBackupLocation), shouldSpeak)
 
-        backupToUri(context, contentResolver, Uri.parse(previousBackupLocation))
         return true
     }
 
@@ -69,19 +71,17 @@ object BackupToUsbManager {
         val sharedPref = context.getSharedPreferences(BACKUP_LOCATION_FILE, Context.MODE_PRIVATE)
         sharedPref.edit().putString(BACKUP_LOCATION_KEY, sourceTreeUri.toString()).apply()
 
-        backupToUri(context, contentResolver, sourceTreeUri)
-
         val constraints = Constraints.Builder()
                 .setRequiresBatteryNotLow(true)
                 .setRequiresDeviceIdle(true)
+                .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
                 .build()
 
         val request = PeriodicWorkRequest.Builder(
                 BackupWorker::class.java,
-                10, TimeUnit.MINUTES,
-                2, TimeUnit.MINUTES)
+                6, TimeUnit.HOURS,
+                2, TimeUnit.HOURS)
                 .setConstraints(constraints)
-                .setInitialDelay(4, TimeUnit.MINUTES)
                 .build()
 
         // Schedule a backup and replace the old backup.
@@ -94,15 +94,15 @@ object BackupToUsbManager {
         return true
     }
 
-    private fun backupToUri(context: Context, contentResolver: ContentResolver, sourceTreeUri: Uri) {
+    private fun backupToUri(context: Context, contentResolver: ContentResolver, sourceTreeUri: Uri, shouldSpeak: Boolean = false) {
         GlobalScope.launch(Dispatchers.Main) {
-            TtsSpeaker.speak("starting backup")
+            if (shouldSpeak) TtsSpeaker.speak("starting backup")
 
             val deferred = async(Dispatchers.IO) {
                 backupOnBackground(contentResolver, sourceTreeUri, context.filesDir)
             }
 
-            TtsSpeaker.speak("backup finished" + deferred.await())
+            if (shouldSpeak) TtsSpeaker.speak("backup finished: " + deferred.await())
         }
     }
 
