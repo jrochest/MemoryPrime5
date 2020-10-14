@@ -3,17 +3,16 @@ package com.md.workers
 import android.content.Context
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import com.md.workers.BackupToUsbManager.createAndWriteZipBackToPreviousLocation
 
 
-class BackupWorker(appContext: Context, workerParams: WorkerParameters):
+class BackupWorker(private val appContext: Context, workerParams: WorkerParameters):
         Worker(appContext, workerParams) {
     override fun doWork(): Result {
-
-
-
-
-
-        // Indicate whether the work finished successfully with the Result
-        return Result.success()
+        if (createAndWriteZipBackToPreviousLocation(appContext, appContext.contentResolver)) {
+            return Result.success()
+        } else {
+            return Result.failure()
+        }
     }
 }
