@@ -6,12 +6,14 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.core.app.ActivityCompat.startActivityForResult
+import androidx.work.*
 import com.md.MemPrimeManager
 import com.md.SpacedRepeaterActivity
 import com.md.modesetters.TtsSpeaker
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.FileOutputStream
+import java.util.concurrent.TimeUnit
 
 
 object BackupToUsbManager {
@@ -20,6 +22,7 @@ object BackupToUsbManager {
 
     const val BACKUP_LOCATION_FILE = "backup_locations_prefs"
     const val BACKUP_LOCATION_KEY = "backup_location_key"
+    const val BACKUP_WORK_NAME = "BACKUP_WORK_NAME"
 
     fun openZipFileDocument(activity: Activity) {
         val exportIntent = Intent(Intent.ACTION_CREATE_DOCUMENT)
@@ -67,6 +70,27 @@ object BackupToUsbManager {
         sharedPref.edit().putString(BACKUP_LOCATION_KEY, sourceTreeUri.toString()).apply()
 
         backupToUri(context, contentResolver, sourceTreeUri)
+
+        val constraints = Constraints.Builder()
+                .setRequiresBatteryNotLow(true)
+                .setRequiresDeviceIdle(true)
+                .build()
+
+        val request = PeriodicWorkRequest.Builder(
+                BackupWorker::class.java,
+                10, TimeUnit.MINUTES,
+                2, TimeUnit.MINUTES)
+                .setConstraints(constraints)
+                .setInitialDelay(4, TimeUnit.MINUTES)
+                .build()
+
+        // Schedule a backup and replace the old backup.
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                BACKUP_WORK_NAME,
+                ExistingPeriodicWorkPolicy.REPLACE,
+                request
+        )
+
         return true
     }
 
