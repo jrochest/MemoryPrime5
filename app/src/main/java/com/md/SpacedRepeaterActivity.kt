@@ -20,6 +20,7 @@ import android.view.KeyEvent
 import android.view.Menu
 import androidx.appcompat.app.AppCompatActivity
 import com.md.modesetters.*
+import com.md.workers.BackupToUsbManager
 
 
 class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
@@ -364,7 +365,7 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
         if (data == null) return
 
         // if ok user selected a file
-        if (requestCode == BackupToUsbManager.REQUEST_CODE && BackupToUsbManager.createAndWriteZipBackup(this, data, requestCode, contentResolver)) return
+        if (requestCode == BackupToUsbManager.REQUEST_CODE && BackupToUsbManager.createAndWriteZipBackToNewLocation(this, data, requestCode, contentResolver)) return
 
         if (requestCode == RestoreFromZipManager.REQUEST_CODE && RestoreFromZipManager.restoreFromZip(this, data, requestCode, contentResolver)) return
     }

@@ -35,6 +35,10 @@
 		android:id="@+id/backup"
 		android:title="Create zip backup."/>
 	<item
+		android:icon="@android:drawable/ic_menu_save"
+		android:id="@+id/backup_previous_location"
+		android:title="Update backup to previous location."/>
+	<item
 		android:id="@+id/small_timer"
 		android:icon="@android:drawable/btn_minus"
 		android:title="14 rounds by 30 seconds"

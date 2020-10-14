@@ -3,8 +3,6 @@ package com.md;
 import java.io.File;
 
 import android.app.Activity;
-import android.content.Context;
-import android.media.AudioManager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -18,6 +16,7 @@ import com.md.modesetters.LearningModeSetter;
 import com.md.modesetters.ModeSetter;
 import com.md.modesetters.SettingModeSetter;
 import com.md.utils.ToastSingleton;
+import com.md.workers.BackupToUsbManager;
 
 public class ActivityHelper {
 
@@ -56,6 +55,14 @@ public class ActivityHelper {
 			@Override
 			public boolean onMenuItemClick(MenuItem item) {
 				BackupToUsbManager.INSTANCE.openZipFileDocument(activity);
+				return true;
+			}
+		});
+
+		menu.findItem(R.id.backup_previous_location).setOnMenuItemClickListener(new OnMenuItemClickListener() {
+			@Override
+			public boolean onMenuItemClick(MenuItem item) {
+				BackupToUsbManager.INSTANCE.createAndWriteZipBackToPreviousLocation(activity, activity.getContentResolver());
 				return true;
 			}
 		});
