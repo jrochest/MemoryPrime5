@@ -179,6 +179,8 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
                 name.contains("memprime") ||
                 name.contains("STRIM-BTN10") ||  // MARREX.
                 name.contains("Button Jack") ||
+                // https://www.amazon.com/gp/product/B0872BC4MY/ref=ppx_yo_dt_b_asin_title_o03_s00
+                name.contains("Mpow isnap X2 Consumer Control")
                 name.contains("PhotoShot") // Wide flat one
     }
 
