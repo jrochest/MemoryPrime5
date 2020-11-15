@@ -205,6 +205,10 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
         }
     }
 
+    // These never happen with mpop override:
+    // fun onKeyMultiple(keyCode: Int, repeatCount: Int, event: KeyEvent?): Boolean
+    // fun onKeyLongPress(keyCode: Int, event: KeyEvent?): Boolean {
+
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
         println("TODOJ key up event$event")
         val modeSetter = modeHand.whoseOnTop()
@@ -351,7 +355,7 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
 
     companion object {
         private const val LOG_TAG = "SpacedRepeater"
-        const val PRESS_GROUP_MAX_GAP_MS_BLUETOOTH = 400L
+        const val PRESS_GROUP_MAX_GAP_MS_BLUETOOTH = 450L
         const val PRESS_GROUP_MAX_GAP_MS_INSTANT = 100L
 
         // Jacob can consistently press every 180ms. With training we can probably drop this down.
