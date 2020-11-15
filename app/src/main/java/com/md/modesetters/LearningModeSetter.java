@@ -3,10 +3,6 @@ package com.md.modesetters;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.gesture.GestureLibraries;
-import android.gesture.GestureLibrary;
-import android.media.ToneGenerator;
-import android.os.Handler;
 import android.os.SystemClock;
 import android.view.KeyEvent;
 import android.view.View;
@@ -28,7 +24,6 @@ import com.md.utils.ToastSingleton;
 
 import java.util.concurrent.TimeUnit;
 
-import static android.media.AudioManager.STREAM_MUSIC;
 import static com.md.SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_INSTANT;
 
 public class LearningModeSetter extends ModeSetter implements
@@ -208,16 +203,17 @@ public class LearningModeSetter extends ModeSetter implements
             proceed(mActivity);
         } else {
             updateScoreAndMoveToNext(mActivity, 1);
-            TtsSpeaker.speak("Bad");
         }
         mActivity.keepHeadphoneAlive();
     }
 
-    public void secondaryAction() {
+    public String secondaryAction() {
         if (questionMode) {
             handleReplay();
+            return "bad go";
         } else {
             proceedFailure();
+            return "bad bad";
         }
     }
 

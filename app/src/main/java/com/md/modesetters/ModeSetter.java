@@ -1,7 +1,6 @@
 package com.md.modesetters;
 
 import android.app.Activity;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 
@@ -98,7 +97,7 @@ public abstract class ModeSetter {
 
     public void mark() {}
 
-    public void secondaryAction() {
-
+    public String secondaryAction() {
+        return "";
     }
 }

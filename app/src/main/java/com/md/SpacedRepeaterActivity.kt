@@ -271,32 +271,38 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
         mPressGroupLastPressMs = currentTimeMs
         mPressSequenceNumber++
         val currentSequenceNumber = mPressSequenceNumber
-        // Don't wait to handle 8 toggle focus.
-        if (mPressGroupCount == 8) {
-            maybeChangeAudioFocus(!hasAudioFocus)
-            return true
-        }
-        // Don't let anything beyond eight go through. This avoid continually toggling audiofocus.
-        if (mPressGroupCount > 8) {
-            return true
-        }
         Handler().postDelayed(Runnable {
             if (mPressSequenceNumber != currentSequenceNumber) {
                 return@Runnable
             }
             println("TODOJ received actual count $mPressGroupCount")
+            val message: String?
             when (mPressGroupCount) {
-                1 -> modeSetter.proceed()
+                1, 2 -> {
+                    message = "go"
+                    modeSetter.proceed()
+                }
                 // This takes a different action based on whether it is a question or answer.
-                2 -> modeSetter.secondaryAction()
-                3 -> modeSetter.undo()
-                4 -> AudioPlayer.instance.shouldRepeat = false
-                5 -> modeSetter.resetActivity()
-                6 -> modeSetter.toggleDim()
-                7 -> modeSetter.mark()
+                3, 4, 5 -> {
+                    message = modeSetter.secondaryAction()
+                }
+                6, 7, 8 -> {
+                    message = "undo"
+                    modeSetter.undo()
+                }
+                9, 10, 11 -> {
+                    AudioPlayer.instance.shouldRepeat = false
+                    message = "repeat off"
+                }
+                12, 13, 14, 15, 16, 17, 18, 19, 20 -> {
+                    modeSetter.resetActivity()
+                    message = "reset"
+                }
                 else -> {
+                    message = "unrecognized count"
                 }
             }
+            message?.let { TtsSpeaker.speak(it, 3.5f, pitch = 1.5f) }
         }, pressGroupMaxGapMs)
         return true
     }
@@ -355,7 +361,7 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
 
     companion object {
         private const val LOG_TAG = "SpacedRepeater"
-        const val PRESS_GROUP_MAX_GAP_MS_BLUETOOTH = 450L
+        const val PRESS_GROUP_MAX_GAP_MS_BLUETOOTH = 550L
         const val PRESS_GROUP_MAX_GAP_MS_INSTANT = 100L
 
         // Jacob can consistently press every 180ms. With training we can probably drop this down.

@@ -16,18 +16,17 @@ class TimerManager {
 
     fun addTimer(numberOfRounds: Int, intervalSeconds: Int) {
         val intervalMillis = intervalSeconds * 1000L
-        speak("starting")
         cancelTimer()
         roundCounter = numberOfRounds * 2 + 1
         timer = object : CountDownTimer(intervalMillis * roundCounter, intervalMillis) {
             override fun onTick(millisUntilFinished: Long) {
                 if (roundCounter == 0) return
                 roundCounter--
-                speak("Rounds $roundCounter")
+                speak("$roundCounter, $roundCounter, $roundCounter", rate=3.5f, pitch = .8f)
             }
 
             override fun onFinish() {
-                speak("Timer finished")
+                speak("Finished", rate=2.0f, pitch = .8f)
                 timer = null
             }
         }.start()

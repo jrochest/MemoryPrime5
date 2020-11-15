@@ -14,9 +14,13 @@ object TtsSpeaker : TextToSpeech.OnInitListener {
         tts = TextToSpeech(context, this)
     }
 
+
     @JvmStatic
-    fun speak(message: String) {
+    @JvmOverloads
+    fun speak(message: String, rate : Float = 1f, pitch : Float = 1f) {
         if (statusResult != TextToSpeech.SUCCESS) return
+        tts?.setSpeechRate(rate)
+        tts?.setPitch(pitch)
         tts?.speak(message, QUEUE_ADD, Bundle(), "")
     }
 
