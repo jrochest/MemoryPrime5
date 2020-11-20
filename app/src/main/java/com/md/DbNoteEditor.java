@@ -60,7 +60,7 @@ public class DbNoteEditor {
 	public void update(Activity activity, AbstractNote note) {
 
 		// If it's in there update it.
-		RevisionQueue.getInstance().update((Note) note);
+		RevisionQueue.getCurrentDeckReviewQueue().updateNote((Note) note);
 		ContentValues values = new ContentValues();
 
 		// Bump the modification time to now.
@@ -546,7 +546,7 @@ public class DbNoteEditor {
 		}
 		if (currentId != null) {
 			int intCurrentId = Integer.parseInt(currentId);
-			RevisionQueue.getInstance().remove(intCurrentId);
+			RevisionQueue.getCurrentDeckReviewQueue().removeNote(intCurrentId);
 		}
 
 		if (Objects.equals(this.mNote, note)) {
@@ -578,7 +578,7 @@ public class DbNoteEditor {
 
 		if (currentId != null) {
 			int intCurrentId = Integer.parseInt(currentId);
-			RevisionQueue.getInstance().remove(intCurrentId);
+			RevisionQueue.getCurrentDeckReviewQueue().removeNote(intCurrentId);
 		}
 
 	}

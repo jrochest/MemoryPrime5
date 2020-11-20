@@ -60,7 +60,7 @@ public class LearningModeSetter extends ModeSetter implements
     private boolean questionMode = true;
 
     public void setupModeImpl(final Activity context) {
-        originalSize = RevisionQueue.getInstance().getSize();
+        originalSize = RevisionQueue.getCurrentDeckReviewQueue().getSize();
 
         lastNote = null;
 
@@ -90,7 +90,7 @@ public class LearningModeSetter extends ModeSetter implements
         String firstLine = "Scheduled: " + originalSize;
         firstLine += "\nPerformed: " + repCounter;
         String secondLine = "\nItems Missed: " + missCounter;
-        secondLine += "\nRemaining: " + RevisionQueue.getInstance().getSize();
+        secondLine += "\nRemaining: " + RevisionQueue.getCurrentDeckReviewQueue().getSize();
         if (currentNote != null) {
             secondLine += "\n\nEasiness: " + currentNote.getEasiness();
             secondLine += "\nInterval: " + currentNote.interval();
@@ -294,7 +294,7 @@ public class LearningModeSetter extends ModeSetter implements
     }
 
     private void updateVal() {
-        currentNote = RevisionQueue.getInstance().getFirst();
+        currentNote = RevisionQueue.getCurrentDeckReviewQueue().getFirst();
         if (currentNote != null) {
             repCounter++;
         }
@@ -328,10 +328,10 @@ public class LearningModeSetter extends ModeSetter implements
 
         // If you scored too low review it again, at the end.
         if (currentNote.is_due_for_acquisition_rep()) {
-            RevisionQueue.getInstance().update(currentNote);
+            RevisionQueue.getCurrentDeckReviewQueue().updateNote(currentNote);
             missCounter++;
         } else {
-            RevisionQueue.getInstance().remove(currentNote.getId());
+            RevisionQueue.getCurrentDeckReviewQueue().removeNote(currentNote.getId());
         }
     }
 
@@ -353,7 +353,7 @@ public class LearningModeSetter extends ModeSetter implements
         Note note = currentNote;
         if (note != null) {
             noteEditor.deleteCurrent(mActivity, note);
-            RevisionQueue.getInstance().remove(note.getId());
+            RevisionQueue.getCurrentDeckReviewQueue().removeNote(note.getId());
         }
 
         setupQuestionMode(mActivity);
@@ -386,8 +386,8 @@ public class LearningModeSetter extends ModeSetter implements
             DbNoteEditor noteEditor = DbNoteEditor.getInstance();
             noteEditor.update(context, lastNote);
             // In case the grade was bad take it out of revision queue.
-            RevisionQueue.getInstance().remove(lastNote.getId());
-            RevisionQueue.getInstance().add(lastNote);
+            RevisionQueue.getCurrentDeckReviewQueue().removeNote(lastNote.getId());
+            RevisionQueue.getCurrentDeckReviewQueue().add(lastNote);
             setupAnswerMode(context);
             lastNote = null;
         } else {

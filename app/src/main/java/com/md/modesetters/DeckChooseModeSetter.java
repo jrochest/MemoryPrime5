@@ -194,8 +194,7 @@ public class DeckChooseModeSetter extends ModeSetter {
 				}
 
 				RevisionQueue revisionQueue = new RevisionQueue();
-				revisionQueue.populate(DbNoteEditor.getInstance(),
-						elementAt.getId());
+				revisionQueue.populate(DbNoteEditor.getInstance(), elementAt.getId());
 
 				// Stop if we aren't loaded anymore. We want this before
 				// and after the query
@@ -263,8 +262,7 @@ public class DeckChooseModeSetter extends ModeSetter {
 		if (deckInfo != null) {
 			CategorySingleton.getInstance().setDeckInfo(deckInfo);
 
-			RevisionQueue.getInstance().makeThisLookLikeThat(
-					deckInfo.getRevisionQueue());
+			RevisionQueue.setCurrentDeckReviewQueue(deckInfo.getRevisionQueue());
 		}
 
 		LearningModeSetter.getInstance().setupMode(memoryDroid);

@@ -10,7 +10,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 
-import com.md.ActivityHelper;
 import com.md.AudioPlayer;
 import com.md.AudioRecorder;
 import com.md.CreateModeData;
@@ -242,7 +241,7 @@ public class CreateModeSetter extends ModeSetter {
 					note = (Note) noteEditor.insert(memoryDroid, note);
 
 					// Add new note.
-					RevisionQueue.getInstance().add(note);
+					RevisionQueue.getCurrentDeckReviewQueue().add(note);
 
 					Log.v(TAG, "Wrote node with ID  " + note.isUnseen());
 
