@@ -22,14 +22,18 @@ public class RecordOnClickListener implements OnTouchListener {
 	private final Activity context;
 	private final Note mNote;
 	private final boolean isAnswer;
-	private Note lastNote;
+	private final Note lastNote;
 
 	public RecordOnClickListener(Note note, Activity context, boolean isAnswer,
 			Note lastNote) {
 		mNote = note;
 		this.context = context;
 		this.isAnswer = isAnswer;
-		this.lastNote = lastNote;
+		if (lastNote != null && lastNote.getId() == mNote.getId()) {
+			this.lastNote = lastNote;
+		} else {
+			this.lastNote = null;
+		}
 	}
 
 	public boolean onTouch(View v, MotionEvent event) {
@@ -68,11 +72,6 @@ public class RecordOnClickListener implements OnTouchListener {
 												// If the revision queue has one in it's history
 												// replace that too.
 												// We only care if it is a match.
-												if (lastNote != null
-														&& lastNote.getId() != mNote
-																.getId()) {
-													lastNote = null;
-												}
 
 												if (isAnswer) {
 													mNote.setAnswer(audioRecorder
