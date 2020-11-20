@@ -301,12 +301,9 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
 
     companion object {
         private const val LOG_TAG = "SpacedRepeater"
-        const val PRESS_GROUP_MAX_GAP_MS_BLUETOOTH = 550L
-        const val PRESS_GROUP_MAX_GAP_MS_INSTANT = 1L
-
-        // Jacob can consistently press every 180ms. With training we can probably drop this down.
-        // But on cold days 250 is hard to achieve.
-        const val PRESS_GROUP_MAX_GAP_MS_SCREEN = 300L
+        const val PRESS_GROUP_MAX_GAP_MS_BLUETOOTH = 700L
+        const val PRESS_GROUP_MAX_GAP_MS_INSTANT = 2L
+        const val PRESS_GROUP_MAX_GAP_MS_SCREEN = 400L
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

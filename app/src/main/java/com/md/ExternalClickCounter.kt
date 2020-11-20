@@ -33,23 +33,30 @@ class ExternalClickCounter {
         mPressGroupLastPressMs = currentTimeMs
 
         currentJob = GlobalScope.launch(Dispatchers.Main) {
+            if (mPressGroupCount == 1) {
+                modeSetter.proceed()
+                return@launch
+            } else if (tapCount == 1) {
+                // If count taps by 1 undo the greedy proceed.
+                modeSetter.undo()
+            }
             delay(pressGroupMaxGapMs)
 
             val message: String?
             when (mPressGroupCount) {
-                1, 2 -> {
-                    message = "go"
+                1 -> {
+                    message = null
                     modeSetter.proceed()
                 }
                 // This takes a different action based on whether it is a question or answer.
-                3, 4 -> {
+                2 -> {
                     message = modeSetter.secondaryAction()
                 }
-                5, 6 -> {
+                3 -> {
                     message = "undo"
                     modeSetter.undo()
                 }
-                7, 8 -> {
+                4 -> {
                     modeSetter.resetActivity()
                     message = "reset"
                 }

@@ -216,8 +216,7 @@ public class LearningModeSetter extends ModeSetter implements
 
     public String secondaryAction() {
         if (questionMode) {
-            handleReplay();
-            return "bad go";
+            return "question mode";
         } else {
             proceedFailure();
             return "bad bad";
