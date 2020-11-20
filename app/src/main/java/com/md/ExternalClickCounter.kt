@@ -37,7 +37,7 @@ class ExternalClickCounter {
 
             val message: String?
             when (mPressGroupCount) {
-                1,2 -> {
+                1, 2 -> {
                     message = "go"
                     modeSetter.proceed()
                 }
