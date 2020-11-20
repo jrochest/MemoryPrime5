@@ -258,8 +258,9 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
         if (mPressGroupLastPressMs == 0L) {
             mPressGroupCount = tapCount
             println("New Press group.")
-        } else if (mPressGroupLastPressEventMs + pressGroupMaxGapMs < eventTimeMs) { // Too much time has ellapsed start a new press group.
-            mPressGroupCount = tapCount // Count the first double press, but not the subsequent.
+        } else if (mPressGroupLastPressEventMs + pressGroupMaxGapMs < eventTimeMs) {
+            // Large gap. Reset count.
+            mPressGroupCount = tapCount
             println("New Press group. Expiring old one.")
         } else {
             println("Time diff: " + (currentTimeMs - mPressGroupLastPressMs))
