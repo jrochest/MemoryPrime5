@@ -10,8 +10,6 @@ import android.media.AudioManager
 import android.media.AudioManager.OnAudioFocusChangeListener
 import android.media.ToneGenerator
 import android.os.Bundle
-import android.os.Handler
-import android.os.SystemClock
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
@@ -27,6 +25,7 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
     private var toneGenerator: ToneGenerator? = null
     private var mAudioManager: AudioManager? = null
     private var mediaController: MediaControllerCompat? = null
+    private val externalClickCounter = ExternalClickCounter()
 
     /** Called when the activity is first created.  */
     public override fun onCreate(savedInstanceState: Bundle?) {
@@ -193,10 +192,6 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
         return name.contains("Shutter Camera")
     }
 
-    private var mPressGroupLastPressMs: Long = 0
-    private var mPressGroupLastPressEventMs: Long = 0
-    private var mPressGroupCount = 0
-    private var mPressSequenceNumber = 0
     private var hasAudioFocus = false
     private val afListener = OnAudioFocusChangeListener { focusChange ->
         when (focusChange) {
@@ -249,63 +244,7 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
             return true
         }
         val eventTimeMs = event.eventTime
-        return handleRhythmUiTaps(modeSetter, eventTimeMs, PRESS_GROUP_MAX_GAP_MS_BLUETOOTH)
-    }
-
-    @JvmOverloads
-    fun handleRhythmUiTaps(modeSetter: ModeSetter, eventTimeMs: Long, pressGroupMaxGapMs: Long, tapCount: Int = 1): Boolean {
-        val currentTimeMs = SystemClock.uptimeMillis()
-        if (mPressGroupLastPressMs == 0L) {
-            mPressGroupCount = tapCount
-            println("New Press group.")
-        } else if (mPressGroupLastPressEventMs + pressGroupMaxGapMs < eventTimeMs) {
-            // Large gap. Reset count.
-            mPressGroupCount = tapCount
-            println("New Press group. Expiring old one.")
-        } else {
-            println("Time diff: " + (currentTimeMs - mPressGroupLastPressMs))
-            println("Time diff event time: " + (eventTimeMs - mPressGroupLastPressEventMs))
-            mPressGroupCount++
-            println("mPressGroupCount++. $mPressGroupCount")
-        }
-        mPressGroupLastPressEventMs = eventTimeMs
-        mPressGroupLastPressMs = currentTimeMs
-        mPressSequenceNumber++
-        val currentSequenceNumber = mPressSequenceNumber
-        Handler().postDelayed(Runnable {
-            if (mPressSequenceNumber != currentSequenceNumber) {
-                return@Runnable
-            }
-            println("TODOJ received actual count $mPressGroupCount")
-            val message: String?
-            when (mPressGroupCount) {
-                1, 2 -> {
-                    message = "go"
-                    modeSetter.proceed()
-                }
-                // This takes a different action based on whether it is a question or answer.
-                3, 4, 5 -> {
-                    message = modeSetter.secondaryAction()
-                }
-                6, 7, 8 -> {
-                    message = "undo"
-                    modeSetter.undo()
-                }
-                9, 10, 11 -> {
-                    AudioPlayer.instance.shouldRepeat = false
-                    message = "repeat off"
-                }
-                12, 13, 14, 15, 16, 17, 18, 19, 20 -> {
-                    modeSetter.resetActivity()
-                    message = "reset"
-                }
-                else -> {
-                    message = "unrecognized count"
-                }
-            }
-            message?.let { TtsSpeaker.speak(it, 3.5f, pitch = 1.5f) }
-        }, pressGroupMaxGapMs)
-        return true
+        return externalClickCounter.handleRhythmUiTaps(modeSetter, eventTimeMs, PRESS_GROUP_MAX_GAP_MS_BLUETOOTH, 1)
     }
 
     fun maybeChangeAudioFocus(shouldHaveFocus: Boolean) {
@@ -381,6 +320,11 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
         if (requestCode == BackupToUsbManager.REQUEST_CODE && BackupToUsbManager.createAndWriteZipBackToNewLocation(this, data, requestCode, contentResolver)) return
 
         if (requestCode == RestoreFromZipManager.REQUEST_CODE && RestoreFromZipManager.restoreFromZip(this, data, requestCode, contentResolver)) return
+    }
+
+    @JvmOverloads
+    fun handleRhythmUiTaps(learningModeSetter: LearningModeSetter, uptimeMillis: Long, pressGroupMaxGapMsScreen: Long, tapCount: Int = 1) {
+        externalClickCounter.handleRhythmUiTaps(learningModeSetter, uptimeMillis, pressGroupMaxGapMsScreen, tapCount)
     }
 
 }
