@@ -1,10 +1,7 @@
 package com.md
 
-import android.media.AudioManager
-import android.media.ToneGenerator
 import android.os.CountDownTimer
 import com.md.modesetters.TtsSpeaker.speak
-import com.md.utils.ToastSingleton
 
 class TimerManager {
     private var timer : CountDownTimer? = null
