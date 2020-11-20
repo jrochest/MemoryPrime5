@@ -12,16 +12,19 @@ class ExternalClickCounter {
     var mPressSequenceNumber: Int = 0
 
     var currentJob: Job? = null
+    var pendingGreedyTap = false
 
     fun handleRhythmUiTaps(modeSetter: ModeSetter, eventTimeMs: Long, pressGroupMaxGapMs: Long, tapCount: Int): Boolean {
         currentJob?.cancel()
         val currentTimeMs = SystemClock.uptimeMillis()
         if (mPressGroupLastPressMs == 0L) {
             mPressGroupCount = tapCount
+            pendingGreedyTap = false
             println("New Press group.")
         } else if (mPressGroupLastPressEventMs + pressGroupMaxGapMs < eventTimeMs) {
             // Large gap. Reset count.
             mPressGroupCount = tapCount
+            pendingGreedyTap = false
             println("New Press group. Expiring old one.")
         } else {
             println("Time diff: " + (currentTimeMs - mPressGroupLastPressMs))
@@ -35,10 +38,12 @@ class ExternalClickCounter {
         currentJob = GlobalScope.launch(Dispatchers.Main) {
             if (mPressGroupCount == 1) {
                 modeSetter.proceed()
+                pendingGreedyTap = true
                 return@launch
-            } else if (tapCount == 1) {
+            } else if (pendingGreedyTap) {
                 // If count taps by 1 undo the greedy proceed.
                 modeSetter.undo()
+                pendingGreedyTap = false
             }
             delay(pressGroupMaxGapMs)
 
