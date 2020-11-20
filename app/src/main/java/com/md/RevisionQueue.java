@@ -88,7 +88,7 @@ public class RevisionQueue {
 		revisionQueue.put(newVal.getId(), newVal);
 	}
 
-	final int SHORT_TERM_MEMORY = 100;
+	final int SHORT_TERM_MEMORY = 5000;
 
 	public Note getFirst() {
 
