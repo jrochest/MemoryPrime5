@@ -22,6 +22,12 @@ import com.md.provider.Note;
 import com.md.utils.ScreenDimmer;
 import com.md.utils.ToastSingleton;
 
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.md.SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_INSTANT;
@@ -50,8 +56,9 @@ public class LearningModeSetter extends ModeSetter implements
         this.memoryDroid = memoryDroid;
     }
 
-    private static Note lastNote;
-    private static AbstractRep lastNoteRep;
+    private final Deque<Note> lastNoteList = new ArrayDeque<>();
+
+    private AbstractRep lastNoteRep;
     private SpacedRepeaterActivity memoryDroid;
     private Note currentNote;
     private int originalSize;
@@ -62,7 +69,7 @@ public class LearningModeSetter extends ModeSetter implements
     public void setupModeImpl(final Activity context) {
         originalSize = RevisionQueue.getCurrentDeckReviewQueue().getSize();
 
-        lastNote = null;
+        lastNoteList.clear();
 
         commonSetup(context, R.layout.learnquestion);
 
@@ -266,8 +273,13 @@ public class LearningModeSetter extends ModeSetter implements
         memoryDroid.findViewById(R.id.rerecord)
                 .setOnTouchListener(
                         new RecordOnClickListener(currentNote, context, false,
-                                lastNote));
+                                getLastOrNull()));
 
+    }
+
+    @Nullable
+    private Note getLastOrNull() {
+        return !lastNoteList.isEmpty() ? lastNoteList.getLast() : null;
     }
 
     private void setupQuestionMode(final Activity context) {
@@ -289,7 +301,7 @@ public class LearningModeSetter extends ModeSetter implements
         memoryDroid.findViewById(R.id.rerecord)
                 .setOnTouchListener(
                         new RecordOnClickListener(currentNote, context, true,
-                                lastNote));
+                                getLastOrNull()));
     }
 
     private void updateVal() {
@@ -311,14 +323,14 @@ public class LearningModeSetter extends ModeSetter implements
                                  Note currentNote) {
         DbNoteEditor noteEditor = DbNoteEditor.getInstance();
 
-        if (lastNoteRep != null && lastNote != null) {
+        if (lastNoteRep != null && getLastOrNull() != null) {
             DbRepEditor repEditor = DbRepEditor.getInstance();
             repEditor.insert(lastNoteRep);
         }
 
-        lastNote = currentNote.clone();
+        lastNoteList.addLast(currentNote.clone());
         // Create the rep info before updating the note with the new internal.
-        lastNoteRep = new AbstractRep(lastNote.getId(),
+        lastNoteRep = new AbstractRep(currentNote.getId(),
                 currentNote.getInterval(), newGrade, System.currentTimeMillis());
 
         currentNote.process_answer(newGrade);
@@ -367,16 +379,15 @@ public class LearningModeSetter extends ModeSetter implements
     }
 
     private void undoLastQuestion(final Activity context) {
-        if (lastNote != null) {
-            currentNote = lastNote;
+        if (!lastNoteList.isEmpty()) {
+            currentNote = lastNoteList.removeLast();
             repCounter--;
             DbNoteEditor noteEditor = DbNoteEditor.getInstance();
-            noteEditor.update(context, lastNote);
+            noteEditor.update(context, currentNote);
             // In case the grade was bad take it out of revision queue.
-            RevisionQueue.getCurrentDeckReviewQueue().removeNote(lastNote.getId());
-            RevisionQueue.getCurrentDeckReviewQueue().add(lastNote);
+            RevisionQueue.getCurrentDeckReviewQueue().removeNote(currentNote.getId());
+            RevisionQueue.getCurrentDeckReviewQueue().addToFront(currentNote);
             setupAnswerMode(context);
-            lastNote = null;
         } else {
             TtsSpeaker.speak("Nothing to undo");
         }

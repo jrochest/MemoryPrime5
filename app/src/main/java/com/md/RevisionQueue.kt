@@ -35,6 +35,10 @@ class RevisionQueue {
         notesToReview.add(newVal)
     }
 
+    fun addToFront(newVal: Note) {
+        notesToReview.add(0, newVal)
+    }
+
     fun peekQueue(): Note? {
         return notesToReview.firstOrNull()
     }
