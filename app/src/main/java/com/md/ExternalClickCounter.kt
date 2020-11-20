@@ -37,25 +37,25 @@ class ExternalClickCounter {
 
             val message: String?
             when (mPressGroupCount) {
-                1 -> {
+                1,2 -> {
                     message = "go"
                     modeSetter.proceed()
                 }
                 // This takes a different action based on whether it is a question or answer.
-                2 -> {
+                3, 4 -> {
                     message = modeSetter.secondaryAction()
                 }
-                3 -> {
+                5, 6 -> {
                     message = "undo"
                     modeSetter.undo()
                 }
-                4 -> {
-                    AudioPlayer.instance.shouldRepeat = false
-                    message = "repeat off"
-                }
-                5 -> {
+                7, 8 -> {
                     modeSetter.resetActivity()
                     message = "reset"
+                }
+                9, 10 -> {
+                    AudioPlayer.instance.shouldRepeat = false
+                    message = "repeat off"
                 }
                 else -> {
                     message = "unrecognized count"
