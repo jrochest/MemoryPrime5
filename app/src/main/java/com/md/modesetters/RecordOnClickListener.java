@@ -90,8 +90,7 @@ public class RecordOnClickListener implements OnTouchListener {
 													}
 												}
 
-												DbNoteEditor.getInstance()
-														.update(context, mNote);
+												DbNoteEditor.getInstance().update(context, mNote);
 											}
 										})
 								.setNegativeButton("No",
