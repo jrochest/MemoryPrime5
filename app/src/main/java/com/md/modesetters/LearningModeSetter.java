@@ -334,18 +334,6 @@ public class LearningModeSetter extends ModeSetter implements
         }
     }
 
-    private void setupButton(final Activity context, int buttonId, final int i) {
-        Button genericMoveToNextAnswerButton = (Button) this.memoryDroid
-                .findViewById(buttonId);
-
-        genericMoveToNextAnswerButton
-                .setOnClickListener(new View.OnClickListener() {
-                    public void onClick(View v) {
-                        updateScoreAndMoveToNext(context, i);
-                    }
-                });
-    }
-
     @Override
     public void deleteNote() {
         final DbNoteEditor noteEditor = DbNoteEditor.getInstance();
