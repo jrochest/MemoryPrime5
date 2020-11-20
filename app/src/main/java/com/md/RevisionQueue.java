@@ -58,7 +58,6 @@ public class RevisionQueue {
 		Vector<Note> revisionQueueLocal = noteEditor.getOverdue(category);
 
 		for (Note note : revisionQueueLocal) {
-
 			if (note.is_overdue()) {
 				revisionQueue.put(note.getId(), note);
 			} else {
