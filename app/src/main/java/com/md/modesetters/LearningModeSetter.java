@@ -230,7 +230,6 @@ public class LearningModeSetter extends ModeSetter implements
 
     private void setupQuestionMode(final Activity context,
                                    boolean shouldUpdateQuestion) {
-
         if (shouldUpdateQuestion) {
             updateVal();
         }
