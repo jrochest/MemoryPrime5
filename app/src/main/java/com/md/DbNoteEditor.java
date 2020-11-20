@@ -60,7 +60,7 @@ public class DbNoteEditor {
 	public void update(Activity activity, AbstractNote note) {
 
 		// If it's in there update it.
-		RevisionQueue.getCurrentDeckReviewQueue().updateNote((Note) note);
+		RevisionQueue.getCurrentDeckReviewQueue().updateNote((Note) note, true);
 		ContentValues values = new ContentValues();
 
 		// Bump the modification time to now.

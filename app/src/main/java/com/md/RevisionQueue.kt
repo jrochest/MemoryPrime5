@@ -2,60 +2,63 @@ package com.md
 
 import android.util.Log
 import com.md.provider.Note
-import java.util.*
 
 class RevisionQueue {
-    private var noteIdToNoteToReview = mutableMapOf<Int, Note>()
+    private var notesToReview = mutableListOf<Note>()
 
     fun populate(noteEditor: DbNoteEditor, category: Int) {
-        noteIdToNoteToReview.clear()
-        var revisionQueueLocal = noteEditor.getOverdue(category)
-        for (note in revisionQueueLocal) {
+        notesToReview.clear()
+        for (note in noteEditor.getOverdue(category)) {
             if (note.is_overdue) {
-                noteIdToNoteToReview[note.id] = note
+                notesToReview.add(note)
             } else {
                 Log.wtf(this.javaClass.toString(),
                         "The overdue function is screwed up")
             }
         }
-        revisionQueueLocal = noteEditor.getAquisitionReps(category)
 
         // TODO restore ability to have these go last.
         // Perhaps by never repeating ids
-        for (note in revisionQueueLocal) {
+        for (note in noteEditor.getAquisitionReps(category)) {
             if (note.is_due_for_acquisition_rep) {
-                noteIdToNoteToReview[note.id] = note
+                notesToReview.add(note)
             } else {
                 Log.wtf(this.javaClass.toString(),
                         "The overdue function is screwed up")
             }
         }
+
+        notesToReview.sortBy { note: Note -> note.interval }
     }
 
     fun add(newVal: Note) {
-        noteIdToNoteToReview[newVal.id] = newVal
+        notesToReview.add(newVal)
     }
 
-    fun getFirst(): Note? {
-        if (noteIdToNoteToReview.isEmpty()) {
-            return null
-        }
-        val queueIterator = noteIdToNoteToReview.values.iterator()
-        val returnVal = queueIterator.next()
-        queueIterator.remove()
-        return returnVal
+    fun peekQueue(): Note? {
+        return notesToReview.firstOrNull()
     }
 
-    fun getSize(): Int = noteIdToNoteToReview.size
+    fun popQueue(): Note? {
+        return notesToReview.removeFirstOrNull()
+     }
 
-    fun updateNote(currentNote: Note) {
-        if (noteIdToNoteToReview.containsKey(currentNote.id)) {
-            noteIdToNoteToReview[currentNote.id] = currentNote
+    fun getSize(): Int = notesToReview.size
+
+    fun updateNote(currentNote: Note, keepQueueLocation: Boolean) {
+        if (keepQueueLocation) {
+            val originalIndex = notesToReview.indexOfFirst { it.id == currentNote.id }
+            if (originalIndex < 0) return
+            notesToReview.removeAt(originalIndex)
+            notesToReview.add(originalIndex, currentNote)
+        } else {
+            notesToReview.removeIf { it.id == currentNote.id }
+            notesToReview.add(currentNote)
         }
     }
 
     fun removeNote(id: Int) {
-        noteIdToNoteToReview.remove(id)
+        notesToReview.removeIf { it.id == id }
     }
 
     companion object {

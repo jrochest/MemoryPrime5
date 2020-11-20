@@ -294,7 +294,7 @@ public class LearningModeSetter extends ModeSetter implements
     }
 
     private void updateVal() {
-        currentNote = RevisionQueue.getCurrentDeckReviewQueue().getFirst();
+        currentNote = RevisionQueue.getCurrentDeckReviewQueue().popQueue();
         if (currentNote != null) {
             repCounter++;
         }
@@ -328,7 +328,7 @@ public class LearningModeSetter extends ModeSetter implements
 
         // If you scored too low review it again, at the end.
         if (currentNote.is_due_for_acquisition_rep()) {
-            RevisionQueue.getCurrentDeckReviewQueue().updateNote(currentNote);
+            RevisionQueue.getCurrentDeckReviewQueue().updateNote(currentNote, false);
             missCounter++;
         } else {
             RevisionQueue.getCurrentDeckReviewQueue().removeNote(currentNote.getId());
