@@ -293,7 +293,7 @@ public class LearningModeSetter extends ModeSetter implements
     }
 
     private void updateVal() {
-        currentNote = RevisionQueue.getCurrentDeckReviewQueue().popQueue();
+        currentNote = RevisionQueue.getCurrentDeckReviewQueue().peekQueue();
         if (currentNote != null) {
             repCounter++;
         }
