@@ -378,8 +378,7 @@ public class LearningModeSetter extends ModeSetter implements
             setupAnswerMode(context);
             lastNote = null;
         } else {
-            // If nothing to undo then just reset
-            resetActivity();
+            TtsSpeaker.speak("Nothing to undo");
         }
     }
 
