@@ -317,7 +317,7 @@ public class LearningModeSetter extends ModeSetter implements
             repEditor.insert(lastNoteRep);
         }
 
-        lastNote = (Note) (currentNote.clone());
+        lastNote = currentNote.clone();
         // Create the rep info before updating the note with the new internal.
         lastNoteRep = new AbstractRep(lastNote.getId(),
                 currentNote.getInterval(), newGrade, System.currentTimeMillis());
