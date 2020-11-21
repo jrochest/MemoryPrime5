@@ -29,8 +29,8 @@ public class RecordOnClickListener implements OnTouchListener {
 		mNote = note;
 		this.context = context;
 		this.isAnswer = isAnswer;
-		if (lastNote != null && lastNote.getId() == mNote.getId()) {
-			this.lastNote = lastNote;
+		if (mNote != null && lastNote != null && lastNote.getId() == mNote.getId()) {
+            this.lastNote = lastNote;
 		} else {
 			this.lastNote = null;
 		}
