@@ -224,7 +224,9 @@ public class DeckChooseModeSetter extends ModeSetter {
 		TextView loadingOrSelect = (TextView) memoryDroid
 				.findViewById(R.id.loadingOrSelect);
 
-		loadingOrSelect.setText("Press or Long Press a Deck");
+		if (loadingOrSelect != null) {
+			loadingOrSelect.setText("Press or Long Press a Deck");
+		}
 
 		loadComplete = true;
 

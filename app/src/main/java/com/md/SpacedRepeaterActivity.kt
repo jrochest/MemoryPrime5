@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -16,6 +17,7 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.view.KeyEvent
 import android.view.Menu
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.md.modesetters.*
 import com.md.workers.BackupToUsbManager
@@ -119,6 +121,12 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
     override fun onDestroy() {
         super.onDestroy()
         mediaBrowser.disconnect()
+    }
+
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        TtsSpeaker.speak("Config change", rate = 3f)
     }
 
     private var controllerCallback = object : MediaControllerCompat.Callback() {
