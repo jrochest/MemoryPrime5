@@ -100,4 +100,6 @@ public abstract class ModeSetter {
     public String secondaryAction() {
         return "";
     }
+
+    public void postponeNote() {}
 }

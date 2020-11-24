@@ -57,13 +57,13 @@ class ExternalClickCounter {
                 2 -> {
                     message = modeSetter.secondaryAction()
                 }
-                3 -> {
+                3, 4 -> {
                     message = "undo"
                     modeSetter.undo()
                 }
-                4 -> {
-                    modeSetter.resetActivity()
-                    message = "reset"
+                5, 6 -> {
+                    modeSetter.postponeNote()
+                    message = "postpone"
                 }
                 9, 10 -> {
                     AudioPlayer.instance.shouldRepeat = false

@@ -223,6 +223,18 @@ public class LearningModeSetter extends ModeSetter implements
         }
     }
 
+    /** Moves this note to the end of the queue. */
+    public void postponeNote() {
+        if (currentNote == null) {
+          return;
+        }
+
+        // Place at end of queue.
+        RevisionQueue.getCurrentDeckReviewQueue().updateNote(currentNote, false);
+        // Prepare the next note in the queue.
+        setupQuestionMode(mActivity);
+    }
+
     public void proceed() {
         ScreenDimmer.getInstance().keepScreenOn(mActivity);
         if (questionMode) {
