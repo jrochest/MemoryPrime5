@@ -55,9 +55,4 @@ public class SettingModeSetter extends ModeSetter implements
 
 
 	}
-
-	@Override
-	public void deleteNote() {
-		// TODO(jrochest) Remove this!
-	}
 }
