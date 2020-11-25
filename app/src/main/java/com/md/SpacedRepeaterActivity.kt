@@ -43,7 +43,7 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
         DeckChooseModeSetter.getInstance().setUp(this, modeHand)
         LearningModeSetter.getInstance().setUp(this, modeHand)
         DeckChooseModeSetter.getInstance().setupMode(this)
-        SettingModeSetter.getInstance().setup(this, modeHand)
+        SettingModeSetter.setup(this, modeHand)
         CleanUpAudioFilesModeSetter.getInstance().setup(this, modeHand)
         mAudioManager = this.getSystemService(
                 Context.AUDIO_SERVICE) as AudioManager
