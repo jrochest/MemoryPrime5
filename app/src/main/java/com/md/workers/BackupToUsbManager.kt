@@ -7,34 +7,46 @@ import android.content.Intent
 import android.net.Uri
 import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.work.*
-import androidx.work.impl.model.WorkTypeConverters.NetworkTypeIds.NOT_REQUIRED
 import com.md.MemPrimeManager
 import com.md.SpacedRepeaterActivity
 import com.md.modesetters.TtsSpeaker
 import kotlinx.coroutines.*
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
 
 
 object BackupToUsbManager {
-    const val REQUEST_CODE = 69
-
+    const val REQUEST_CODE_FOR_LOCATION_1 = 69
+    const val REQUEST_CODE_FOR_LOCATION_2 = 70
+    const val REQUEST_CODE_FOR_LOCATION_3 = 71
+    const val REQUEST_CODE_FOR_LOCATION_4 = 72
 
     const val BACKUP_LOCATION_FILE = "backup_locations_prefs"
-    const val BACKUP_LOCATION_KEY = "backup_location_key"
+    const val BACKUP_LOCATION_KEY_1 = "backup_location_key"
+    const val BACKUP_LOCATION_KEY_2 = "backup_location_key_2"
+    const val BACKUP_LOCATION_KEY_3 = "backup_location_key_3"
+    const val BACKUP_LOCATION_KEY_4 = "backup_location_key_4"
+
+    val requestCodeToKey = mapOf(
+            REQUEST_CODE_FOR_LOCATION_1 to BACKUP_LOCATION_KEY_1,
+            REQUEST_CODE_FOR_LOCATION_2 to BACKUP_LOCATION_KEY_2,
+            REQUEST_CODE_FOR_LOCATION_3 to BACKUP_LOCATION_KEY_3,
+            REQUEST_CODE_FOR_LOCATION_4 to BACKUP_LOCATION_KEY_4
+    )
+
     const val BACKUP_WORK_NAME = "BACKUP_WORK_NAME"
 
-    fun openZipFileDocument(activity: Activity) {
+    fun openZipFileDocument(activity: Activity, requestCode: Int) {
         val exportIntent = Intent(Intent.ACTION_CREATE_DOCUMENT)
         exportIntent.addCategory(Intent.CATEGORY_OPENABLE)
         exportIntent.type = "application/zip"
         val currentTimeMillis = System.currentTimeMillis()
         val filename = "memprime_note_$currentTimeMillis.zip"
         exportIntent.putExtra(Intent.EXTRA_TITLE, filename)
-        startActivityForResult(activity, exportIntent, REQUEST_CODE, null)
+        startActivityForResult(activity, exportIntent, requestCode, null)
     }
-
 
     fun createAndWriteZipBackToPreviousLocation(
             context: Context,
@@ -42,14 +54,18 @@ object BackupToUsbManager {
             shouldSpeak: Boolean = false
     ): Boolean {
         val sharedPref = context.getSharedPreferences(BACKUP_LOCATION_FILE, Context.MODE_PRIVATE)
-        val previousBackupLocation = sharedPref.getString(BACKUP_LOCATION_KEY, null)
 
-        if (previousBackupLocation == null) {
+        val backupLocations = mutableListOf<Uri>()
+        requestCodeToKey.values.forEach { locationKey ->
+            sharedPref.getString(locationKey, null)?.let { backupLocations.add(Uri.parse(it)) }
+        }
+
+        if (backupLocations.isNotEmpty()) {
+            backupToUris(context, contentResolver, backupLocations, shouldSpeak)
+        } else {
             TtsSpeaker.speak("No previous backup location")
             return false
         }
-        Uri.parse(previousBackupLocation)
-        backupToUri(context, contentResolver, Uri.parse(previousBackupLocation), shouldSpeak)
 
         return true
     }
@@ -60,8 +76,7 @@ object BackupToUsbManager {
             requestCode: Int,
             contentResolver: ContentResolver
     ): Boolean {
-        if (requestCode != REQUEST_CODE) return false
-
+        val locationKey: String = requestCodeToKey.get(requestCode) ?: return false
         val sourceTreeUri: Uri = data.data ?: return false
         contentResolver.takePersistableUriPermission(
                 sourceTreeUri,
@@ -69,7 +84,7 @@ object BackupToUsbManager {
         )
 
         val sharedPref = context.getSharedPreferences(BACKUP_LOCATION_FILE, Context.MODE_PRIVATE)
-        sharedPref.edit().putString(BACKUP_LOCATION_KEY, sourceTreeUri.toString()).apply()
+        sharedPref.edit().putString(locationKey, sourceTreeUri.toString()).apply()
 
         val constraints = Constraints.Builder()
                 .setRequiresBatteryNotLow(true)
@@ -94,19 +109,20 @@ object BackupToUsbManager {
         return true
     }
 
-    private fun backupToUri(context: Context, contentResolver: ContentResolver, sourceTreeUri: Uri, shouldSpeak: Boolean = false) {
+    private fun backupToUris(context: Context, contentResolver: ContentResolver, backupUris: List<Uri>, shouldSpeak: Boolean = false) {
         GlobalScope.launch(Dispatchers.Main) {
             if (shouldSpeak) TtsSpeaker.speak("starting backup")
 
             val deferred = async(Dispatchers.IO) {
-                backupOnBackground(contentResolver, sourceTreeUri, context.filesDir)
+                backupOnBackground(contentResolver, backupUris, context.filesDir, shouldSpeak)
             }
 
             if (shouldSpeak) TtsSpeaker.speak("backup finished: " + deferred.await())
         }
     }
 
-    private suspend fun backupOnBackground(contentResolver: ContentResolver, sourceTreeUri: Uri, filesDir: File) {
+    private suspend fun backupOnBackground(contentResolver: ContentResolver, backupUris: List<Uri>, filesDir: File, shouldSpeak: Boolean) {
+
         filesDir.listFiles().forEach {
             if (it.isDirectory && it.name == "com.md.MemoryPrime") {
                 val dirsToZip = mutableListOf<File>()
@@ -130,9 +146,17 @@ object BackupToUsbManager {
                     }
                 }
 
-                contentResolver.openFileDescriptor(sourceTreeUri, "w")?.use {
-                    val output = FileOutputStream(it.fileDescriptor) ?: return@use
-                    MemPrimeManager.zip(filesToZip, dirsToZip, output)
+                backupUris.forEach { uri ->
+                    try {
+                        contentResolver.openFileDescriptor(uri, "w")?.use {
+                            val output = FileOutputStream(it.fileDescriptor) ?: return@use
+                            MemPrimeManager.zip(filesToZip, dirsToZip, output)
+                        }
+                    } catch (e : FileNotFoundException) {
+                        System.err.println("Missing file during backup: $uri")
+                    } catch (e : SecurityException) {
+                        if (shouldSpeak) TtsSpeaker.speak("security exception for $uri")
+                    }
                 }
             }
         }

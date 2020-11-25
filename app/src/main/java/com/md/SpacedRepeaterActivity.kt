@@ -17,7 +17,6 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.view.KeyEvent
 import android.view.Menu
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.md.modesetters.*
 import com.md.workers.BackupToUsbManager
@@ -318,11 +317,20 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (resultCode != RESULT_OK) return
+        // else if ok user probably selected a file
 
         if (data == null) return
 
-        // if ok user selected a file
-        if (requestCode == BackupToUsbManager.REQUEST_CODE && BackupToUsbManager.createAndWriteZipBackToNewLocation(this, data, requestCode, contentResolver)) return
+        if (BackupToUsbManager.requestCodeToKey.containsKey(requestCode) &&
+                BackupToUsbManager.createAndWriteZipBackToNewLocation(
+                        this,
+                        data,
+                        requestCode,
+                        contentResolver
+                )) {
+            SettingModeSetter.refreshSettings(this)
+            return
+        }
 
         if (requestCode == RestoreFromZipManager.REQUEST_CODE && RestoreFromZipManager.restoreFromZip(this, data, requestCode, contentResolver)) return
     }
