@@ -16,7 +16,7 @@ import java.util.zip.ZipInputStream
 
 
 object RestoreFromZipManager {
-    const val REQUEST_CODE = 70
+    const val REQUEST_CODE = 170
 
     fun openZipFileDocument(activity: Activity) {
         val exportIntent = Intent(Intent.ACTION_OPEN_DOCUMENT)
