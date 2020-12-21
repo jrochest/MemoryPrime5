@@ -262,30 +262,14 @@ public class LearningModeSetter extends ModeSetter implements
                 // Release audio focus since the dialog prevents keyboards from controlling memprime.
                 mActivity.maybeChangeAudioFocus(false);
             }
-            AlertDialog.Builder builder = new AlertDialog.Builder(context);
-
             TtsSpeaker.speak("Great job! Deck done.");
-            builder.setMessage("Great job! Deck done.")
-                    .setCancelable(false)
-                    .setNeutralButton("Ok",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog,
-                                                    int id) {
-
-                                }
-                            });
-            AlertDialog alert = builder.create();
-            alert.show();
-
         }
 
         commonLayoutSetup();
-
         memoryDroid.findViewById(R.id.rerecord)
                 .setOnTouchListener(
                         new RecordOnClickListener(currentNote, context, false,
                                 getLastOrNull()));
-
     }
 
     @Nullable
