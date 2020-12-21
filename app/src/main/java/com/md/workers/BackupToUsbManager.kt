@@ -149,7 +149,7 @@ object BackupToUsbManager {
                 backupUris.forEach { uri ->
                     try {
                         contentResolver.openFileDescriptor(uri, "w")?.use {
-                            val output = FileOutputStream(it.fileDescriptor) ?: return@use
+                            val output = FileOutputStream(it.fileDescriptor)
                             MemPrimeManager.zip(filesToZip, dirsToZip, output)
                         }
                     } catch (e : FileNotFoundException) {
