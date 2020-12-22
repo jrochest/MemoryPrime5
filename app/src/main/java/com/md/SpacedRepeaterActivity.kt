@@ -139,8 +139,10 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
 
     var modeHand = ModeHandler(this)
     override fun onBackPressed() {
-        modeHand.goBack()
-        return
+        if (modeHand.goBack()) {
+            return
+        }
+        super.onBackPressed()
     }
 
     override fun onStart() {

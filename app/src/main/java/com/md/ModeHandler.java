@@ -27,16 +27,14 @@ public class ModeHandler {
 		}
 	}
 	
-	public void goBack() {
-
+	public boolean goBack() {
 		// Must have two.
 		if (modeStack.size() > 1) {
 			ModeSetter pop = modeStack.pop();
 			modeStack.peek().setupMode(context);
-		} else {
-
-			System.exit(0);
+			return true;
 		}
+		return false;
 	}
 
 	public void add(ModeSetter modeSetter) {

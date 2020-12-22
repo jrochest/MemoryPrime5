@@ -8,6 +8,8 @@ import android.net.Uri
 import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.core.content.edit
 import androidx.work.*
+import androidx.work.PeriodicWorkRequest.MIN_PERIODIC_FLEX_MILLIS
+import androidx.work.PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS
 import com.md.MemPrimeManager
 import com.md.SpacedRepeaterActivity
 import com.md.modesetters.TtsSpeaker
@@ -16,6 +18,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
+import java.util.function.BiConsumer
 
 
 object BackupToUsbManager {
@@ -30,7 +33,7 @@ object BackupToUsbManager {
     const val BACKUP_LOCATION_KEY_3 = "backup_location_key_3"
     const val BACKUP_LOCATION_KEY_4 = "backup_location_key_4"
 
-    val requestCodeToKey = mapOf(
+    public val requestCodeToKey = mapOf(
             REQUEST_CODE_FOR_LOCATION_1 to BACKUP_LOCATION_KEY_1,
             REQUEST_CODE_FOR_LOCATION_2 to BACKUP_LOCATION_KEY_2,
             REQUEST_CODE_FOR_LOCATION_3 to BACKUP_LOCATION_KEY_3,
@@ -46,7 +49,6 @@ object BackupToUsbManager {
          putBoolean(key + "is_stale", newValue)
         }
     }
-
 
     const val BACKUP_WORK_NAME = "BACKUP_WORK_NAME"
 
@@ -79,7 +81,7 @@ object BackupToUsbManager {
         if (backupLocations.isNotEmpty()) {
             backupToUris(context, contentResolver, backupLocations, shouldSpeak)
         } else {
-            TtsSpeaker.speak("No previous backup location")
+            TtsSpeaker.speak("No backup needed")
             return false
         }
 
@@ -105,13 +107,14 @@ object BackupToUsbManager {
         val constraints = Constraints.Builder()
                 .setRequiresBatteryNotLow(true)
                 .setRequiresDeviceIdle(true)
+                .setRequiresCharging(false)
                 .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
                 .build()
 
         val request = PeriodicWorkRequest.Builder(
                 BackupWorker::class.java,
-                6, TimeUnit.HOURS,
-                2, TimeUnit.HOURS)
+                MIN_PERIODIC_INTERVAL_MILLIS, TimeUnit.MILLISECONDS,
+                MIN_PERIODIC_FLEX_MILLIS, TimeUnit.MILLISECONDS)
                 .setConstraints(constraints)
                 .build()
 
@@ -207,6 +210,12 @@ object BackupToUsbManager {
                     }
                 }
             }
+        }
+    }
+
+    fun markAllStale(context: Context) {
+        requestCodeToKey.values.forEach { key ->
+            markBackupFresh(context, key, false)
         }
     }
 }

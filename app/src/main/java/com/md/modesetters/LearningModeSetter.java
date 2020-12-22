@@ -21,6 +21,7 @@ import com.md.provider.AbstractRep;
 import com.md.provider.Note;
 import com.md.utils.ScreenDimmer;
 import com.md.utils.ToastSingleton;
+import com.md.workers.BackupToUsbManager;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.md.SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_INSTANT;
+import static com.md.workers.BackupToUsbManager.INSTANCE;
 
 public class LearningModeSetter extends ModeSetter implements
         ItemDeletedHandler {
@@ -303,6 +305,9 @@ public class LearningModeSetter extends ModeSetter implements
         currentNote = RevisionQueue.getCurrentDeckReviewQueue().peekQueue();
         if (currentNote != null) {
             repCounter++;
+            if (repCounter % 10 == 9) {
+                BackupToUsbManager.INSTANCE.markAllStale(mActivity);
+            }
         }
     }
 
