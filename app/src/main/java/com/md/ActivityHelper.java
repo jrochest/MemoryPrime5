@@ -43,9 +43,12 @@ public class ActivityHelper {
 		inflater.inflate(R.menu.menu, menu);
 
 		MenuItem quitMenuItem = menu.findItem(R.id.dimMenuItem);
-		quitMenuItem.setOnMenuItemClickListener(item -> {
-			activity.maybeDim();
-			return true;
+		quitMenuItem.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+			@Override
+			public boolean onMenuItemClick(MenuItem item) {
+				activity.maybeDim();
+				return true;
+			}
 		});
 
 		menu.findItem(R.id.backup_previous_location).setOnMenuItemClickListener(new OnMenuItemClickListener() {
