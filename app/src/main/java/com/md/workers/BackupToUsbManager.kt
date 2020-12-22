@@ -33,7 +33,7 @@ object BackupToUsbManager {
     const val BACKUP_LOCATION_KEY_3 = "backup_location_key_3"
     const val BACKUP_LOCATION_KEY_4 = "backup_location_key_4"
 
-    public val requestCodeToKey = mapOf(
+    val requestCodeToKey = mapOf(
             REQUEST_CODE_FOR_LOCATION_1 to BACKUP_LOCATION_KEY_1,
             REQUEST_CODE_FOR_LOCATION_2 to BACKUP_LOCATION_KEY_2,
             REQUEST_CODE_FOR_LOCATION_3 to BACKUP_LOCATION_KEY_3,
