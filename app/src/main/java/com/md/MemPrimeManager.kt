@@ -23,7 +23,7 @@ object MemPrimeManager {
         return absoluteFile.path.replaceBefore("com.md.MemoryPrime", "")
     }
 
-    suspend fun zip(files: MutableList<File>, dirs: MutableList<File>, dest: FileOutputStream) {
+    suspend fun zip(files: MutableList<File>, dirs: MutableList<File>, dest: FileOutputStream) : Boolean {
         try {
             var origin: BufferedInputStream
             val out = ZipOutputStream(BufferedOutputStream(dest))
@@ -70,8 +70,12 @@ object MemPrimeManager {
             }
             out.flush()
             out.close()
+            return true
         } catch (e: Exception) {
-            e.printStackTrace()
+            GlobalScope.launch(Dispatchers.Main) {
+                TtsSpeaker.speak("error backing up: $e")
+            }
+            return false
         }
     }
 
