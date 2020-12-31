@@ -1,36 +1,23 @@
 package com.md
 
 import android.app.AlertDialog
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
-import android.media.AudioManager.OnAudioFocusChangeListener
 import android.media.ToneGenerator
 import android.os.Bundle
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.MediaControllerCompat
-import android.support.v4.media.session.PlaybackStateCompat
 import android.view.KeyEvent
 import android.view.Menu
-import androidx.appcompat.app.AppCompatActivity
 import com.md.modesetters.*
 import com.md.workers.BackupPreferences
 import com.md.workers.BackupToUsbManager.createAndWriteZipBackToNewLocation
 
 
-class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
-    // Change this to make this app a media playback service and take media events like play
-    // pause next prev etc
-    private val shouldCreatePlaybackService = false
-
+class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager {
     private var toneGenerator: ToneGenerator? = null
-    private var mAudioManager: AudioManager? = null
-    private var mediaController: MediaControllerCompat? = null
     private val externalClickCounter = ExternalClickCounter()
 
     /** Called when the activity is first created.  */
@@ -50,71 +37,32 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
         SettingModeSetter.setup(this, modeHand)
         CleanUpAudioFilesModeSetter.getInstance().setup(this, modeHand)
 
-        if (shouldCreatePlaybackService) {
-            mAudioManager = this.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            //startService(Intent(this, PlayerService::class.java))
-            mediaBrowser = MediaBrowserCompat(
-                    this,
-                    ComponentName(this, PlayerService::class.java),
-                    connectionCallbacks,
-                    null).also {
-                if (!it.isConnected) {
-                    it.connect()
-                }
-            }
-        }
+        playbackServiceOnCreate()
 
         TtsSpeaker.setup(this.applicationContext)
     }
 
-    private val connectionCallbacks = object : MediaBrowserCompat.ConnectionCallback() {
-        override fun onConnectionSuspended() {
-        }
-
-        override fun onConnectionFailed() {
-
-        }
-
-        override fun onConnected() {
-            // Get the token for the MediaSession
-            mediaBrowser?.let {
-                it.sessionToken.also { token ->
-                    // Create a MediaControllerCompat
-                    mediaController = MediaControllerCompat(
-                            this@SpacedRepeaterActivity, // Context
-                            token
-                    ).apply {
-                        // Save the controller
-                        MediaControllerCompat.setMediaController(this@SpacedRepeaterActivity, this)
-                        // Register a callback to stay in sync
-                        registerCallback(controllerCallback)
-                        transportControls.prepare()
-                    }
-                }
-            }
-        }
-    }
-
-    private var mediaBrowser: MediaBrowserCompat? = null
 
     override fun onResume() {
         super.onResume()
 
         // This is also needed to keep audio focus.
         keepHeadphoneAlive()
-        mediaController?.transportControls?.prepare()
+
+        playbackServiceOnResume()
 
         val modeSetter = modeHand.whoseOnTop() ?: return
         // Take back media session focus if we lost it.
         modeSetter.handleReplay()
     }
 
+
     override fun onPause() {
         super.onPause()
         // Hiding stops the repeat playback in learning mode.
         AudioPlayer.instance.shouldRepeat = false
 
-        mediaController?.transportControls?.stop()
+        playbackServiceOnPause()
         if (toneGenerator != null) {
             toneGenerator!!.release()
             toneGenerator = null
@@ -123,22 +71,12 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
 
     override fun onDestroy() {
         super.onDestroy()
-        mediaBrowser?.disconnect()
+        playbackServiceOnDestroy()
     }
-
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         TtsSpeaker.speak("Config change", rate = 3f)
-    }
-
-    private var controllerCallback = object : MediaControllerCompat.Callback() {
-
-        override fun onMetadataChanged(metadata: MediaMetadataCompat?) {}
-
-        override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
-            println("TODOJ " + state?.playbackState)
-        }
     }
 
     var modeHand = ModeHandler(this)
@@ -166,13 +104,6 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
         val activityHelper = ActivityHelper()
         activityHelper.createCommonMenu(menu, this)
         return true
-    }
-
-    fun makeDialog(message: String?) {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle(message)
-        builder.create()
-        builder.show()
     }
 
     private fun isFromMemprimeDevice(keyCode: Int, event: KeyEvent?): Boolean {
@@ -203,14 +134,6 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
         val device = event.device ?: return false
         val name = device.name
         return name.contains("Shutter Camera")
-    }
-
-    private var hasAudioFocus = false
-    private val afListener = OnAudioFocusChangeListener { focusChange ->
-        when (focusChange) {
-            AudioManager.AUDIOFOCUS_GAIN -> hasAudioFocus = true
-            AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> hasAudioFocus = false
-        }
     }
 
     // These never happen with mpop override:
@@ -282,10 +205,6 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
             audioManager.abandonAudioFocus(afListener)
             false
         }
-    }
-
-    fun hasAudioFocus(): Boolean {
-        return hasAudioFocus
     }
 
     fun keepHeadphoneAlive() {
