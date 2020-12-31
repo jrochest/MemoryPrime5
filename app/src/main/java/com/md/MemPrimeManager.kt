@@ -36,7 +36,6 @@ object MemPrimeManager {
             val data = ByteArray(BUFFER)
             val size = files.size
             files.forEach { file ->
-                Log.v("Compress", "Adding: " + file)
                 try {
                     val fi = FileInputStream(file)
                     origin = BufferedInputStream(fi, BUFFER)
@@ -52,7 +51,7 @@ object MemPrimeManager {
                     origin.close()
 
                     fileCount++
-                    if (fileCount % 10000 == 0) {
+                    if (fileCount % 2000 == 0) {
                         GlobalScope.launch(Dispatchers.Main) {
                             ToastSingleton.getInstance().msg("Memprime backed up " + fileCount + " of " + size)
                         }
@@ -117,5 +116,5 @@ object MemPrimeManager {
             f.mkdirs()
         }
     }
-    private const val BUFFER = 80000
+    private const val BUFFER = 800000
 }
