@@ -24,6 +24,10 @@ import com.md.workers.BackupToUsbManager.createAndWriteZipBackToNewLocation
 
 
 class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
+    // Change this to make this app a media playback service and take media events like play
+    // pause next prev etc
+    private val shouldCreatePlaybackService = false
+
     private var toneGenerator: ToneGenerator? = null
     private var mAudioManager: AudioManager? = null
     private var mediaController: MediaControllerCompat? = null
@@ -45,18 +49,19 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
         DeckChooseModeSetter.getInstance().setupMode(this)
         SettingModeSetter.setup(this, modeHand)
         CleanUpAudioFilesModeSetter.getInstance().setup(this, modeHand)
-        mAudioManager = this.getSystemService(
-                Context.AUDIO_SERVICE) as AudioManager
-        //startService(Intent(this, PlayerService::class.java))
 
-        mediaBrowser = MediaBrowserCompat(
-                this,
-                ComponentName(this, PlayerService::class.java),
-                connectionCallbacks,
-                null)
-
-        if (!mediaBrowser.isConnected) {
-            mediaBrowser.connect()
+        if (shouldCreatePlaybackService) {
+            mAudioManager = this.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            //startService(Intent(this, PlayerService::class.java))
+            mediaBrowser = MediaBrowserCompat(
+                    this,
+                    ComponentName(this, PlayerService::class.java),
+                    connectionCallbacks,
+                    null).also {
+                if (!it.isConnected) {
+                    it.connect()
+                }
+            }
         }
 
         TtsSpeaker.setup(this.applicationContext)
@@ -64,36 +69,33 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
 
     private val connectionCallbacks = object : MediaBrowserCompat.ConnectionCallback() {
         override fun onConnectionSuspended() {
-            println("TODOJ onConnectionSuspended!!!")
         }
 
         override fun onConnectionFailed() {
-            println("TODOJ onConnectionFailed!!!")
+
         }
 
         override fun onConnected() {
-            println("TODOJ Connected!!!")
-
             // Get the token for the MediaSession
-            mediaBrowser.sessionToken.also { token ->
-                println("TODOJ Setting controller!!!")
-                // Create a MediaControllerCompat
-                mediaController = MediaControllerCompat(
-                        this@SpacedRepeaterActivity, // Context
-                        token
-                ).apply {
-                    // Save the controller
-                    MediaControllerCompat.setMediaController(this@SpacedRepeaterActivity, this)
-                    // Register a Callback to stay in sync
-                    registerCallback(controllerCallback)
-                    transportControls.prepare()
+            mediaBrowser?.let {
+                it.sessionToken.also { token ->
+                    // Create a MediaControllerCompat
+                    mediaController = MediaControllerCompat(
+                            this@SpacedRepeaterActivity, // Context
+                            token
+                    ).apply {
+                        // Save the controller
+                        MediaControllerCompat.setMediaController(this@SpacedRepeaterActivity, this)
+                        // Register a callback to stay in sync
+                        registerCallback(controllerCallback)
+                        transportControls.prepare()
+                    }
                 }
-
             }
         }
     }
 
-    lateinit var mediaBrowser: MediaBrowserCompat
+    private var mediaBrowser: MediaBrowserCompat? = null
 
     override fun onResume() {
         super.onResume()
@@ -111,6 +113,7 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
         super.onPause()
         // Hiding stops the repeat playback in learning mode.
         AudioPlayer.instance.shouldRepeat = false
+
         mediaController?.transportControls?.stop()
         if (toneGenerator != null) {
             toneGenerator!!.release()
@@ -120,7 +123,7 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
 
     override fun onDestroy() {
         super.onDestroy()
-        mediaBrowser.disconnect()
+        mediaBrowser?.disconnect()
     }
 
 
@@ -258,6 +261,9 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
     }
 
     fun maybeChangeAudioFocus(shouldHaveFocus: Boolean) {
+        if (!shouldCreatePlaybackService) {
+            return
+        }
         if (hasAudioFocus == shouldHaveFocus) { // The audiofocus matches request already.
             return
         }
@@ -271,11 +277,7 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
                 .setOnAudioFocusChangeListener(afListener).build()
         hasAudioFocus = if (shouldHaveFocus) {
             val res = audioManager.requestAudioFocus(mFocusRequest)
-            if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                true
-            } else {
-                false
-            }
+            res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
         } else {
             audioManager.abandonAudioFocus(afListener)
             false

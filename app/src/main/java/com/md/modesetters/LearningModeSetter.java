@@ -255,7 +255,7 @@ public class LearningModeSetter extends ModeSetter implements
         if (currentNote != null) {
             AudioPlayer.getInstance().playFile(currentNote.getQuestion(), null, true);
         } else {
-            if (mActivity instanceof SpacedRepeaterActivity) {
+            if (mActivity != null) {
                 // Release audio focus since the dialog prevents keyboards from controlling memprime.
                 mActivity.maybeChangeAudioFocus(false);
             }
