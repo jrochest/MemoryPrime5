@@ -76,11 +76,5 @@ object MemPrimeManager {
         }
     }
 
-    private fun dirChecker(dir: String) {
-        val f = File(dir)
-        if (!f.isDirectory()) {
-            f.mkdirs()
-        }
-    }
     private const val BUFFER = 800000
 }
