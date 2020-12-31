@@ -53,12 +53,11 @@ object MemPrimeManager {
 
                     count++
 
-                    if (count % 1000 == 0) {
+                    if (count % 10000 == 0) {
                         GlobalScope.launch(Dispatchers.Main) {
                             ToastSingleton.getInstance().msg("Memprime backed up " + count + " of " + size)
                         }
                     }
-
                 } catch (e: FileNotFoundException){
                     Log.e("Compress", "failed to open " + file)
 
