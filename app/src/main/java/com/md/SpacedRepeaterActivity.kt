@@ -19,7 +19,8 @@ import android.view.KeyEvent
 import android.view.Menu
 import androidx.appcompat.app.AppCompatActivity
 import com.md.modesetters.*
-import com.md.workers.BackupToUsbManager
+import com.md.workers.BackupPreferences
+import com.md.workers.BackupToUsbManager.createAndWriteZipBackToNewLocation
 
 
 class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
@@ -323,8 +324,8 @@ class SpacedRepeaterActivity : AppCompatActivity(), ToneManager {
 
         if (data == null) return
 
-        if (BackupToUsbManager.requestCodeToKey.containsKey(requestCode) &&
-                BackupToUsbManager.createAndWriteZipBackToNewLocation(
+        if (BackupPreferences.requestCodeToKey.containsKey(requestCode) &&
+                createAndWriteZipBackToNewLocation(
                         this,
                         data,
                         requestCode,

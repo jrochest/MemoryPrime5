@@ -16,6 +16,7 @@ import com.md.modesetters.LearningModeSetter;
 import com.md.modesetters.ModeSetter;
 import com.md.modesetters.SettingModeSetter;
 import com.md.utils.ToastSingleton;
+import com.md.workers.BackupPreferences;
 import com.md.workers.BackupToUsbManager;
 
 public class ActivityHelper {

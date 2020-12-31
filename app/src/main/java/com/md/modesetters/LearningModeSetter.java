@@ -1,8 +1,6 @@
 package com.md.modesetters;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.os.SystemClock;
 import android.view.KeyEvent;
 import android.view.View;
@@ -21,18 +19,15 @@ import com.md.provider.AbstractRep;
 import com.md.provider.Note;
 import com.md.utils.ScreenDimmer;
 import com.md.utils.ToastSingleton;
-import com.md.workers.BackupToUsbManager;
+import com.md.workers.BackupPreferences;
 
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.md.SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_INSTANT;
-import static com.md.workers.BackupToUsbManager.INSTANCE;
 
 public class LearningModeSetter extends ModeSetter implements
         ItemDeletedHandler {
@@ -306,7 +301,7 @@ public class LearningModeSetter extends ModeSetter implements
         if (currentNote != null) {
             repCounter++;
             if (repCounter % 10 == 9) {
-                BackupToUsbManager.INSTANCE.markAllStale(mActivity);
+                BackupPreferences.INSTANCE.markAllStale(mActivity);
             }
         }
     }

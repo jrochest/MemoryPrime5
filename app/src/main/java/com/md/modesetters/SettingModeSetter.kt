@@ -7,11 +7,11 @@ import android.widget.ToggleButton
 import com.md.CategorySingleton
 import com.md.ModeHandler
 import com.md.R
-import com.md.workers.BackupToUsbManager
-import com.md.workers.BackupToUsbManager.REQUEST_CODE_FOR_LOCATION_1
-import com.md.workers.BackupToUsbManager.REQUEST_CODE_FOR_LOCATION_2
-import com.md.workers.BackupToUsbManager.REQUEST_CODE_FOR_LOCATION_3
-import com.md.workers.BackupToUsbManager.REQUEST_CODE_FOR_LOCATION_4
+import com.md.workers.BackupPreferences
+import com.md.workers.BackupPreferences.REQUEST_CODE_FOR_LOCATION_1
+import com.md.workers.BackupPreferences.REQUEST_CODE_FOR_LOCATION_2
+import com.md.workers.BackupPreferences.REQUEST_CODE_FOR_LOCATION_3
+import com.md.workers.BackupPreferences.REQUEST_CODE_FOR_LOCATION_4
 import com.md.workers.BackupToUsbManager.openZipFileDocument
 
 object SettingModeSetter : ModeSetter(), ItemDeletedHandler {
@@ -55,7 +55,7 @@ object SettingModeSetter : ModeSetter(), ItemDeletedHandler {
     }
 
     private fun Button.specifyNewBackupLocation(backupLocationName: String, activity: Activity, requestCode: Int) {
-        val backupLocation = context.getSharedPreferences(BackupToUsbManager.BACKUP_LOCATION_FILE, Context.MODE_PRIVATE).getString(BackupToUsbManager.requestCodeToKey[requestCode], null)
+        val backupLocation = context.getSharedPreferences(BackupPreferences.BACKUP_LOCATION_FILE, Context.MODE_PRIVATE).getString(BackupPreferences.requestCodeToKey[requestCode], null)
         if (backupLocation != null) {
             setText(backupLocationName + ":\n" + backupLocation)
         } else {
