@@ -23,7 +23,7 @@ object MemPrimeManager {
         return absoluteFile.path.replaceBefore("com.md.MemoryPrime", "")
     }
 
-    suspend fun zip(files: MutableList<File>, dirs: MutableList<File>, dest: FileOutputStream) : Boolean {
+    fun zip(files: MutableList<File>, dirs: MutableList<File>, dest: FileOutputStream) : Boolean {
         try {
             var origin: BufferedInputStream
             val out = ZipOutputStream(BufferedOutputStream(dest))
