@@ -32,7 +32,7 @@ object MemPrimeManager {
                 out.putNextEntry(ZipEntry(convertToZipDir(it)))
             }
 
-            var count = 0
+            var fileCount = 0
             val data = ByteArray(BUFFER)
             val size = files.size
             files.forEach { file ->
@@ -51,11 +51,10 @@ object MemPrimeManager {
                     }
                     origin.close()
 
-                    count++
-
-                    if (count % 10000 == 0) {
+                    fileCount++
+                    if (fileCount % 10000 == 0) {
                         GlobalScope.launch(Dispatchers.Main) {
-                            ToastSingleton.getInstance().msg("Memprime backed up " + count + " of " + size)
+                            ToastSingleton.getInstance().msg("Memprime backed up " + fileCount + " of " + size)
                         }
                     }
                 } catch (e: FileNotFoundException){
