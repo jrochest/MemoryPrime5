@@ -115,15 +115,16 @@ class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager {
             return true
         }
         val name = device.name
-        return name.contains("AB Shutter3") ||
+        return name.contains("Virtual") || // After updated to Android 11 on Note 20 Ultra
+                // https://www.amazon.com/gp/product/B0872BC4MY/ref=ppx_yo_dt_b_asin_title_o03_s00
+                name.contains("Mpow isnap X2 Consumer Control") ||
+                name.contains("AB Shutter3") ||
                 name.contains("AK LIFE BT") ||
                 name.contains("BLE") ||
                 name.contains("BR301") ||
                 name.contains("memprime") ||
                 name.contains("STRIM-BTN10") ||  // MARREX.
                 name.contains("Button Jack") ||
-                // https://www.amazon.com/gp/product/B0872BC4MY/ref=ppx_yo_dt_b_asin_title_o03_s00
-                name.contains("Mpow isnap X2 Consumer Control")
                 name.contains("PhotoShot") // Wide flat one
     }
 
