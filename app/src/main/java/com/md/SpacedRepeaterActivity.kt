@@ -11,6 +11,7 @@ import android.media.ToneGenerator
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.Menu
+import androidx.core.view.InputDeviceCompat.SOURCE_KEYBOARD
 import com.md.modesetters.*
 import com.md.workers.BackupPreferences
 import com.md.workers.BackupToUsbManager.createAndWriteZipBackToNewLocation
@@ -110,13 +111,20 @@ class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager {
         if (event == null) {
             return false
         }
-        val device = event.device ?: return false
-        if (isFromMultiButtonMemprimeDevice(keyCode, event)) {
-            return true
+
+        if (event.source == SOURCE_KEYBOARD) {
+            // After update to After updated to Android 11 on Note 20 Ultra
+            // for the Mpow name equals "Virtual". Both the phone volume button and shutter use that
+            // name. But only the phone buttons use SOURCE_KEYBOARD. The shutter uses 0x301.
+            return false
+
         }
+
+        val device = event.device ?: return false
+
         val name = device.name
-        return name.contains("Virtual") || // After updated to Android 11 on Note 20 Ultra
-                // https://www.amazon.com/gp/product/B0872BC4MY/ref=ppx_yo_dt_b_asin_title_o03_s00
+        // https://www.amazon.com/gp/product/B0872BC4MY/ref=ppx_yo_dt_b_asin_title_o03_s00
+        if (name.contains("Virtual") ||
                 name.contains("Mpow isnap X2 Consumer Control") ||
                 name.contains("AB Shutter3") ||
                 name.contains("AK LIFE BT") ||
@@ -125,7 +133,11 @@ class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager {
                 name.contains("memprime") ||
                 name.contains("STRIM-BTN10") ||  // MARREX.
                 name.contains("Button Jack") ||
-                name.contains("PhotoShot") // Wide flat one
+                name.contains("PhotoShot")) {
+            return true
+        }
+
+        return isFromMultiButtonMemprimeDevice(keyCode, event)
     }
 
     private fun isFromMultiButtonMemprimeDevice(keyCode: Int, event: KeyEvent?): Boolean {
