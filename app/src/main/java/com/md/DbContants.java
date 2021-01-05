@@ -19,11 +19,7 @@ public abstract class DbContants {
 	public static String getAudioLocation() {
 		return AUDIO_LOCATION;	
 	}
-	
-	public static String getDataLocation() {
-		return DATA_LOCATION;
-	}
-	
+
 	private static String FULL_PATH;
 	private static String AUDIO_LOCATION;
 	private static String DATA_LOCATION;
