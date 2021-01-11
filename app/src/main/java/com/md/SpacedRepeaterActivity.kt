@@ -1,13 +1,11 @@
 package com.md
 
-import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
-import android.media.ToneGenerator
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.Menu
@@ -17,8 +15,8 @@ import com.md.workers.BackupPreferences
 import com.md.workers.BackupToUsbManager.createAndWriteZipBackToNewLocation
 
 
-class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager {
-    private var toneGenerator: ToneGenerator? = null
+class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager by ToneManagerImpl() {
+
     private val externalClickCounter = ExternalClickCounter()
 
     /** Called when the activity is first created.  */
@@ -64,10 +62,7 @@ class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager {
         AudioPlayer.instance.shouldRepeat = false
 
         playbackServiceOnPause()
-        if (toneGenerator != null) {
-            toneGenerator!!.release()
-            toneGenerator = null
-        }
+        maybeStopTone()
     }
 
     override fun onDestroy() {
@@ -90,15 +85,12 @@ class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager {
 
     override fun onStart() {
         super.onStart()
-        toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 1)
+        maybeStartTone(this)
     }
 
     override fun onStop() {
         super.onStop()
-        if (toneGenerator != null) {
-            toneGenerator!!.release()
-            toneGenerator = null
-        }
+        maybeStopTone()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -220,23 +212,6 @@ class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager {
         }
     }
 
-    fun keepHeadphoneAlive() {
-        if (toneGenerator == null) {
-            return
-        }
-        // keep the headphones turned on by playing an almost silent sound n seconds.
-        toneGenerator!!.startTone(ToneGenerator.TONE_CDMA_DIAL_TONE_LITE,  /* Two minutes */1000 * 60 * 2)
-    }
-
-    override fun backupTone() {
-        // keep the headphones turned on by playing an almost silent sound n seconds.
-        ToneGenerator(AudioManager.STREAM_MUSIC, 80).startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD,  /* half second */500)
-    }
-
-    override fun errorTone() {
-        // keep the headphones turned on by playing an almost silent sound n seconds.
-        ToneGenerator(AudioManager.STREAM_MUSIC, 80).startTone(ToneGenerator.TONE_CDMA_SOFT_ERROR_LITE, 1000)
-    }
 
     fun maybeDim() {
         val modeSetter = modeHand.whoseOnTop()

@@ -1,14 +1,12 @@
 package com.md
 
-import android.os.Handler
-import android.os.SystemClock
-import com.md.modesetters.ModeSetter
-import com.md.modesetters.TtsSpeaker
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import android.content.Context
 
 interface ToneManager {
     fun backupTone()
     fun errorTone()
+    fun keepHeadphoneAlive()
+
+    fun maybeStartTone(context: Context)
+    fun maybeStopTone()
 }
