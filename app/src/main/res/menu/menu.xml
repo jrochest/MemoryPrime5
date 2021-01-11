@@ -55,7 +55,6 @@
 		android:title="cancel timer"
 		app:showAsAction="ifRoom" />
 	<item
-		android:icon="@android:drawable/ic_menu_save"
 		android:id="@+id/restore"
 		android:title="Restore from zip. Requires clearing storage first"/>
 </menu>
