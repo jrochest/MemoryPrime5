@@ -111,7 +111,9 @@ object BackupToUsbManager {
                 )
             }
 
-            if (shouldSpeak) TtsSpeaker.speak("backup finished: " + deferred.await())
+            deferred.await()
+            // We don't really need this due to the toasts.
+            // if (shouldSpeak) TtsSpeaker.speak("backup finished: " + deferred.await())
         }
     }
 
