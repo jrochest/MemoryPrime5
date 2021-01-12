@@ -77,8 +77,8 @@ object BackupToUsbManager {
 
         val request = PeriodicWorkRequest.Builder(
                 BackupWorker::class.java,
-                MIN_PERIODIC_INTERVAL_MILLIS, TimeUnit.MILLISECONDS,
-                MIN_PERIODIC_FLEX_MILLIS, TimeUnit.MILLISECONDS)
+                2 * MIN_PERIODIC_INTERVAL_MILLIS, TimeUnit.MILLISECONDS,
+                2 * MIN_PERIODIC_FLEX_MILLIS, TimeUnit.MILLISECONDS)
                 .setConstraints(constraints)
                 .build()
 
