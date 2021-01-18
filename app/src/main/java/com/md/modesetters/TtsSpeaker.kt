@@ -10,10 +10,19 @@ object TtsSpeaker : TextToSpeech.OnInitListener {
     private var tts: TextToSpeech? = null
     private var statusResult: Int? = null
 
-    public fun setup(context: Context) {
+    fun setup(context: Context) {
         tts = TextToSpeech(context, this)
     }
 
+    private val errors = mutableSetOf<String>()
+
+    @JvmStatic
+    fun error(message: String) {
+        if (errors.contains(message)) return
+        errors.add(message)
+
+        speak("Error: $message")
+    }
 
     @JvmStatic
     @JvmOverloads

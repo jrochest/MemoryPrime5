@@ -157,10 +157,12 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
             } else {
                 ""
             }
-            val uniquePathToString = "$zeroPadding$whichDirToPutIn/"
-            filename = DbContants.getAudioLocation() + uniquePathToString + filename
+            val twoCharDirectoryString = "$zeroPadding$whichDirToPutIn/"
+            filename = DbContants.getAudioLocation() + twoCharDirectoryString + filename
+
             if (!filename.contains("wav") && !filename.contains("mp3") && !filename.contains("m4a")) {
                 filename += ".mp3"
+                TtsSpeaker.error("mp3 had to be concatenated")
             }
             return filename
         }
