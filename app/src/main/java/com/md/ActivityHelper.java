@@ -18,6 +18,7 @@ import com.md.modesetters.SettingModeSetter;
 import com.md.utils.ToastSingleton;
 import com.md.workers.BackupPreferences;
 import com.md.workers.BackupToUsbManager;
+import com.md.workers.IncrementalBackupManager;
 
 public class ActivityHelper {
 
@@ -52,12 +53,15 @@ public class ActivityHelper {
 			}
 		});
 
-		menu.findItem(R.id.backup_previous_location).setOnMenuItemClickListener(new OnMenuItemClickListener() {
-			@Override
-			public boolean onMenuItemClick(MenuItem item) {
-				BackupToUsbManager.INSTANCE.createAndWriteZipBackToPreviousLocation(activity, activity.getContentResolver(), true);
-				return true;
-			}
+		menu.findItem(R.id.backup_previous_location).setOnMenuItemClickListener(item -> {
+			BackupToUsbManager.INSTANCE.createAndWriteZipBackToPreviousLocation(activity, activity.getContentResolver(), true);
+			return true;
+		});
+
+		menu.findItem(R.id.incremental_backup).setOnMenuItemClickListener(item -> {
+			IncrementalBackupManager.INSTANCE.createAndWriteZipBackToPreviousLocation(
+					activity, activity.getContentResolver(), true);
+			return true;
 		});
 
 		menu.findItem(R.id.restore).setOnMenuItemClickListener(new OnMenuItemClickListener() {

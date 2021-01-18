@@ -8,6 +8,10 @@
 		app:showAsAction="always"
 		android:title="Run backup now."/>
 	<item
+		android:icon="@android:drawable/ic_popup_sync"
+		android:id="@+id/incremental_backup"
+		android:title="Incremental backup."/>
+	<item
 		android:id="@+id/creationModeMenuItem"
 		android:title="New Note"
 		android:icon="@android:drawable/ic_menu_add"
