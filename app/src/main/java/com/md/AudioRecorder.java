@@ -39,11 +39,9 @@ public class AudioRecorder {
 	}
 
 	public static boolean deleteFile(String fileName) {
-
 		String path = AudioPlayer.sanitizePath(fileName);
 		File file = new File(path);
 		return file.delete();
-
 	}
 
 	/**
