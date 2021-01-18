@@ -9,6 +9,7 @@ import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.work.*
 import androidx.work.PeriodicWorkRequest.MIN_PERIODIC_FLEX_MILLIS
 import androidx.work.PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS
+import com.md.AudioPlayer
 import com.md.MemPrimeManager
 import com.md.SpacedRepeaterActivity
 import com.md.modesetters.TtsSpeaker
@@ -19,6 +20,7 @@ import kotlinx.coroutines.*
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
+import java.io.PrintWriter
 import java.util.concurrent.TimeUnit
 
 
@@ -175,6 +177,15 @@ object BackupToUsbManager {
                         if (shouldSpeak) TtsSpeaker.speak("security exception for $uri")
                     }
                 }
+            }
+        }
+    }
+
+    fun markPathAsUpdated(path: String) {
+        GlobalScope.launch(Dispatchers.IO) {
+            val audioDirectory = AudioPlayer.getAudioDirectory(path)
+            PrintWriter(audioDirectory + "updateTime.txt").use {
+                it.println(System.currentTimeMillis())
             }
         }
     }

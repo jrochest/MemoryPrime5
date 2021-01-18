@@ -6,11 +6,11 @@ import java.util.Random;
 
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaRecorder;
-import android.util.Log;
 
 import com.md.modesetters.CreateModeSetter;
 import com.md.modesetters.TtsSpeaker;
 import com.md.utils.ToastSingleton;
+import com.md.workers.BackupToUsbManager;
 
 public class AudioRecorder {
 	private static final String sessionSuffixTwoDigitNumber = createSuffix();
@@ -24,7 +24,7 @@ public class AudioRecorder {
 	}
 
 	private MediaRecorder recorder = null;
-	private String path;
+	private final String path;
 	private final String originalFile;
 	boolean recorded = false;
 
@@ -84,6 +84,7 @@ public class AudioRecorder {
 			fileMp3.delete();
 		} else {
 			recorded = true;
+			BackupToUsbManager.INSTANCE.markPathAsUpdated(originalFile);
 		}
 	}
 
