@@ -142,7 +142,7 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
         }
 
         @JvmStatic
-        fun sanitizePath(filename: String): String {
+        fun getAudioDirectory(filename: String): String {
             var filename = filename
             var basename = filename.replace(".mp3", "").replace(".wav", "").replace(".m4a", "")
             // Cut off the negative sign. Just used for dir name.
@@ -158,7 +158,12 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
                 ""
             }
             val twoCharDirectoryString = "$zeroPadding$whichDirToPutIn/"
-            filename = DbContants.getAudioLocation() + twoCharDirectoryString + filename
+            return DbContants.getAudioLocation() + twoCharDirectoryString
+        }
+
+        @JvmStatic
+        fun sanitizePath(original: String): String {
+            var filename = getAudioDirectory(original) + original
 
             if (!filename.contains("wav") && !filename.contains("mp3") && !filename.contains("m4a")) {
                 filename += ".mp3"
