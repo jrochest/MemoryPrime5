@@ -448,11 +448,8 @@ public class CreateModeSetter extends ModeSetter {
 					}
 
 					private void startRecording(final int questionIndex) {
-						long currentTimeMillis = System.currentTimeMillis();
-
 						if (questionIndex == ANSWER_INDEX) {
-							String answerName = currentTimeMillis + ".m4a";
-							answer = new AudioRecorder(answerName);
+							answer = new AudioRecorder();
 							try {
 								answer.start();
 							} catch (IOException e) {
@@ -461,8 +458,7 @@ public class CreateModeSetter extends ModeSetter {
 							}
 
 						} else {
-							String questionName = currentTimeMillis + ".m4a";
-							question = new AudioRecorder(questionName);
+							question = new AudioRecorder();
 							try {
 								question.start();
 							} catch (IOException e) {

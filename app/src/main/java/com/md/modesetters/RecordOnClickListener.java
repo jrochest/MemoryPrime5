@@ -42,7 +42,7 @@ public class RecordOnClickListener implements OnTouchListener {
 				switch (event.getAction()) {
 				case MotionEvent.ACTION_DOWN: {
 					AudioPlayer.getInstance().pause();
-					audioRecorder = new AudioRecorder(System.currentTimeMillis()+".m4a");
+					audioRecorder = new AudioRecorder();
 					audioRecorder.start();
 					return true;
 				}
