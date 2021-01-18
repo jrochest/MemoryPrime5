@@ -132,25 +132,15 @@ public class LearningModeSetter extends ModeSetter implements
         });
 
         View audioFocusToggle = memoryDroid.findViewById(R.id.audio_focus_toggle);
-        audioFocusToggle.setOnKeyListener(
-                new View.OnKeyListener() {
-                    @Override
-                    public boolean onKey(View view, int keyCode, KeyEvent keyEvent) {
-                        // BR301 sends an enter command, which we want to ignore.
-                        if (keyCode == KeyEvent.KEYCODE_ENTER) {
-                            return true;
-                        }
-                        return false;
-                    }
-                }
-        );
 
-        audioFocusToggle.setOnClickListener(new MultiClickListener() {
-            @Override
-            public void onMultiClick(View v) {
-                // Release audio focus since the dialog prevents keyboards from controlling memprime.
-                mActivity.maybeChangeAudioFocus(!mActivity.hasAudioFocus());
+        audioFocusToggle.setOnClickListener(v -> {
+            boolean shouldRepeat = AudioPlayer.getInstance().getShouldRepeat();
+            if (shouldRepeat) {
+                AudioPlayer.getInstance().pause();
+            } else {
+                AudioPlayer.getInstance().unpause();
             }
+            AudioPlayer.getInstance().setShouldRepeat(!shouldRepeat);
         });
     }
 

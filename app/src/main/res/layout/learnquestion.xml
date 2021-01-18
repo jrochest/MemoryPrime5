@@ -12,7 +12,7 @@
     <Button
         style="@style/learn_button_style"
         android:id="@+id/audio_focus_toggle"
-        android:text="Audio Focus"
+        android:text="Repeat"
         app:layout_constraintLeft_toRightOf="@+id/rerecord"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintRight_toLeftOf="@+id/deleteButton"

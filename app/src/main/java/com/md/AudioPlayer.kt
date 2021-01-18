@@ -113,6 +113,20 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
         return true
     }
 
+    fun pause() {
+        val mp = mp ?: return
+        if (mp.isPlaying) {
+            mp.pause()
+        }
+    }
+
+    fun unpause() {
+        val mp = mp ?: return
+        if (!mp.isPlaying) {
+            mp.start();
+        }
+    }
+
     companion object {
         @JvmStatic
         val instance: AudioPlayer by lazy {  AudioPlayer() }
