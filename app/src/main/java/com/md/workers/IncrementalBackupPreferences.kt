@@ -2,7 +2,6 @@ package com.md.workers
 
 import android.content.Context
 import android.net.Uri
-import androidx.core.content.edit
 
 object IncrementalBackupPreferences {
     const val REQUEST_CODE_FOR_LOCATION_1 = 169
@@ -24,33 +23,15 @@ object IncrementalBackupPreferences {
             REQUEST_CODE_FOR_LOCATION_4 to BACKUP_LOCATION_KEY_4
     )
 
-    fun isBackupFresh(context: Context, key: String) : Boolean {
-        return context.getSharedPreferences(BACKUP_LOCATION_FILE, Context.MODE_PRIVATE).getBoolean(key + "is_stale", false)
-    }
-
-    fun markBackupFresh(context: Context, key: String, newValue: Boolean) {
-        context.getSharedPreferences(BACKUP_LOCATION_FILE, Context.MODE_PRIVATE).edit {
-            putBoolean(key + "is_stale", newValue)
-        }
-    }
-
     fun getBackupLocations(context: Context): MutableMap<String, Uri> {
         val sharedPref = context.getSharedPreferences(BACKUP_LOCATION_FILE, Context.MODE_PRIVATE)
 
         val backupLocations = mutableMapOf<String, Uri>()
         requestCodeToKey.values.forEach { locationKey ->
-            if (!isBackupFresh(context, locationKey)) {
                 sharedPref.getString(locationKey, null)?.let {
                     backupLocations.put(locationKey, Uri.parse(it))
                 }
-            }
         }
         return backupLocations
-    }
-
-    fun markAllStale(context: Context) {
-        requestCodeToKey.values.forEach { key ->
-            markBackupFresh(context, key, false)
-        }
     }
 }
