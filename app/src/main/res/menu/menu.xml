@@ -2,20 +2,21 @@
 <menu
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto">
+
 	<item
-		android:icon="@android:drawable/ic_menu_save"
-		android:id="@+id/backup_previous_location"
-		app:showAsAction="always"
-		android:title="Run backup now."/>
-	<item
-		android:icon="@android:drawable/ic_popup_sync"
 		android:id="@+id/incremental_backup"
+		android:icon="@android:drawable/ic_popup_sync"
+		app:showAsAction="always"
 		android:title="Incremental backup."/>
 	<item
 		android:id="@+id/creationModeMenuItem"
 		android:title="New Note"
 		android:icon="@android:drawable/ic_menu_add"
 		app:showAsAction="always" />
+	<item
+		android:icon="@android:drawable/ic_menu_save"
+		android:id="@+id/backup_previous_location"
+		android:title="Run backup now."/>
 	<item
 		android:id="@+id/learningModeMenuItem"
 		android:title="Learning"
