@@ -15,13 +15,11 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 
 
-object RestoreFromZipManager {
-    const val REQUEST_CODE = 1170
+object RestoreFromIncrementalDirectoryManager {
+    const val REQUEST_CODE = 2170
 
     fun openZipFileDocument(activity: Activity) {
-        val exportIntent = Intent(Intent.ACTION_OPEN_DOCUMENT)
-        exportIntent.addCategory(Intent.CATEGORY_OPENABLE)
-        exportIntent.type = "application/zip"
+        val exportIntent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
         startActivityForResult(activity, exportIntent, REQUEST_CODE, null)
     }
 
@@ -33,7 +31,6 @@ object RestoreFromZipManager {
     ): Boolean {
         if (requestCode != REQUEST_CODE) return false
 
-
         val sourceTreeUri: Uri = data.data ?: return false
         contentResolver.takePersistableUriPermission(
                 sourceTreeUri,
@@ -41,7 +38,7 @@ object RestoreFromZipManager {
         )
 
         GlobalScope.launch(Dispatchers.Main) {
-            activity.backupTone()
+            TtsSpeaker.speak("Restoring")
 
             val deferred = async(Dispatchers.IO) {
                 restoreInBackground(contentResolver, sourceTreeUri, activity.filesDir)

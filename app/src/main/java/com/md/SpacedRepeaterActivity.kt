@@ -258,6 +258,8 @@ class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager by ToneMana
         }
 
         if (requestCode == RestoreFromZipManager.REQUEST_CODE && RestoreFromZipManager.restoreFromZip(this, data, requestCode, contentResolver)) return
+
+        if (requestCode == RestoreFromIncrementalDirectoryManager.REQUEST_CODE && RestoreFromIncrementalDirectoryManager.restoreFromZip(this, data, requestCode, contentResolver)) return
     }
 
     @JvmOverloads

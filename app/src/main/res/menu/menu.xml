@@ -61,5 +61,8 @@
 		app:showAsAction="ifRoom" />
 	<item
 		android:id="@+id/restore"
-		android:title="Restore from zip. Requires clearing storage first"/>
+		android:title="Restore from single zip. Requires clearing storage first"/>
+	<item
+		android:id="@+id/incremental_restore"
+		android:title="Restore from incremental directory. Requires clearing storage first"/>
 </menu>
