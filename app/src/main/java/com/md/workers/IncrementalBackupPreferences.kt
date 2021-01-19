@@ -11,7 +11,7 @@ object IncrementalBackupPreferences {
 
     const val BACKUP_LOCATION_KEY_1 = "backup_location_key"
     const val BACKUP_LOCATION_KEY_2 = "backup_location_key_2"
-    const val BACKUP_LOCATION_KEY_3 = "backup_location_key_3"
+    const val BACKUP_LOCATION_KEY_3 = "backup_location_key_3b"
     const val BACKUP_LOCATION_KEY_4 = "backup_location_key_4"
 
     const val BACKUP_LOCATION_FILE = "incremental_backup_locations_prefs"

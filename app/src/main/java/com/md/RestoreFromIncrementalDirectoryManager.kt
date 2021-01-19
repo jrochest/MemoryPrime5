@@ -5,6 +5,7 @@ import android.content.ContentResolver
 import android.content.Intent
 import android.net.Uri
 import androidx.core.app.ActivityCompat.startActivityForResult
+import androidx.documentfile.provider.DocumentFile
 import com.md.modesetters.TtsSpeaker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -41,7 +42,7 @@ object RestoreFromIncrementalDirectoryManager {
             TtsSpeaker.speak("Restoring")
 
             val deferred = async(Dispatchers.IO) {
-                restoreInBackground(contentResolver, sourceTreeUri, activity.filesDir)
+                restoreInBackground(activity, contentResolver, sourceTreeUri, activity.filesDir)
             }
 
             TtsSpeaker.speak("Restore finished. Finishing activity" + deferred.await())
@@ -92,7 +93,7 @@ object RestoreFromIncrementalDirectoryManager {
         }
     }
 
-    private fun restoreInBackground(contentResolver: ContentResolver, sourceTreeUri: Uri, filesDir: File) {
+    private fun restoreInBackground(activity: SpacedRepeaterActivity, contentResolver: ContentResolver, sourceTreeUri: Uri, filesDir: File) {
         val memPrimeDir = File(filesDir, "com.md.MemoryPrime")
         val audioMemo = File(memPrimeDir, "AudioMemo")
 
@@ -102,12 +103,26 @@ object RestoreFromIncrementalDirectoryManager {
         }
         TtsSpeaker.speak("Restoring!")
         // This moves the database that is created due to starting up the app the first time.
+
         memPrimeDir.renameTo(File(filesDir, "com.md.MemoryPrime.Old"))
 
-        contentResolver.openFileDescriptor(sourceTreeUri, "r")?.use {
-            val output = FileInputStream(it.fileDescriptor) ?: return@use
-            unzip(output, filesDir)
+        val rootDir = DocumentFile.fromTreeUri(activity, sourceTreeUri)
+
+        if (rootDir == null || !rootDir.exists()) {
+            TtsSpeaker.speak("selected directory empty!")
+            return
         }
+
+        rootDir.listFiles().forEach {
+            val fileName = it.name ?: return@forEach
+            if (fileName.endsWith(".zip")) {
+                contentResolver.openFileDescriptor(it.uri, "r")?.use {
+                    val output = FileInputStream(it.fileDescriptor) ?: return@use
+                    unzip(output, filesDir)
+                }
+            }
+        }
+
     }
 }
 
