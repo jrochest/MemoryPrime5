@@ -23,7 +23,7 @@ object MemPrimeManager {
         return absoluteFile.path.replaceBefore("com.md.MemoryPrime", "")
     }
 
-    fun zip(files: MutableList<File>, dirs: MutableList<File>, dest: FileOutputStream) : Boolean {
+    fun zip(files: List<File>, dirs: List<File>, dest: FileOutputStream) : Boolean {
         try {
             var origin: BufferedInputStream
             val out = ZipOutputStream(BufferedOutputStream(dest))
@@ -51,11 +51,6 @@ object MemPrimeManager {
                     origin.close()
 
                     fileCount++
-                    if (fileCount % 2000 == 0) {
-                        GlobalScope.launch(Dispatchers.Main) {
-                            ToastSingleton.getInstance().msg("Memprime backed up " + fileCount + " of " + size)
-                        }
-                    }
                 } catch (e: FileNotFoundException){
                     Log.e("Compress", "failed to open " + file)
 

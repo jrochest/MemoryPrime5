@@ -24,6 +24,31 @@
 		android:textSize="16sp" />
 
 	<Button
+		android:id="@+id/incremental_backup_directory"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:minHeight="100dp"
+		android:textSize="16sp" />
+	<Button
+		android:id="@+id/incremental_backup_directory_2"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:minHeight="100dp"
+		android:textSize="16sp" />
+	<Button
+		android:id="@+id/incremental_backup_directory_3"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:minHeight="100dp"
+		android:textSize="16sp" />
+	<Button
+		android:id="@+id/incremental_backup_directory_4"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:minHeight="100dp"
+		android:textSize="16sp" />
+
+	<Button
 		android:id="@+id/external_backup_directory"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"

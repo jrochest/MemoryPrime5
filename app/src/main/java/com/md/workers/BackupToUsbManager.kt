@@ -128,9 +128,9 @@ object BackupToUsbManager {
                         backupsNeeded++
                     }
                 }
-            } catch (e : FileNotFoundException) {
+            } catch (e: FileNotFoundException) {
                 System.err.println("Missing file during backup: $uri")
-            } catch (e : SecurityException) {
+            } catch (e: SecurityException) {
                 if (shouldSpeak) TtsSpeaker.speak("security exception for $uri")
             }
         }
@@ -171,9 +171,9 @@ object BackupToUsbManager {
                                 markBackupFresh(context, uri.key, newValue = true)
                             }
                         }
-                    } catch (e : FileNotFoundException) {
+                    } catch (e: FileNotFoundException) {
                         System.err.println("Missing file during backup: $uri")
-                    } catch (e : SecurityException) {
+                    } catch (e: SecurityException) {
                         if (shouldSpeak) TtsSpeaker.speak("security exception for $uri")
                     }
                 }
@@ -181,10 +181,17 @@ object BackupToUsbManager {
         }
     }
 
-    fun markPathAsUpdated(path: String) {
+    const val UPDATE_TIME_FILE_NAME = "updateTime.txt"
+
+    fun markPathAsUpdated(originalFilePath: String) {
+        val audioDirectory = AudioPlayer.getAudioDirectory(originalFilePath)
+
+        markAudioDirectoryWithUpdateTime(File(audioDirectory))
+    }
+
+    fun markAudioDirectoryWithUpdateTime(audioDirectory: File) {
         GlobalScope.launch(Dispatchers.IO) {
-            val audioDirectory = AudioPlayer.getAudioDirectory(path)
-            PrintWriter(audioDirectory + "updateTime.txt").use {
+            PrintWriter(File(audioDirectory,UPDATE_TIME_FILE_NAME)).use {
                 it.println(System.currentTimeMillis())
             }
         }

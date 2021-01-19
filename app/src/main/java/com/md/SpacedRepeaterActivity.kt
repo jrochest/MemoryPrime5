@@ -13,6 +13,8 @@ import androidx.core.view.InputDeviceCompat.SOURCE_KEYBOARD
 import com.md.modesetters.*
 import com.md.workers.BackupPreferences
 import com.md.workers.BackupToUsbManager.createAndWriteZipBackToNewLocation
+import com.md.workers.IncrementalBackupManager
+import com.md.workers.IncrementalBackupPreferences
 
 
 class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager by ToneManagerImpl() {
@@ -235,6 +237,17 @@ class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager by ToneMana
 
         if (BackupPreferences.requestCodeToKey.containsKey(requestCode) &&
                 createAndWriteZipBackToNewLocation(
+                        this,
+                        data,
+                        requestCode,
+                        contentResolver
+                )) {
+            SettingModeSetter.refreshSettings(this)
+            return
+        }
+
+        if (IncrementalBackupPreferences.requestCodeToKey.containsKey(requestCode) &&
+                IncrementalBackupManager.createAndWriteZipBackToNewLocation(
                         this,
                         data,
                         requestCode,
