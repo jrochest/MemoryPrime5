@@ -115,8 +115,9 @@ object RestoreFromIncrementalDirectoryManager {
 
         rootDir.listFiles().forEach {
             val fileName = it.name ?: return@forEach
+            val uri = it.uri
             if (fileName.endsWith(".zip")) {
-                contentResolver.openFileDescriptor(it.uri, "r")?.use {
+                contentResolver.openFileDescriptor(uri, "r")?.use {
                     val output = FileInputStream(it.fileDescriptor) ?: return@use
                     unzip(output, filesDir)
                 }
