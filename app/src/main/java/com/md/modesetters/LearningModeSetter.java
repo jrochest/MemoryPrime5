@@ -59,7 +59,7 @@ public class LearningModeSetter extends ModeSetter implements
     private SpacedRepeaterActivity memoryDroid;
     private Note currentNote;
     private int originalSize;
-    private int repCounter;
+    public int repCounter;
     private int missCounter;
     private boolean questionMode = true;
 

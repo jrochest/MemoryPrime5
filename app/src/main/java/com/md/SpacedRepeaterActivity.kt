@@ -11,7 +11,9 @@ import android.view.KeyEvent
 import android.view.Menu
 import androidx.core.view.InputDeviceCompat.SOURCE_KEYBOARD
 import com.md.modesetters.*
+import com.md.utils.ToastSingleton
 import com.md.workers.BackupPreferences
+import com.md.workers.BackupToUsbManager
 import com.md.workers.BackupToUsbManager.createAndWriteZipBackToNewLocation
 import com.md.workers.IncrementalBackupManager
 import com.md.workers.IncrementalBackupPreferences
@@ -79,9 +81,16 @@ class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager by ToneMana
 
     var modeHand = ModeHandler(this)
     override fun onBackPressed() {
+
         if (modeHand.goBack()) {
             return
         }
+
+        if (LearningModeSetter.getInstance().repCounter > 0) {
+            BackupToUsbManager.requestBackupWork(this)
+            ToastSingleton.getInstance().msg("WorkManager backup request")
+        }
+
         super.onBackPressed()
     }
 

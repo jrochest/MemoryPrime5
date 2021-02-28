@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit
 
 
 object BackupToUsbManager {
-    const val BACKUP_WORK_NAME = "BACKUP_WORK_NAME"
+    const val BACKUP_WORK_NAME = "BACKUP_WORK_NAME_AFTER"
 
     fun openZipFileDocument(activity: Activity, requestCode: Int) {
         val exportIntent = Intent(Intent.ACTION_CREATE_DOCUMENT)
@@ -70,28 +70,20 @@ object BackupToUsbManager {
         val sharedPref = context.getSharedPreferences(BACKUP_LOCATION_FILE, Context.MODE_PRIVATE)
         sharedPref.edit().putString(locationKey, sourceTreeUri.toString()).apply()
 
+        return true
+    }
+
+    fun requestBackupWork(context: Context) {
         val constraints = Constraints.Builder()
                 .setRequiresBatteryNotLow(true)
                 .setRequiresDeviceIdle(true)
                 .setRequiresCharging(false)
                 .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
                 .build()
+        val request = OneTimeWorkRequest.Builder(BackupWorker::class.java)
+                .setConstraints(constraints).build()
 
-        val request = PeriodicWorkRequest.Builder(
-                BackupWorker::class.java,
-                2 * MIN_PERIODIC_INTERVAL_MILLIS, TimeUnit.MILLISECONDS,
-                2 * MIN_PERIODIC_FLEX_MILLIS, TimeUnit.MILLISECONDS)
-                .setConstraints(constraints)
-                .build()
-
-        // Schedule a backup and replace the old backup.
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                BACKUP_WORK_NAME,
-                ExistingPeriodicWorkPolicy.REPLACE,
-                request
-        )
-
-        return true
+        WorkManager.getInstance(context).enqueue(request)
     }
 
     private fun backupToUris(
