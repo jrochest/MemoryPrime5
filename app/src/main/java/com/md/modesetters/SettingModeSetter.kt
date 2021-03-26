@@ -76,11 +76,7 @@ object SettingModeSetter : ModeSetter(), ItemDeletedHandler {
     private fun Button.specifyNewIncrementalBackupLocation(backupLocationName: String, activity: Activity, requestCode: Int) {
         val backupLocation = context.getSharedPreferences(IncrementalBackupPreferences.BACKUP_LOCATION_FILE, Context.MODE_PRIVATE).getString(IncrementalBackupPreferences.requestCodeToKey[requestCode], null)
         if (backupLocation != null) {
-
-
             setText(backupLocationName + ":\n" +  IncrementalBackupPreferences.simplifyName(backupLocation) + "\n")
-
-
         } else {
             setText("$backupLocationName: Tap to set")
         }
@@ -90,7 +86,8 @@ object SettingModeSetter : ModeSetter(), ItemDeletedHandler {
     private fun Button.specifyNewBackupLocation(backupLocationName: String, activity: Activity, requestCode: Int) {
         val backupLocation = context.getSharedPreferences(BackupPreferences.BACKUP_LOCATION_FILE, Context.MODE_PRIVATE).getString(BackupPreferences.requestCodeToKey[requestCode], null)
         if (backupLocation != null) {
-            setText(backupLocationName + ":\n" + backupLocation)
+
+            setText(backupLocationName + ":\n" +  BackupPreferences.simplifyName(backupLocation) + "\n")
         } else {
             setText("$backupLocationName: Tap to set")
         }

@@ -3,6 +3,7 @@ package com.md.workers
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.edit
+import java.net.URLDecoder
 
 object BackupPreferences {
     const val REQUEST_CODE_FOR_LOCATION_1 = 69
@@ -52,5 +53,9 @@ object BackupPreferences {
         requestCodeToKey.values.forEach { key ->
             markBackupFresh(context, key, false)
         }
+    }
+
+    fun simplifyName(backupLocation: String): String {
+        return URLDecoder.decode(backupLocation, "UTF-8")
     }
 }

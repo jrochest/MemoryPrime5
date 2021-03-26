@@ -38,6 +38,6 @@ object IncrementalBackupPreferences {
 
     fun simplifyName(backupLocation: String): String {
         val decoded: String = URLDecoder.decode(backupLocation, "UTF-8")
-        return decoded.substringAfterLast("/")
+        return decoded + "\n" + decoded.substringAfterLast("/")
     }
 }
