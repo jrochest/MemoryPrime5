@@ -2,6 +2,7 @@ package com.md.workers
 
 import android.content.Context
 import android.net.Uri
+import java.net.URLDecoder
 
 object IncrementalBackupPreferences {
     const val REQUEST_CODE_FOR_LOCATION_1 = 169
@@ -33,5 +34,10 @@ object IncrementalBackupPreferences {
                 }
         }
         return backupLocations
+    }
+
+    fun simplifyName(backupLocation: String): String {
+        val decoded: String = URLDecoder.decode(backupLocation, "UTF-8")
+        return decoded.substringAfterLast("/")
     }
 }

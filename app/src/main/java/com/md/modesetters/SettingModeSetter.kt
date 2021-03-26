@@ -15,6 +15,7 @@ import com.md.workers.BackupPreferences.REQUEST_CODE_FOR_LOCATION_4
 import com.md.workers.BackupToUsbManager.openZipFileDocument
 import com.md.workers.IncrementalBackupManager
 import com.md.workers.IncrementalBackupPreferences
+import java.net.URLDecoder
 
 object SettingModeSetter : ModeSetter(), ItemDeletedHandler {
     fun setup(memoryDroid: Activity?, modeHand: ModeHandler?) {
@@ -75,7 +76,11 @@ object SettingModeSetter : ModeSetter(), ItemDeletedHandler {
     private fun Button.specifyNewIncrementalBackupLocation(backupLocationName: String, activity: Activity, requestCode: Int) {
         val backupLocation = context.getSharedPreferences(IncrementalBackupPreferences.BACKUP_LOCATION_FILE, Context.MODE_PRIVATE).getString(IncrementalBackupPreferences.requestCodeToKey[requestCode], null)
         if (backupLocation != null) {
-            setText(backupLocationName + ":\n" + backupLocation)
+
+
+            setText(backupLocationName + ":\n" +  IncrementalBackupPreferences.simplifyName(backupLocation) + "\n")
+
+
         } else {
             setText("$backupLocationName: Tap to set")
         }
