@@ -87,6 +87,7 @@ class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager by ToneMana
         }
 
         if (LearningModeSetter.getInstance().repCounter > 0) {
+            // WIP_TEMP
             BackupToUsbManager.requestBackupWork(this)
             ToastSingleton.getInstance().msg("WorkManager backup request")
         }
