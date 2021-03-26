@@ -16,7 +16,7 @@
 		android:minHeight="100dp"
 		android:textOff="Look ahead off"
 		android:textOn="Look ahead on"
-		android:textSize="16sp" />
+		android:textSize="12sp" />
 
 	<ToggleButton
 		android:id="@+id/repeat"
@@ -25,56 +25,56 @@
 		android:minHeight="100dp"
 		android:textOff="Repeat off"
 		android:textOn="Repeat on"
-		android:textSize="16sp" />
+		android:textSize="12sp" />
 
 	<Button
 		android:id="@+id/incremental_backup_directory"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:minHeight="100dp"
-		android:textSize="16sp" />
+		android:textSize="12sp" />
 	<Button
 		android:id="@+id/incremental_backup_directory_2"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:minHeight="100dp"
-		android:textSize="16sp" />
+		android:textSize="12sp" />
 	<Button
 		android:id="@+id/incremental_backup_directory_3"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:minHeight="100dp"
-		android:textSize="16sp" />
+		android:textSize="12sp" />
 	<Button
 		android:id="@+id/incremental_backup_directory_4"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:minHeight="100dp"
-		android:textSize="16sp" />
+		android:textSize="12sp" />
 
 	<Button
 		android:id="@+id/external_backup_directory"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:minHeight="100dp"
-		android:textSize="16sp" />
+		android:textSize="12sp" />
 	<Button
 		android:id="@+id/external_backup_directory_2"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:minHeight="100dp"
-		android:textSize="16sp" />
+		android:textSize="12sp" />
 	<Button
 		android:id="@+id/external_backup_directory_3"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:minHeight="100dp"
-		android:textSize="16sp" />
+		android:textSize="12sp" />
 	<Button
 		android:id="@+id/external_backup_directory_4"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:minHeight="100dp"
-		android:textSize="16sp" />
+		android:textSize="12sp" />
 </LinearLayout>
 </ScrollView>
