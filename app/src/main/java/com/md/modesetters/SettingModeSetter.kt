@@ -1,7 +1,9 @@
 package com.md.modesetters
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Context
+import android.content.SharedPreferences
 import android.widget.Button
 import android.widget.ToggleButton
 import com.md.CategorySingleton
@@ -15,7 +17,6 @@ import com.md.workers.BackupPreferences.REQUEST_CODE_FOR_LOCATION_4
 import com.md.workers.BackupToUsbManager.openZipFileDocument
 import com.md.workers.IncrementalBackupManager
 import com.md.workers.IncrementalBackupPreferences
-import java.net.URLDecoder
 
 object SettingModeSetter : ModeSetter(), ItemDeletedHandler {
     fun setup(memoryDroid: Activity?, modeHand: ModeHandler?) {
@@ -74,23 +75,41 @@ object SettingModeSetter : ModeSetter(), ItemDeletedHandler {
     }
 
     private fun Button.specifyNewIncrementalBackupLocation(backupLocationName: String, activity: Activity, requestCode: Int) {
-        val backupLocation = context.getSharedPreferences(IncrementalBackupPreferences.BACKUP_LOCATION_FILE, Context.MODE_PRIVATE).getString(IncrementalBackupPreferences.requestCodeToKey[requestCode], null)
+        val key = IncrementalBackupPreferences.requestCodeToKey[requestCode]
+        val prefFile = context.getSharedPreferences(IncrementalBackupPreferences.BACKUP_LOCATION_FILE, Context.MODE_PRIVATE)
+        val backupLocation = prefFile.getString(key, null)
+
         if (backupLocation != null) {
-            setText(backupLocationName + ":\n" +  IncrementalBackupPreferences.simplifyName(backupLocation) + "\n")
+            setText(backupLocationName + ":\n" + IncrementalBackupPreferences.simplifyName(backupLocation) + "\n")
         } else {
             setText("$backupLocationName: Tap to set")
         }
         setOnClickListener { IncrementalBackupManager.openBackupDir(activity, requestCode) }
+        addLongClickToClear(prefFile, key)
+    }
+
+    private fun Button.addLongClickToClear(prefFile: SharedPreferences, key: String?) {
+        setOnLongClickListener {
+            AlertDialog.Builder(context).setMessage("Stop backing up to this location?")
+                    .setCancelable(true).setPositiveButton("Yes") { dialog, _ ->
+                        prefFile.edit().remove(key).apply()
+                        setText("Cleared!: Tap to set")
+                    }
+                    .setNegativeButton("No") { dialog, _ -> }.create().show()
+            true
+        }
     }
 
     private fun Button.specifyNewBackupLocation(backupLocationName: String, activity: Activity, requestCode: Int) {
-        val backupLocation = context.getSharedPreferences(BackupPreferences.BACKUP_LOCATION_FILE, Context.MODE_PRIVATE).getString(BackupPreferences.requestCodeToKey[requestCode], null)
+        val key = BackupPreferences.requestCodeToKey[requestCode]
+        val prefFile = context.getSharedPreferences(BackupPreferences.BACKUP_LOCATION_FILE, Context.MODE_PRIVATE)
+        val backupLocation = prefFile.getString(key, null)
         if (backupLocation != null) {
-
-            setText(backupLocationName + ":\n" +  BackupPreferences.simplifyName(backupLocation) + "\n")
+            setText(backupLocationName + ":\n" + BackupPreferences.simplifyName(backupLocation) + "\n")
         } else {
             setText("$backupLocationName: Tap to set")
         }
         setOnClickListener { openZipFileDocument(activity, requestCode) }
+        addLongClickToClear(prefFile, key)
     }
 }
