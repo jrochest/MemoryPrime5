@@ -165,10 +165,12 @@ object IncrementalBackupManager {
                         }
                     } else { // Else it's the database.
                         // Files only. No directories
-                        if (databaseOrAudioDirectory.endsWith(".db")) {
+                        if (databaseOrAudioDirectory.name.endsWith(".db")) {
                             // This if adds memory_droid.db, but not memory_droid.db-journal
                             databaseLastModTime = databaseOrAudioDirectory.lastModified()
                             databaseFilesToZip.add(databaseOrAudioDirectory)
+                        } else {
+                            println("backup ignoring non-db file: >$databaseOrAudioDirectory<")
                         }
                     }
                 }
@@ -196,7 +198,7 @@ object IncrementalBackupManager {
                         for (attempt in 1..3) {
                             databaseZip = backupRoot.createFile("application/zip", "database.zip")
                             if (databaseZip == null) {
-                                TtsSpeaker.error("Database backup failed. Try $attempt")
+                                TtsSpeaker.error("Database backup create failed. Try $attempt")
                             } else {
                                 break
                             }
@@ -214,6 +216,7 @@ object IncrementalBackupManager {
                             continue
                         }
                         val output = FileOutputStream(descriptor)
+                        println("zipping database $databaseFilesToZip")
                         if (MemPrimeManager.zip(databaseFilesToZip, dirsToZip, output)) {
                             println("Backed up database successful")
                         } else {

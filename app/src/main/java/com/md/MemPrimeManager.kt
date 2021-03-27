@@ -37,6 +37,7 @@ object MemPrimeManager {
             val size = files.size
             files.forEach { file ->
                 try {
+                    println("zipping $file")
                     val fi = FileInputStream(file)
                     val origin = BufferedInputStream(fi, BUFFER)
                     val entry = ZipEntry(convertToZipFile(file))
