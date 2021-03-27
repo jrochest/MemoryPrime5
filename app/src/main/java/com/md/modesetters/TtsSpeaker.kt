@@ -18,6 +18,7 @@ object TtsSpeaker : TextToSpeech.OnInitListener {
 
     @JvmStatic
     fun error(message: String) {
+        println(message)
         if (errors.contains(message)) return
         errors.add(message)
 

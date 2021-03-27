@@ -43,10 +43,11 @@ public class NotesProvider extends ContentProvider {
 
 	private static final UriMatcher sUriMatcher;
 
+
 	/**
 	 * This class helps open, create, and upgrade the database file.
 	 */
-	private static class DatabaseHelper extends SQLiteOpenHelper {
+	public static class DatabaseHelper extends SQLiteOpenHelper {
 
 		DatabaseHelper(Context context) {
 			super(context, DbContants.getDatabasePath(context), null, DATABASE_VERSION);
@@ -142,12 +143,20 @@ public class NotesProvider extends ContentProvider {
 		}
 	}
 
-	private DatabaseHelper mOpenHelper;
+	public static DatabaseHelper mOpenHelper;
+
+	DatabaseHelper getOpenHelper() {
+		if (mOpenHelper == null) {
+			Context context = getContext();
+			if (context != null) {
+				mOpenHelper = new DatabaseHelper(context);
+			}
+		}
+		return mOpenHelper;
+	}
 
 	@Override
 	public boolean onCreate() {
-		mOpenHelper = new DatabaseHelper(getContext());
-
 		return true;
 	}
 
@@ -156,7 +165,7 @@ public class NotesProvider extends ContentProvider {
 			String[] selectionArgs, String sortOrder) {
 
 		// Get the database and run the query
-		SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+		SQLiteDatabase db = getOpenHelper().getReadableDatabase();
 		SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
 		qb.setTables(NOTES_TABLE_NAME);
 
@@ -270,7 +279,7 @@ public class NotesProvider extends ContentProvider {
 			values.put(AbstractNote.MARKED, false);
 		}
 
-		SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+		SQLiteDatabase db = getOpenHelper().getWritableDatabase();
 		long rowId = db.insert(NOTES_TABLE_NAME, AbstractNote.QUESTION, values);
 		if (rowId > 0) {
 			Uri noteUri = ContentUris.withAppendedId(AbstractNote.CONTENT_URI,
@@ -284,7 +293,7 @@ public class NotesProvider extends ContentProvider {
 
 	@Override
 	public int delete(Uri uri, String where, String[] whereArgs) {
-		SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+		SQLiteDatabase db = getOpenHelper().getWritableDatabase();
 		int count;
 		switch (sUriMatcher.match(uri)) {
 		case NOTES:
@@ -312,7 +321,7 @@ public class NotesProvider extends ContentProvider {
 	@Override
 	public int update(Uri uri, ContentValues values, String where,
 			String[] whereArgs) {
-		SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+		SQLiteDatabase db = getOpenHelper().getWritableDatabase();
 		int count;
 		switch (sUriMatcher.match(uri)) {
 		case NOTES:

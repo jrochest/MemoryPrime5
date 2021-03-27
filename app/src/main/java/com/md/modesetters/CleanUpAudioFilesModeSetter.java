@@ -80,21 +80,22 @@ public class CleanUpAudioFilesModeSetter extends ModeSetter {
 
 			final DbNoteEditor noteEditor = DbNoteEditor.getInstance();
 
-			Cursor query = null;
-
 			String queryString = "SELECT " + AbstractNote.QUESTION
 					+ ", " + AbstractNote.ANSWER + " FROM "
 					+ NotesProvider.NOTES_TABLE_NAME;
-
-			query = noteEditor.rawQuery(queryString);
 			final ArrayList<String> audioFiles = new ArrayList<>();
-			if (query != null) {
-				while (query.moveToNext()) {
-					audioFiles.add(query.getString(0));
-					audioFiles.add(query.getString(1));
-				}
-				query.close();
+			DbNoteEditor.DatabaseResult query = noteEditor.rawQuery(queryString);
+			if (query == null) {
+				return audioFiles;
 			}
+
+			while (query.getCursor().moveToNext()) {
+				audioFiles.add(query.getCursor().getString(0));
+				audioFiles.add(query.getCursor().getString(1));
+			}
+
+			query.getCursor().close();
+			query.getDatabase().close();
 
 			return audioFiles;
 		}

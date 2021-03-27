@@ -1,703 +1,540 @@
-package com.md;
+package com.md
 
-import java.util.Objects;
-import java.util.Vector;
-
-import android.app.Activity;
-import android.content.ContentValues;
-import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.net.Uri;
-import android.util.Log;
-
-import com.md.provider.AbstractDeck;
-import com.md.provider.AbstractNote;
-import com.md.provider.Deck;
-import com.md.provider.Note;
-import com.md.utils.ToastSingleton;
+import android.app.Activity
+import android.content.ContentValues
+import android.database.Cursor
+import android.database.sqlite.SQLiteDatabase
+import android.util.Log
+import com.md.RevisionQueue.Companion.currentDeckReviewQueue
+import com.md.provider.AbstractDeck
+import com.md.provider.AbstractNote
+import com.md.provider.Deck
+import com.md.provider.Note
+import com.md.utils.ToastSingleton
+import java.util.*
 
 /**
  * A generic activity for editing a note in a database. This can be used either
- * to simply view a note {@link Intent#ACTION_VIEW}, view and edit a note
- * {@link Intent#ACTION_EDIT}, or create a new note {@link Intent#ACTION_INSERT}
+ * to simply view a note [Intent.ACTION_VIEW], view and edit a note
+ * [Intent.ACTION_EDIT], or create a new note [Intent.ACTION_INSERT]
  * .
  */
-public class DbNoteEditor {
-
-	private String currentId;
-
-	Activity context;
-
-	public void setContext(Activity context) {
-		this.context = context;
-
-		// TODO Do this to init the database.
-		getOverdue(0);
-	}
-
-	private static DbNoteEditor instance = null;
-	private Vector<NoteEditorListener> listeners = new Vector<NoteEditorListener>();
-
-	public void addListener(NoteEditorListener listener) {
-		listeners.add(listener);
-	}
-
-	protected DbNoteEditor() {
-
-	}
-
-	// TODO make the DbNoteEditor not use a TextView to update BrowseMode
-	// Make it a callback!!!
-
-	public static DbNoteEditor getInstance() {
-		if (instance == null) {
-			instance = new DbNoteEditor();
-		}
-		return instance;
-	}
-
-	public void update(Activity activity, AbstractNote note) {
-
-		// If it's in there update it.
-		RevisionQueue.getCurrentDeckReviewQueue().updateNote((Note) note, true);
-		ContentValues values = new ContentValues();
-
-		// Bump the modification time to now.
-		noteToContentValues(note, values);
-
-		// TODO figure out how to get the ID URI
-		try {
-			activity.getContentResolver().update(AbstractNote.CONTENT_URI,
-					values, Note._ID + "=" + note.getId(), null);
-
-		} catch (Exception e) {
-			String message = e.getMessage();
-			System.out.println(message);
-		}
-	}
-
-	public AbstractNote insert(Activity activity, AbstractNote note) {
-
-		ContentValues values = new ContentValues();
-
-		// Bump the modification time to now.
-		noteToContentValues(note, values);
-
-		try {
-			Uri uri = activity.getContentResolver().insert(
-					AbstractNote.CONTENT_URI, values);
-
-			String noteId = uri.getPathSegments().get(1);
-
-			note.setId(Integer.parseInt(noteId));
-
-		} catch (Exception e) {
-
-			// TODO Log this.
-			String message = e.getMessage();
-			System.out.println(message);
-		}
-
-		return note;
-	}
-
-	private void noteToContentValues(AbstractNote note, ContentValues values) {
-		values.put(AbstractNote.GRADE, note.getGrade());
-		values.put(AbstractNote.QUESTION, note.getQuestion());
-		values.put(AbstractNote.ANSWER, note.getAnswer());
-		values.put(AbstractNote.CATEGORY, note.getCategory());
-
-		values.put(AbstractNote.EASINESS, note.getEasiness());
-		values.put(AbstractNote.ACQ_REPS, note.getAcq_reps());
-		values.put(AbstractNote.RET_REPS, note.getRet_reps());
-		values.put(AbstractNote.ACQ_REPS_SINCE_LAPSE, note
-				.getAcq_reps_since_lapse());
-		values.put(AbstractNote.RET_REPS_SINCE_LAPSE, note
-				.getRet_reps_since_lapse());
-		values.put(AbstractNote.LAPSES, note.getLapses());
-		values.put(AbstractNote.LAST_REP, note.getLast_rep());
-		values.put(AbstractNote.NEXT_REP, note.getNext_rep());
-		values.put(AbstractNote.UNSEEN, note.isUnseen());
-		values.put(AbstractNote.MARKED, note.isMarked());
-	}
-
-	public Note getFirst() {
-
-		Note returnValue = null;
-
-		Cursor query = null;
-
-		String queryString = "SELECT MIN(" + Note._ID + ") FROM "
-				+ NotesProvider.NOTES_TABLE_NAME + " WHERE "
-				+ categoryCriteria();
-
-		if (markedMode) {
-			queryString += " AND " + Note.MARKED + " = 1";
-		}
-
-		query = rawQuery(queryString);
-
-		if (query != null && query.moveToNext()) {
-			if (query.getInt(0) != 0) {
-				currentId = "" + query.getInt(0);
-				returnValue = loadDataCurrentId();
-			}
-		}
-
-		if (query != null) {
-			query.close();
-		}
-
-		return returnValue;
-
-	}
-
-	public Vector<Deck> queryDeck() {
-		Cursor query = rawQuery("SELECT * FROM "
-				+ NotesProvider.DECKS_TABLE_NAME);
-
-
-
-		Vector<Deck> vector = new Vector<Deck>();
-		if (query == null) {
-			return vector;
-		}
-
-		String keyword = "";
-		while (query.moveToNext()) {
-			keyword += "\n";
-
-			int _id = query.getInt(query.getColumnIndex("_id"));
-			String name = query.getString(query
-					.getColumnIndex(AbstractDeck.NAME));
-
-			System.out.println("name: " + name);
-
-			vector.add(new Deck(_id, name));
-		}
-
-		return vector;
-	}
-
-	public Cursor rawQuery(String queryString) {
-		Cursor query = null;
-
-		try {
-			SQLiteDatabase checkDB = SQLiteDatabase
-					.openDatabase(DbContants.getDatabasePath(), null,
-							SQLiteDatabase.OPEN_READWRITE);
-
-			query = checkDB.rawQuery(queryString, null);
-		} catch (Exception e) {
-			ToastSingleton.getInstance().error(e.getMessage());
-		}
-
-		return query;
-	}
-
-	public Vector<Integer> getUpcomingReps() {
-
-		Vector<Integer> reps = new Vector<Integer>();
-		Cursor query = null;
-
-		final int NUMBER_TO_COUNT = 12;
-
-		for (int idx = 0; idx < NUMBER_TO_COUNT; idx++) {
-
-			int currentDay = idx
-					+ CategorySingleton.getInstance().getDaysSinceStart();
-			String queryString = "SELECT COUNT(" + Note._ID + ") FROM "
-					+ NotesProvider.NOTES_TABLE_NAME + " WHERE " + currentDay
-					+ " = " + Note.NEXT_REP;
-
-			try {
-
-				query = rawQuery(queryString);
-			} catch (Exception e) {
-				String getMsg = e.getMessage();
-				System.out.println(getMsg);
-			}
-
-			Vector<Note> notes = new Vector<Note>();
-			while (query != null && query.moveToNext()) {
-				reps.add(query.getInt(0));
-			}
-
-			if (query != null) {
-				query.close();
-			}
-
-		}
-		return reps;
-
-	}
-
-	public Vector<Note> getOverdue(int category) {
-
-		// TODO make this look for ones that actually need to be reviewed.
-		Cursor query = null;
-
-		final CategorySingleton catSingleton = CategorySingleton.getInstance();
-
-		// If it's not a note that we just failed on.
-		String selection = Note.GRADE + " >= " + 2
-				// The right category name
-				+ " AND " + categoryCriteria(category)
-				// Normal overdue
-				+ " AND ((" + catSingleton.getDaysSinceStart() + " > " + Note.NEXT_REP + ") ";
-		        // Note this needs an end paren.
-
-		if (catSingleton.getLookAheadDays() == 0) {
-			// End paren
-			selection += ")";
-		} else {
-			int oldNoteDays = 20;
-			int overDueDate = catSingleton.getDaysSinceStart() + catSingleton.getLookAheadDays();
-			// Over due with look ahead.
-			selection += " OR (" + overDueDate + " > " + Note.NEXT_REP
-					// Is mature.
-					+ " AND " + Note.NEXT_REP + " - " + Note.LAST_REP + " > " + oldNoteDays + ")"
-					// End paran
-			        + ")";
-		}
-
-		try {
-			query = context.getContentResolver().query(
-					AbstractNote.CONTENT_URI, null, selection, null,
-					AbstractNote.DEFAULT_SORT_ORDER);
-		} catch (Exception e) {
-			String getMsg = e.getMessage();
-			System.out.println(getMsg);
-		}
-
-		Vector<Note> notes = new Vector<>();
-		while (query != null && query.moveToNext()) {
-			notes.add(queryGetOneNote(query));
-		}
-
-		if (query != null) {
-			query.close();
-		}
-
-		return notes;
-	}
-
-	final String[] JUST_ID_PROJECTION = new String[] { Note._ID };
-
-	private Note mNote;
-
-	private boolean markedMode;
-
-	public Note getNext() {
-		return getNext(0);
-	}
-
-	public Note getNext(int howFarToGo) {
-
-		Note returnVal = null;
-
-		Cursor query = null;
-
-		if (currentId == null) {
-			return null;
-		}
-
-		String queryString = "SELECT MIN(" + Note._ID + ") FROM "
-				+ NotesProvider.NOTES_TABLE_NAME + " WHERE " + Note._ID + " > "
-				+ (Integer.parseInt(currentId) + howFarToGo) + " AND "
-				+ categoryCriteria();
-
-		if (markedMode) {
-			queryString += " AND " + Note.MARKED + " = 1";
-		}
-
-		query = rawQuery(queryString);
-
-		// If we found nothing just go to the max.
-		if (!query.moveToFirst() || query.getInt(0) == 0) {
-
-			queryString = "SELECT MAX(" + Note._ID + ") FROM "
-					+ NotesProvider.NOTES_TABLE_NAME + " WHERE "
-					+ categoryCriteria();
-
-			if (markedMode) {
-				queryString += " AND " + Note.MARKED + " = 1";
-			}
-
-			query = rawQuery(queryString);
-		}
-
-		if (query.moveToFirst()) {
-			if (query.getInt(0) != 0) {
-				currentId = "" + query.getInt(0);
-				returnVal = loadDataCurrentId();
-			}
-		}
-
-		if (query != null) {
-			query.close();
-		}
-
-		return returnVal;
-
-	}
-
-	private Note loadDataCurrentId() {
-
-		if (currentId != null) {
-			mNote = loadNote(Integer.parseInt(currentId));
-		} else {
-			// The listener need to be able to handle null notes.
-			mNote = null;
-		}
-
-		for (NoteEditorListener listener : listeners) {
-			listener.onNoteUpdate(mNote);
-		}
-
-		return mNote;
-	}
-
-	private Note loadNote(int currentId) {
-
-		Cursor query;
-		query = context.getContentResolver().query(AbstractNote.CONTENT_URI,
-				null, Note._ID + " = " + currentId, null,
-				AbstractNote.DEFAULT_SORT_ORDER);
-
-		if (query.moveToNext()) {
-			mNote = queryGetOneNote(query);
-		} else {
-			mNote = null;
-		}
-
-		if (query != null) {
-			query.close();
-		}
-
-		return mNote;
-	}
-
-	private Note queryGetOneNote(Cursor query) {
-
-		String question = query.getString(query.getColumnIndex(Note.QUESTION));
-		String answer = query.getString(query.getColumnIndex(Note.ANSWER));
-
-		mNote = new Note(question, answer);
-
-		int id = query.getInt(query.getColumnIndex(Note._ID));
-
-		mNote.setId(id);
-
-		int grade = query.getInt(query.getColumnIndex(Note.GRADE));
-
-		mNote.setGrade(grade);
-
-		String category = query.getString(query.getColumnIndex(Note.CATEGORY));
-
-		mNote.setCategory(Integer.parseInt(category));
-
-		String unseenString = query
-				.getString(query.getColumnIndex(Note.UNSEEN));
-
-		Boolean unseen = false;
-
-		if (unseenString.equals("1")) {
-			unseen = true;
-		}
-
-		mNote.setUnseen(unseen);
-
-		String markedString = query
-				.getString(query.getColumnIndex(Note.MARKED));
-
-		Boolean marked = false;
-
-		if (markedString != null && markedString.equals("1")) {
-			marked = true;
-		}
-
-		mNote.setMarked(marked);
-
-		float easiness = query.getFloat(query.getColumnIndex(Note.EASINESS));
-
-		mNote.setEasiness(easiness);
-
-		int acq_reps = query.getInt(query.getColumnIndex(Note.ACQ_REPS));
-
-		mNote.setAcq_reps(acq_reps);
-
-		int ret_reps = query.getInt(query.getColumnIndex(Note.RET_REPS));
-
-		mNote.setRet_reps(ret_reps);
-
-		int lapses = query.getInt(query.getColumnIndex(Note.LAPSES));
-
-		mNote.setLapses(lapses);
-
-		int acq_reps_since_lapse = query.getInt(query
-				.getColumnIndex(Note.ACQ_REPS_SINCE_LAPSE));
-
-		mNote.setAcq_reps_since_lapse(acq_reps_since_lapse);
-
-		int ret_reps_since_lapse = query.getInt(query
-				.getColumnIndex(Note.RET_REPS_SINCE_LAPSE));
-
-		mNote.setRet_reps_since_lapse(ret_reps_since_lapse);
-
-		int next_rep = query.getInt(query.getColumnIndex(Note.NEXT_REP));
-
-		mNote.setNext_rep(next_rep);
-
-		int last_rep = query.getInt(query.getColumnIndex(Note.LAST_REP));
-
-		mNote.setLast_rep(last_rep);
-		return mNote;
-	}
-
-	public Note getLast() {
-		return getLast(0);
-	}
-
-	public Note getLast(int howFarToGo) {
-
-		Note returnVal = null;
-
-		Cursor query = null;
-
-		if (currentId == null) {
-			return null;
-		}
-
-		String queryString = "SELECT MAX(" + Note._ID + ") FROM "
-				+ NotesProvider.NOTES_TABLE_NAME + " WHERE " + Note._ID + " < "
-				+ (Integer.parseInt(currentId) - howFarToGo) + " AND "
-				+ categoryCriteria();
-
-		if (markedMode) {
-			queryString += " AND " + Note.MARKED + " = 1";
-		}
-
-		query = rawQuery(queryString);
-
-		// If we found nothing just go to the max.
-		if (!query.moveToFirst() || query.getInt(0) == 0) {
-
-			queryString = "SELECT MIN(" + Note._ID + ") FROM "
-					+ NotesProvider.NOTES_TABLE_NAME + " WHERE "
-					+ categoryCriteria();
-
-			if (markedMode) {
-				queryString += " AND " + Note.MARKED + " = 1";
-			}
-
-			query = rawQuery(queryString);
-		}
-
-		if (query.moveToFirst()) {
-			if (query.getInt(0) != 0) {
-				currentId = "" + query.getInt(0);
-				returnVal = loadDataCurrentId();
-			}
-		}
-
-		if (query != null) {
-			query.close();
-		}
-
-		return returnVal;
-	}
-
-	private String categoryCriteria() {
-		return categoryCriteria(CategorySingleton.getInstance()
-				.getCurrentDeck());
-	}
-
-	private String categoryCriteria(int category) {
-		return " " + Note.CATEGORY + " = '" + category + "' ";
-	}
-
-	public Note deleteCurrent(Activity context, Note note) {
-		return deleteNote(context, note);
-	}
-
-	public Note deleteNote(Activity context, Note note) {
-
-		Note returnVal = null;
-
-		if (note == null) {
-			return null;
-		}
-
-		context.getContentResolver().delete(AbstractNote.CONTENT_URI,
-				Note._ID + " = " + note.getId(), null);
-
-		if (note != null) {
-			if (!AudioRecorder.deleteFile(note.getAnswer())) {
-				Log.e(this.getClass().toString(), "Couldn't answer question "
-						+ note.getAnswer());
-			}
-
-			if (!AudioRecorder.deleteFile(note.getQuestion())) {
-				Log.e(this.getClass().toString(), "Couldn't delete question "
-						+ note.getQuestion());
-			}
-		}
-		if (currentId != null) {
-			int intCurrentId = Integer.parseInt(currentId);
-			RevisionQueue.getCurrentDeckReviewQueue().removeNote(intCurrentId);
-		}
-
-		if (Objects.equals(this.mNote, note)) {
-			returnVal = getNext();
-
-			// If double fail then clear the data.
-			if (returnVal == null) {
-				returnVal = getLast();
-
-				// Double fail no more items.
-				if (returnVal == null) {
-					currentId = null;
-					loadDataCurrentId();
-				}
-			}
-		}
-
-		return returnVal;
-	}
-
-	public Note getNote() {
-		return mNote;
-
-	}
-
-	public void debugDeleteAll() {
-		context.getContentResolver().delete(AbstractNote.CONTENT_URI, null,
-				null);
-
-		if (currentId != null) {
-			int intCurrentId = Integer.parseInt(currentId);
-			RevisionQueue.getCurrentDeckReviewQueue().removeNote(intCurrentId);
-		}
-
-	}
-
-	public Vector<Note> getAquisitionReps(int category) {
-
-		// TODO make this look for ones that actually need to be reviewed.
-		Cursor query;
-
-		String selection = Note.GRADE + " < " + 2 + " AND "
-				+ categoryCriteria(category);
-
-		query = context.getContentResolver().query(AbstractNote.CONTENT_URI,
-				null, selection, null, AbstractNote.DEFAULT_SORT_ORDER);
-
-		Vector<Note> notes = new Vector<Note>();
-		while (query != null && query.moveToNext()) {
-			notes.add(queryGetOneNote(query));
-		}
-
-		if (query != null) {
-			query.close();
-		}
-
-		return notes;
-	}
-
-	public void setMarkedMode(boolean markedMode) {
-		this.markedMode = markedMode;
-	}
-
-	public boolean isMarkedMode() {
-
-		return markedMode;
-	}
-
-	public void setNullNote() {
-		currentId = null;
-		loadDataCurrentId();
-	}
-
-	public void insertDeck(Deck deck) {
-
-		ContentValues values = new ContentValues();
-
-		// Bump the modification time to now.
-		DeckDb.deckToContentValues(deck, values);
-
-		try {
-			SQLiteDatabase checkDB = SQLiteDatabase.openDatabase(
-					DbContants.getDatabasePath(), null,
-					SQLiteDatabase.OPEN_READWRITE);
-
-			checkDB.insertOrThrow(NotesProvider.DECKS_TABLE_NAME, null, values);
-
-		} catch (Exception e) {
-			ToastSingleton.getInstance().error(e.getMessage());
-		}
-
-	}
-
-	public void deleteDeck(Deck deck) {
-
-		try {
-			SQLiteDatabase checkDB = SQLiteDatabase.openDatabase(
-					DbContants.getDatabasePath(), null,
-					SQLiteDatabase.OPEN_READWRITE);
-
-			String cause = Deck._ID + " = " + deck.getId();
-			checkDB.delete(NotesProvider.DECKS_TABLE_NAME, cause, null);
-
-		} catch (Exception e) {
-			System.out.println(e.getMessage());
-			ToastSingleton.getInstance().error(e.getMessage());
-		}
-	}
-
-	public void updateDeck(Deck deck) {
-
-		ContentValues values = new ContentValues();
-
-		// Bump the modification time to now.
-		DeckDb.deckToContentValues(deck, values);
-
-		try {
-			SQLiteDatabase checkDB = SQLiteDatabase.openDatabase(
-					DbContants.getDatabasePath(), null,
-					SQLiteDatabase.OPEN_READWRITE);
-
-			String cause = Deck._ID + " = " + deck.getId();
-
-			checkDB.update(NotesProvider.DECKS_TABLE_NAME, values, cause, null);
-		} catch (Exception e) {
-			System.out.println(e.getMessage());
-			ToastSingleton.getInstance().error(e.getMessage());
-		}
-	}
-
-	public int getDeckCount(int id) {
-
-		int deckCount = 0;
-
-		Cursor query = null;
-
-		String COUNT_COLUMN = "MyCount";
-		String queryString = "SELECT COUNT(" + Note._ID + ") AS "
-				+ COUNT_COLUMN + " FROM " + NotesProvider.NOTES_TABLE_NAME
-				+ " WHERE " + Note.CATEGORY + " = '" + id + "'";
-
-		query = rawQuery(queryString);
-
-		if (query != null) {
-			// If we found nothing just go to the max.
-			if (query.moveToFirst()) {
-				deckCount = query.getInt(query.getColumnIndex(COUNT_COLUMN));
-			}
-			query.close();
-		}
-
-		return deckCount;
-	}
+class DbNoteEditor protected constructor() {
+    private var currentId: String? = null
+    var context2: Activity? = null
+
+    fun setContext(context: Activity?) {
+        this.context2 = context
+
+        // TODO Do this to init the database.
+        getOverdue(0)
+    }
+
+    private val listeners = Vector<NoteEditorListener>()
+    fun addListener(listener: NoteEditorListener) {
+        listeners.add(listener)
+    }
+
+    fun update(activity: Activity, note: AbstractNote) {
+
+        // If it's in there update it.
+        currentDeckReviewQueue!!.updateNote((note as Note), true)
+        val values = ContentValues()
+
+        // Bump the modification time to now.
+        noteToContentValues(note, values)
+
+        // TODO figure out how to get the ID URI
+        try {
+            activity.contentResolver.update(AbstractNote.CONTENT_URI,
+                    values, Note._ID + "=" + note.getId(), null)
+        } catch (e: Exception) {
+            val message = e.message
+            println(message)
+        }
+    }
+
+    fun insert(activity: Activity, note: AbstractNote): AbstractNote {
+        val values = ContentValues()
+
+        // Bump the modification time to now.
+        noteToContentValues(note, values)
+        try {
+            val uri = activity.contentResolver.insert(
+                    AbstractNote.CONTENT_URI, values)
+            val noteId = uri!!.pathSegments[1]
+            note.id = noteId.toInt()
+        } catch (e: Exception) {
+
+            // TODO Log this.
+            val message = e.message
+            println(message)
+        }
+        return note
+    }
+
+    private fun noteToContentValues(note: AbstractNote, values: ContentValues) {
+        values.put(AbstractNote.GRADE, note.grade)
+        values.put(AbstractNote.QUESTION, note.question)
+        values.put(AbstractNote.ANSWER, note.answer)
+        values.put(AbstractNote.CATEGORY, note.category)
+        values.put(AbstractNote.EASINESS, note.easiness)
+        values.put(AbstractNote.ACQ_REPS, note.acq_reps)
+        values.put(AbstractNote.RET_REPS, note.ret_reps)
+        values.put(AbstractNote.ACQ_REPS_SINCE_LAPSE, note
+                .acq_reps_since_lapse)
+        values.put(AbstractNote.RET_REPS_SINCE_LAPSE, note
+                .ret_reps_since_lapse)
+        values.put(AbstractNote.LAPSES, note.lapses)
+        values.put(AbstractNote.LAST_REP, note.last_rep)
+        values.put(AbstractNote.NEXT_REP, note.next_rep)
+        values.put(AbstractNote.UNSEEN, note.isUnseen)
+        values.put(AbstractNote.MARKED, note.isMarked)
+    }
+
+    val first: Note?
+        get() {
+            var returnValue: Note? = null
+            var query: Cursor? = null
+            var queryString = ("SELECT MIN(" + Note._ID + ") FROM "
+                    + NotesProvider.NOTES_TABLE_NAME + " WHERE "
+                    + categoryCriteria())
+            if (isMarkedMode) {
+                queryString += " AND " + Note.MARKED + " = 1"
+            }
+            val result = rawQuery(queryString) ?: return null
+            query = result.cursor
+            if (query.moveToNext()) {
+                if (query.getInt(0) != 0) {
+                    currentId = "" + query.getInt(0)
+                    returnValue = loadDataCurrentId()
+                }
+            }
+            query.close()
+            result.database.close()
+            return returnValue
+        }
+
+    fun queryDeck(): Vector<Deck> {
+        val vector = Vector<Deck>()
+        val result = rawQuery("SELECT * FROM "
+                + NotesProvider.DECKS_TABLE_NAME) ?: return vector
+        val query = result.cursor
+        var keyword = ""
+        while (query.moveToNext()) {
+            keyword += "\n"
+            val _id = query.getInt(query.getColumnIndex("_id"))
+            val name = query.getString(query
+                    .getColumnIndex(AbstractDeck.NAME))
+            println("name: $name")
+            vector.add(Deck(_id, name))
+        }
+        result.cursor.close()
+        result.database.close()
+        return vector
+    }
+
+    class DatabaseResult(val cursor: Cursor, val database: SQLiteDatabase)
+
+    fun rawQuery(queryString: String?): DatabaseResult? {
+        var openDatabase: SQLiteDatabase? = null
+        var query: Cursor? = null
+        try {
+            openDatabase = SQLiteDatabase
+                    .openDatabase(DbContants.getDatabasePath(), null,
+                            SQLiteDatabase.OPEN_READWRITE)
+            query = openDatabase.rawQuery(queryString, null)
+        } catch (e: Exception) {
+            ToastSingleton.getInstance().error(e.message)
+            return null
+        }
+
+        return DatabaseResult(query, openDatabase)
+    }
+
+    val upcomingReps: Vector<Int>
+        get() {
+            val reps = Vector<Int>()
+            var query: DatabaseResult? = null
+            val NUMBER_TO_COUNT = 12
+            for (idx in 0 until NUMBER_TO_COUNT) {
+                val currentDay = (idx
+                        + CategorySingleton.getInstance().daysSinceStart)
+                val queryString = ("SELECT COUNT(" + Note._ID + ") FROM "
+                        + NotesProvider.NOTES_TABLE_NAME + " WHERE " + currentDay
+                        + " = " + Note.NEXT_REP)
+                try {
+                    query = rawQuery(queryString)
+                } catch (e: Exception) {
+                    val getMsg = e.message
+                    println(getMsg)
+                }
+                while (query != null && query.cursor.moveToNext()) {
+                    reps.add(query.cursor.getInt(0))
+                }
+                if (query != null) {
+                    query.cursor.close()
+                    query.database.close()
+                }
+            }
+            return reps
+        }
+
+    fun getOverdue(category: Int): Vector<Note> {
+
+        // TODO make this look for ones that actually need to be reviewed.
+        var query: Cursor? = null
+        val catSingleton = CategorySingleton.getInstance()
+
+        // If it's not a note that we just failed on.
+        var selection = (Note.GRADE + " >= " + 2 // The right category name
+                + " AND " + categoryCriteria(category) // Normal overdue
+                + " AND ((" + catSingleton.daysSinceStart + " > " + Note.NEXT_REP + ") ")
+        // Note this needs an end paren.
+        selection += if (catSingleton.lookAheadDays == 0) {
+            // End paren
+            ")"
+        } else {
+            val oldNoteDays = 20
+            val overDueDate = catSingleton.daysSinceStart + catSingleton.lookAheadDays
+            // Over due with look ahead.
+            (" OR (" + overDueDate + " > " + Note.NEXT_REP // Is mature.
+                    + " AND " + Note.NEXT_REP + " - " + Note.LAST_REP + " > " + oldNoteDays + ")" // End paran
+                    + ")")
+        }
+        try {
+            query = context2!!.contentResolver.query(
+                    AbstractNote.CONTENT_URI, null, selection, null,
+                    AbstractNote.DEFAULT_SORT_ORDER)
+        } catch (e: Exception) {
+            val getMsg = e.message
+            println(getMsg)
+        }
+        val notes = Vector<Note>()
+        while (query != null && query.moveToNext()) {
+            notes.add(queryGetOneNote(query))
+        }
+        query?.close()
+        return notes
+    }
+
+    val JUST_ID_PROJECTION = arrayOf(Note._ID)
+    var note: Note? = null
+        private set
+    var isMarkedMode = false
+    val next: Note?
+        get() = getNext(0)
+
+    fun getNext(howFarToGo: Int): Note? {
+        var returnVal: Note? = null
+        var query: DatabaseResult? = null
+        if (currentId == null) {
+            return null
+        }
+        var queryString = ("SELECT MIN(" + Note._ID + ") FROM "
+                + NotesProvider.NOTES_TABLE_NAME + " WHERE " + Note._ID + " > "
+                + (currentId!!.toInt() + howFarToGo) + " AND "
+                + categoryCriteria())
+        if (isMarkedMode) {
+            queryString += " AND " + Note.MARKED + " = 1"
+        }
+        query = rawQuery(queryString) ?: return null
+
+        // If we found nothing just go to the max.
+        if (!query.cursor.moveToFirst() || query.cursor.getInt(0) == 0) {
+            queryString = ("SELECT MAX(" + Note._ID + ") FROM "
+                    + NotesProvider.NOTES_TABLE_NAME + " WHERE "
+                    + categoryCriteria())
+            if (isMarkedMode) {
+                queryString += " AND " + Note.MARKED + " = 1"
+            }
+            var query2 = rawQuery(queryString) ?: return null
+            if (query2.cursor.moveToFirst()) {
+                if (query2.cursor.getInt(0) != 0) {
+                    currentId = "" + query2.cursor.getInt(0)
+                    returnVal = loadDataCurrentId()
+                }
+            }
+            query2.cursor.close()
+            query2.database.close()
+        }
+
+        query.cursor.close()
+        query.database.close()
+        return returnVal
+    }
+
+    private fun loadDataCurrentId(): Note? {
+        if (currentId != null) {
+            note = loadNote(currentId!!.toInt())
+        } else {
+            // The listener need to be able to handle null notes.
+            note = null
+        }
+        for (listener in listeners) {
+            listener.onNoteUpdate(note)
+        }
+        return note
+    }
+
+    private fun loadNote(currentId: Int): Note? {
+        val query: Cursor?
+        query = context2!!.contentResolver.query(AbstractNote.CONTENT_URI,
+                null, Note._ID + " = " + currentId, null,
+                AbstractNote.DEFAULT_SORT_ORDER)
+        if (query!!.moveToNext()) {
+            note = queryGetOneNote(query)
+        } else {
+            note = null
+        }
+        if (query != null) {
+            query.close()
+        }
+        return note
+    }
+
+    private fun queryGetOneNote(query: Cursor?): Note {
+        val question = query!!.getString(query.getColumnIndex(Note.QUESTION))
+        val answer = query.getString(query.getColumnIndex(Note.ANSWER))
+        note = Note(question, answer)
+        val id = query.getInt(query.getColumnIndex(Note._ID))
+        note!!.id = id
+        val grade = query.getInt(query.getColumnIndex(Note.GRADE))
+        note!!.grade = grade
+        val category = query.getString(query.getColumnIndex(Note.CATEGORY))
+        note!!.category = category.toInt()
+        val unseenString = query
+                .getString(query.getColumnIndex(Note.UNSEEN))
+        var unseen = false
+        if (unseenString == "1") {
+            unseen = true
+        }
+        note!!.isUnseen = unseen
+        val markedString = query
+                .getString(query.getColumnIndex(Note.MARKED))
+        var marked = false
+        if (markedString != null && markedString == "1") {
+            marked = true
+        }
+        note!!.isMarked = marked
+        val easiness = query.getFloat(query.getColumnIndex(Note.EASINESS))
+        note!!.easiness = easiness
+        val acq_reps = query.getInt(query.getColumnIndex(Note.ACQ_REPS))
+        note!!.acq_reps = acq_reps
+        val ret_reps = query.getInt(query.getColumnIndex(Note.RET_REPS))
+        note!!.ret_reps = ret_reps
+        val lapses = query.getInt(query.getColumnIndex(Note.LAPSES))
+        note!!.lapses = lapses
+        val acq_reps_since_lapse = query.getInt(query
+                .getColumnIndex(Note.ACQ_REPS_SINCE_LAPSE))
+        note!!.acq_reps_since_lapse = acq_reps_since_lapse
+        val ret_reps_since_lapse = query.getInt(query
+                .getColumnIndex(Note.RET_REPS_SINCE_LAPSE))
+        note!!.ret_reps_since_lapse = ret_reps_since_lapse
+        val next_rep = query.getInt(query.getColumnIndex(Note.NEXT_REP))
+        note!!.next_rep = next_rep
+        val last_rep = query.getInt(query.getColumnIndex(Note.LAST_REP))
+        note!!.last_rep = last_rep
+        return note!!
+    }
+
+    val last: Note?
+        get() = getLast(0)
+
+    fun getLast(howFarToGo: Int): Note? {
+        var returnVal: Note? = null
+        if (currentId == null) {
+            return null
+        }
+        var queryString = ("SELECT MAX(" + Note._ID + ") FROM "
+                + NotesProvider.NOTES_TABLE_NAME + " WHERE " + Note._ID + " < "
+                + (currentId!!.toInt() - howFarToGo) + " AND "
+                + categoryCriteria())
+        if (isMarkedMode) {
+            queryString += " AND " + Note.MARKED + " = 1"
+        }
+        val query = rawQuery(queryString) ?: return null
+        val cursory = query.cursor
+        // If we found nothing just go to the max.
+        if (!cursory.moveToFirst() || cursory.getInt(0) == 0) {
+            queryString = ("SELECT MIN(" + Note._ID + ") FROM "
+                    + NotesProvider.NOTES_TABLE_NAME + " WHERE "
+                    + categoryCriteria())
+            if (isMarkedMode) {
+                queryString += " AND " + Note.MARKED + " = 1"
+            }
+            val query2 = rawQuery(queryString) ?: return null
+            val cursor2 = query2.cursor
+            if (cursor2.moveToFirst()) {
+                if (cursor2.getInt(0) != 0) {
+                    currentId = "" + cursor2.getInt(0)
+                    returnVal = loadDataCurrentId()
+                }
+            }
+            cursor2.close()
+            query2.database.close()
+        }
+
+        cursory.close()
+        query.database.close()
+
+        return returnVal
+    }
+
+    private fun categoryCriteria(category: Int = CategorySingleton.getInstance()
+            .currentDeck): String {
+        return " " + Note.CATEGORY + " = '" + category + "' "
+    }
+
+    fun deleteCurrent(context: Activity, note: Note?): Note? {
+        return deleteNote(context, note)
+    }
+
+    fun deleteNote(context: Activity, note: Note?): Note? {
+        var returnVal: Note? = null
+        if (note == null) {
+            return null
+        }
+        context.contentResolver.delete(AbstractNote.CONTENT_URI,
+                Note._ID + " = " + note.id, null)
+        if (note != null) {
+            if (!AudioRecorder.deleteFile(note.answer)) {
+                Log.e(this.javaClass.toString(), "Couldn't answer question "
+                        + note.answer)
+            }
+            if (!AudioRecorder.deleteFile(note.question)) {
+                Log.e(this.javaClass.toString(), "Couldn't delete question "
+                        + note.question)
+            }
+        }
+        if (currentId != null) {
+            val intCurrentId = currentId!!.toInt()
+            currentDeckReviewQueue!!.removeNote(intCurrentId)
+        }
+        if (this.note == note) {
+            returnVal = next
+
+            // If double fail then clear the data.
+            if (returnVal == null) {
+                returnVal = last
+
+                // Double fail no more items.
+                if (returnVal == null) {
+                    currentId = null
+                    loadDataCurrentId()
+                }
+            }
+        }
+        return returnVal
+    }
+
+    fun debugDeleteAll() {
+        context2!!.contentResolver.delete(AbstractNote.CONTENT_URI, null,
+                null)
+        if (currentId != null) {
+            val intCurrentId = currentId!!.toInt()
+            currentDeckReviewQueue!!.removeNote(intCurrentId)
+        }
+    }
+
+    fun getAquisitionReps(category: Int): Vector<Note> {
+
+        // TODO make this look for ones that actually need to be reviewed.
+        val query: Cursor?
+        val selection = (Note.GRADE + " < " + 2 + " AND "
+                + categoryCriteria(category))
+        query = context2!!.contentResolver.query(AbstractNote.CONTENT_URI,
+                null, selection, null, AbstractNote.DEFAULT_SORT_ORDER)
+        val notes = Vector<Note>()
+        while (query != null && query.moveToNext()) {
+            notes.add(queryGetOneNote(query))
+        }
+        query?.close()
+        return notes
+    }
+
+    fun setNullNote() {
+        currentId = null
+        loadDataCurrentId()
+    }
+
+    fun insertDeck(deck: Deck?) {
+        val values = ContentValues()
+
+        // Bump the modification time to now.
+        DeckDb.deckToContentValues(deck, values)
+        try {
+            SQLiteDatabase.openDatabase(
+                    DbContants.getDatabasePath(), null,
+                    SQLiteDatabase.OPEN_READWRITE).use { checkDB -> checkDB.insertOrThrow(NotesProvider.DECKS_TABLE_NAME, null, values) }
+        } catch (e: Exception) {
+            ToastSingleton.getInstance().error(e.message)
+        }
+    }
+
+    fun deleteDeck(deck: Deck) {
+        try {
+            SQLiteDatabase.openDatabase(
+                    DbContants.getDatabasePath(), null,
+                    SQLiteDatabase.OPEN_READWRITE).use { checkDB ->
+                val cause = Deck._ID + " = " + deck.id
+                checkDB.delete(NotesProvider.DECKS_TABLE_NAME, cause, null)
+            }
+        } catch (e: Exception) {
+            println(e.message)
+            ToastSingleton.getInstance().error(e.message)
+        }
+    }
+
+    fun updateDeck(deck: Deck) {
+        val values = ContentValues()
+
+        // Bump the modification time to now.
+        DeckDb.deckToContentValues(deck, values)
+        try {
+            SQLiteDatabase.openDatabase(
+                    DbContants.getDatabasePath(), null,
+                    SQLiteDatabase.OPEN_READWRITE).use { checkDB ->
+                val cause = Deck._ID + " = " + deck.id
+                checkDB.update(NotesProvider.DECKS_TABLE_NAME, values, cause, null)
+            }
+        } catch (e: Exception) {
+            println(e.message)
+            ToastSingleton.getInstance().error(e.message)
+        }
+    }
+
+    fun getDeckCount(id: Int): Int {
+        var deckCount = 0
+        val COUNT_COLUMN = "MyCount"
+        val queryString = ("SELECT COUNT(" + Note._ID + ") AS "
+                + COUNT_COLUMN + " FROM " + NotesProvider.NOTES_TABLE_NAME
+                + " WHERE " + Note.CATEGORY + " = '" + id + "'")
+
+        val result = rawQuery(queryString) ?: return 0
+        val query = result.cursor
+
+        // If we found nothing just go to the max.
+        if (query.moveToFirst()) {
+            deckCount = query.getInt(query.getColumnIndex(COUNT_COLUMN))
+        }
+
+        query.close()
+        result.database.close()
+        return deckCount
+    }
+
+    companion object {
+        // TODO make the DbNoteEditor not use a TextView to update BrowseMode
+        // Make it a callback!!!
+		@JvmStatic
+		var instance: DbNoteEditor? = null
+            get() {
+                if (field == null) {
+                    field = DbNoteEditor()
+                }
+                return field
+            }
+            private set
+    }
 }

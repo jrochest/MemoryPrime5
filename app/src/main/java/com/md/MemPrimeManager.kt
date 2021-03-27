@@ -25,7 +25,7 @@ object MemPrimeManager {
 
     fun zip(files: List<File>, dirs: List<File>, dest: FileOutputStream) : Boolean {
         try {
-            var origin: BufferedInputStream
+
             val out = ZipOutputStream(BufferedOutputStream(dest))
 
             dirs.forEach {
@@ -38,7 +38,7 @@ object MemPrimeManager {
             files.forEach { file ->
                 try {
                     val fi = FileInputStream(file)
-                    origin = BufferedInputStream(fi, BUFFER)
+                    val origin = BufferedInputStream(fi, BUFFER)
                     val entry = ZipEntry(convertToZipFile(file))
                     out.putNextEntry(entry)
                     while (true) {
@@ -52,7 +52,7 @@ object MemPrimeManager {
 
                     fileCount++
                 } catch (e: FileNotFoundException){
-                    Log.e("Compress", "failed to open " + file)
+                    Log.e("Compress", "failed to open " + e)
 
                     GlobalScope.launch(Dispatchers.Main) {
                         TtsSpeaker.speak("error backing up" + file)
@@ -64,6 +64,7 @@ object MemPrimeManager {
             out.close()
             return true
         } catch (e: Exception) {
+            Log.e("Compress", "failed to open " + e)
             GlobalScope.launch(Dispatchers.Main) {
                 TtsSpeaker.speak("error backing up: $e")
             }

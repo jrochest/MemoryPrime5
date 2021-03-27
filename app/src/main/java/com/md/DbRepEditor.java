@@ -46,13 +46,13 @@ public class DbRepEditor {
 
 		values.put(AbstractRep.TIME_STAMP_MS, rep.getTimeStampMs());
 
-		SQLiteDatabase db = SQLiteDatabase
+		long rowId;
+		try (SQLiteDatabase db = SQLiteDatabase
 				.openDatabase(DbContants.getDatabasePath(), null,
-						SQLiteDatabase.OPEN_READWRITE);
+						SQLiteDatabase.OPEN_READWRITE)) {
 
-		long rowId = db.insert(REPS_TABLE_NAME, AbstractRep.INTERVAL, values);
-
-		db.close();
+			rowId = db.insert(REPS_TABLE_NAME, AbstractRep.INTERVAL, values);
+		}
 		if (rowId > 0) {
 			rep.setId(rowId);
 			System.out.println("Successfully insert rep row " + rep + " id "+ rowId);

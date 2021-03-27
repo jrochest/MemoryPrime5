@@ -25,6 +25,7 @@ import com.md.DbNoteEditor;
 import com.md.ModeHandler;
 import com.md.R;
 import com.md.provider.MemoreasyType;
+import com.md.utils.ToastSingleton;
 
 public class ImportModeSetter extends ModeSetter implements
 		android.os.Handler.Callback {
@@ -261,25 +262,17 @@ public class ImportModeSetter extends ModeSetter implements
 		 */
 		private boolean checkDataBase() {
 
-			SQLiteDatabase checkDB = null;
 
-			try {
+
+
 				String myPath = DB_PATH + DB_NAME;
-				checkDB = SQLiteDatabase.openDatabase(myPath, null,
-						SQLiteDatabase.OPEN_READONLY);
-
-			} catch (SQLiteException e) {
-
+			try (SQLiteDatabase checkDB = SQLiteDatabase.openDatabase(myPath, null,
+					SQLiteDatabase.OPEN_READONLY)) {
 				// database does't exist yet.
 				System.out.println("DbDoesn't exist");
-
+				ToastSingleton.getInstance().error("Database does not exist yet.");
+				return checkDB != null;
 			}
-
-			if (checkDB != null) {
-				checkDB.close();
-			}
-
-			return checkDB != null ? true : false;
 		}
 
 		public void openDataBase() throws SQLException {
