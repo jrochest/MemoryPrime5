@@ -73,19 +73,6 @@ object BackupToUsbManager {
         return true
     }
 
-    fun requestBackupWork(context: Context) {
-        val constraints = Constraints.Builder()
-                .setRequiresBatteryNotLow(true)
-                .setRequiresDeviceIdle(true)
-                .setRequiresCharging(false)
-                .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
-                .build()
-        val request = OneTimeWorkRequest.Builder(BackupWorker::class.java)
-                .setConstraints(constraints).build()
-
-        WorkManager.getInstance(context).enqueue(request)
-    }
-
     private fun backupToUris(
             context: Context,
             contentResolver: ContentResolver,
