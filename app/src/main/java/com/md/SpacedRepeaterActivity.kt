@@ -10,10 +10,9 @@ import android.os.Bundle
 import android.view.KeyEvent
 import android.view.Menu
 import androidx.core.view.InputDeviceCompat.SOURCE_KEYBOARD
+import com.md.AudioPlayer.Companion.instance
 import com.md.modesetters.*
-import com.md.utils.ToastSingleton
 import com.md.workers.BackupPreferences
-import com.md.workers.BackupToUsbManager
 import com.md.workers.BackupToUsbManager.createAndWriteZipBackToNewLocation
 import com.md.workers.IncrementalBackupManager
 import com.md.workers.IncrementalBackupPreferences
@@ -63,7 +62,10 @@ class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager by ToneMana
     override fun onPause() {
         super.onPause()
         // Hiding stops the repeat playback in learning mode.
-        AudioPlayer.instance.shouldRepeat = false
+        if (instance.shouldRepeat) {
+            instance.pause()
+            instance.shouldRepeat = false
+        }
 
         playbackServiceOnPause()
         maybeStopTone()
