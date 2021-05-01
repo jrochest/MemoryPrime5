@@ -26,6 +26,8 @@ import com.md.modesetters.deckchoose.InsertNewHandler;
 import com.md.provider.Deck;
 import com.md.utils.ToastSingleton;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Vector;
@@ -54,7 +56,7 @@ public class DeckChooseModeSetter extends ModeSetter {
 		this.memoryDroid = memoryDroid;
 	}
 
-	public void setupModeImpl(final Activity context) {
+	public void setupModeImpl(@NotNull final Activity context) {
 		commonSetup(context, R.layout.deckchoosetemp);
 		setupCreateMode();
 	}

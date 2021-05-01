@@ -21,6 +21,7 @@ import com.md.utils.ScreenDimmer;
 import com.md.utils.ToastSingleton;
 import com.md.workers.BackupPreferences;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
@@ -63,7 +64,7 @@ public class LearningModeSetter extends ModeSetter implements
     private int missCounter;
     private boolean questionMode = true;
 
-    public void setupModeImpl(final Activity context) {
+    public void setupModeImpl(@NotNull final Activity context) {
         originalSize = RevisionQueue.getCurrentDeckReviewQueue().getSize();
 
         lastNoteList.clear();

@@ -27,6 +27,8 @@ import com.md.R;
 import com.md.provider.MemoreasyType;
 import com.md.utils.ToastSingleton;
 
+import org.jetbrains.annotations.NotNull;
+
 public class ImportModeSetter extends ModeSetter implements
 		android.os.Handler.Callback {
 	/**
@@ -45,7 +47,7 @@ public class ImportModeSetter extends ModeSetter implements
 		this.memoryDroid = memoryDroid;
 	}
 
-	public void setupModeImpl(final Activity context) {
+	public void setupModeImpl(@NotNull final Activity context) {
 
 		commonSetup(context, R.layout.debug);
 		setupBrowsing(context);

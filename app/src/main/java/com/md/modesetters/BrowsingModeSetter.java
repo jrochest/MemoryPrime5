@@ -14,6 +14,8 @@ import com.md.NoteEditorListener;
 import com.md.R;
 import com.md.provider.Note;
 
+import org.jetbrains.annotations.NotNull;
+
 public class BrowsingModeSetter extends ModeSetter implements
 		ItemDeletedHandler {
 
@@ -40,7 +42,7 @@ public class BrowsingModeSetter extends ModeSetter implements
 
 	}
 
-	public void setupModeImpl(final Activity context) {
+	public void setupModeImpl(@NotNull final Activity context) {
 
 		commonSetup(context, R.layout.browsing);
 		setupBrowsing(context);

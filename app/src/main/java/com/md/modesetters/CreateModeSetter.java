@@ -20,6 +20,8 @@ import com.md.RevisionQueue;
 import com.md.CreateModeData.State;
 import com.md.provider.Note;
 
+import org.jetbrains.annotations.NotNull;
+
 public class CreateModeSetter extends ModeSetter {
 
 	private static CreateModeSetter instance = null;
@@ -48,7 +50,7 @@ public class CreateModeSetter extends ModeSetter {
 		parentSetup(memoryDroid, modeHand);
 	}
 
-	public void setupModeImpl(final Activity context) {
+	public void setupModeImpl(@NotNull final Activity context) {
 		commonSetup(context, R.layout.creation);
 		setupCreateMode(context);
 

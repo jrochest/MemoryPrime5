@@ -20,7 +20,6 @@
             android:name="SpacedRepeaterActivity"
             android:label="${appName}"
             android:screenOrientation="portrait"
-            android:theme="@style/MpTheme"
             android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation"
             >
             <intent-filter>

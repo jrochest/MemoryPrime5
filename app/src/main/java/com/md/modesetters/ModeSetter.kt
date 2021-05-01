@@ -15,7 +15,7 @@ abstract class ModeSetter {
     protected var mActivity: SpacedRepeaterActivity? = null
     @JvmField
     protected var modeHand: ModeHandler? = null
-    fun setupMode(context: Activity?) {
+    fun setupMode(context: Activity) {
         if (this !is DeckChooseModeSetter &&
                 !CategorySingleton.getInstance().hasCategory()) {
             ToastSingleton.getInstance().msg("No deck selected. \nUsing default")
@@ -27,7 +27,8 @@ abstract class ModeSetter {
         updateShouldRepeat()
     }
 
-    abstract fun setupModeImpl(context: Activity?)
+    abstract fun setupModeImpl(context: Activity)
+
     fun parentSetup(context: Activity?, modeHand: ModeHandler?) {
         mActivity = context as SpacedRepeaterActivity?
         this.modeHand = modeHand
@@ -81,7 +82,7 @@ abstract class ModeSetter {
 
     open fun proceed() {
         // If play is pressed setup learning mode.
-        LearningModeSetter.getInstance().setupMode(mActivity)
+        LearningModeSetter.getInstance().setupMode(mActivity!!)
     }
 
     open fun undo() {}

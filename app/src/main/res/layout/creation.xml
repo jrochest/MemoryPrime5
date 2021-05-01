@@ -4,9 +4,6 @@
     android:layout_height="match_parent"
     android:baselineAligned="false"
     android:gravity="center"
-    android:layout_marginTop="?android:attr/actionBarSize"
-    android:layout_marginBottom="?android:attr/actionBarSize"
-    android:paddingTop="40dp"
     android:orientation="vertical" >
 
     <LinearLayout

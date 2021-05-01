@@ -15,6 +15,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.util.ArrayList;
 
@@ -38,7 +40,7 @@ public class CleanUpAudioFilesModeSetter extends ModeSetter {
 		return sInstance;
 	}
 
-	public void setupModeImpl(final Activity activity) {
+	public void setupModeImpl(@NotNull final Activity activity) {
 		commonSetup(activity, R.layout.clean_up_audio_files);
 		setupBrowsing(activity);
 	}

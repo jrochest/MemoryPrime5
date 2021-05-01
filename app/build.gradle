@@ -27,7 +27,7 @@ android {
         debug {
             debuggable = true
             applicationIdSuffix = '.debug'
-            manifestPlaceholders.appName = "MemDebugPrime"
+            manifestPlaceholders.appName = "MP"
         }
     }
     compileOptions {

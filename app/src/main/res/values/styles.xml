@@ -20,18 +20,14 @@
     </style>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
         <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorPrimary">#222222</item>
+        <item name="colorPrimaryDark">#444444</item>
+        <item name="colorAccent">#990000</item>
+        <item name="colorControlNormal">#444444</item>
     </style>
-
-
-    <style name="CustomWindowTitleBackground">
-           <item name="android:background">#000000</item>
-     </style>
-
+    
     <style name="learn_button_style">
         <item name="android:textSize">20sp</item>
         <item name="android:layout_height">0dp</item>
