@@ -1,7 +1,10 @@
 package com.md.modesetters;
 
 import android.app.Activity;
+import android.os.Build;
 import android.view.View;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.view.WindowManager;
 
 import com.md.AudioPlayer;
@@ -9,6 +12,9 @@ import com.md.CategorySingleton;
 import com.md.ModeHandler;
 import com.md.SpacedRepeaterActivity;
 import com.md.utils.ToastSingleton;
+
+import static android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
+import static android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS;
 
 public abstract class ModeSetter {
     protected SpacedRepeaterActivity mActivity;
@@ -56,22 +62,27 @@ public abstract class ModeSetter {
                 */
     }
 
-    protected void hideSystemUi() {// Set the IMMERSIVE flag.
-        // Set the content to appear under the system bars so that the content
-        // doesn't resize when the system bars hide and show.
-        mActivity.getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
-                        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        // hide nav bar
-                        | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
-                        | View.SYSTEM_UI_FLAG_IMMERSIVE);
+    protected void hideSystemUi() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+          return;
+        }
+        WindowInsetsController controller = mActivity.getWindow().getInsetsController();
+        if (controller != null) {
+          //controller.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+            controller.setSystemBarsAppearance(APPEARANCE_LIGHT_NAVIGATION_BARS, APPEARANCE_LIGHT_NAVIGATION_BARS);
+            controller.setSystemBarsAppearance(APPEARANCE_LIGHT_STATUS_BARS, APPEARANCE_LIGHT_STATUS_BARS);
+        }
     }
 
     protected void showSystemUi() {
-        mActivity.getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            return;
+        }
+        WindowInsetsController controller = mActivity.getWindow().getInsetsController();
+        if (controller != null) {
+            controller.setSystemBarsAppearance(0, APPEARANCE_LIGHT_NAVIGATION_BARS);
+            controller.setSystemBarsAppearance(0, APPEARANCE_LIGHT_STATUS_BARS);
+        }
     }
 
     public void proceed() {
