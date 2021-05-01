@@ -251,6 +251,15 @@ public class LearningModeSetter extends ModeSetter implements
                 mActivity.maybeChangeAudioFocus(false);
             }
             TtsSpeaker.speak("Great job! Deck done.");
+
+            DeckChooseModeSetter deckChooser = DeckChooseModeSetter.getInstance();
+            DeckInfo nextDeckWithItems = deckChooser.getNextDeckWithItems();
+            if (nextDeckWithItems != null) {
+                deckChooser.loadDeck(nextDeckWithItems);
+                TtsSpeaker.speak("Loading " + nextDeckWithItems.getName());
+            } else {
+                TtsSpeaker.speak("All decks done..");
+            }
         }
 
         commonLayoutSetup();

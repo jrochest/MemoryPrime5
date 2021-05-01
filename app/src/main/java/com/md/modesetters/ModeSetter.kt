@@ -20,8 +20,11 @@ abstract class ModeSetter {
                 !CategorySingleton.getInstance().hasCategory()) {
             ToastSingleton.getInstance().msg("No deck selected. \nUsing default")
             val deckChooser = DeckChooseModeSetter.getInstance()
-            val defaultDeck = deckChooser.defaultDeck
-            deckChooser.loadDeck(defaultDeck)
+            val defaultDeck = deckChooser.nextDeckWithItems
+            if (defaultDeck != null) {
+                deckChooser.loadDeck(defaultDeck)
+            }
+
         }
         setupModeImpl(context)
         updateShouldRepeat()

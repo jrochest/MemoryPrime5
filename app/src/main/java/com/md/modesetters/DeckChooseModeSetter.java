@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Vector;
 
 public class DeckChooseModeSetter extends ModeSetter {
@@ -279,5 +280,23 @@ public class DeckChooseModeSetter extends ModeSetter {
         }
         return null;
     }
+
+	public DeckInfo getNextDeckWithItems() {
+		if (deckInfoMap.isEmpty()) {
+			return null;
+		}
+
+		for (Map.Entry<Integer, DeckInfo> deck : deckInfoMap.entrySet()) {
+			DeckInfo value = deck.getValue();
+			if (value.getName().contains("inactive")) {
+				continue;
+			}
+			if (value.getRevisionQueue().getSize() > 0) {
+				return value;
+			}
+		}
+
+		return null;
+	}
 
 }
