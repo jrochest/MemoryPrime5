@@ -22,8 +22,10 @@ import java.io.FileOutputStream
 
 object IncrementalBackupManager {
     fun openBackupDir(activity: Activity, requestCode: Int) {
-        TtsSpeaker.speak("Create a new directory where you would like backup files to be" +
-                " written to. Then click allow to grant this app access.")
+        TtsSpeaker.speak(
+            "Create a new directory where you would like backup files to be" +
+                    " written to. Then click allow to grant this app access."
+        )
         // Choose a directory using the system's file picker.
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
             // Provide write access to files and sub-directories in the user-selected
@@ -34,9 +36,9 @@ object IncrementalBackupManager {
     }
 
     fun createAndWriteZipBackToPreviousLocation(
-            context: SpacedRepeaterActivity,
-            contentResolver: ContentResolver,
-            shouldSpeak: Boolean
+        context: SpacedRepeaterActivity,
+        contentResolver: ContentResolver,
+        shouldSpeak: Boolean
     ) {
         val backupLocations = IncrementalBackupPreferences.getBackupLocations(context)
 
@@ -48,22 +50,23 @@ object IncrementalBackupManager {
     }
 
     fun createAndWriteZipBackToNewLocation(
-            context: SpacedRepeaterActivity,
-            data: Intent,
-            requestCode: Int,
-            contentResolver: ContentResolver
+        context: SpacedRepeaterActivity,
+        data: Intent,
+        requestCode: Int,
+        contentResolver: ContentResolver
     ): Boolean {
         val locationKey: String = IncrementalBackupPreferences.requestCodeToKey.get(requestCode)
-                ?: return false
+            ?: return false
         val sourceTreeUri: Uri = data.data ?: return false
 
         contentResolver.takePersistableUriPermission(
-                sourceTreeUri,
-                Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION
+            sourceTreeUri,
+            Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION
         )
 
         val sharedPref = context.getSharedPreferences(
-                IncrementalBackupPreferences.BACKUP_LOCATION_FILE, Context.MODE_PRIVATE)
+            IncrementalBackupPreferences.BACKUP_LOCATION_FILE, Context.MODE_PRIVATE
+        )
 
         sharedPref.edit().putString(locationKey, sourceTreeUri.toString()).apply()
 
@@ -71,21 +74,21 @@ object IncrementalBackupManager {
     }
 
     private fun backupToUris(
-            context: Context,
-            contentResolver: ContentResolver,
-            backupUris: MutableMap<String, Uri>,
-            shouldSpeak: Boolean = false
+        context: Context,
+        contentResolver: ContentResolver,
+        backupUris: MutableMap<String, Uri>,
+        shouldSpeak: Boolean = false
     ) {
         GlobalScope.launch(Dispatchers.Main) {
             if (shouldSpeak) TtsSpeaker.speak("starting backup")
 
             val deferred = async(Dispatchers.IO) {
                 backupOnBackground(
-                        contentResolver,
-                        backupUris,
-                        context.filesDir,
-                        shouldSpeak,
-                        context
+                    contentResolver,
+                    backupUris,
+                    context.filesDir,
+                    shouldSpeak,
+                    context
                 )
             }
 
@@ -96,11 +99,11 @@ object IncrementalBackupManager {
     }
 
     private suspend fun backupOnBackground(
-            contentResolver: ContentResolver,
-            backupUris: MutableMap<String, Uri>,
-            filesDir: File,
-            shouldSpeak: Boolean,
-            context: Context
+        contentResolver: ContentResolver,
+        backupUris: MutableMap<String, Uri>,
+        filesDir: File,
+        shouldSpeak: Boolean,
+        context: Context
     ) {
 
         val validBackupUris = backupUris.filter { uri ->
@@ -154,11 +157,16 @@ object IncrementalBackupManager {
                             if (audioDirs.isDirectory) {
                                 val updateTimeFile = File(audioDirs, UPDATE_TIME_FILE_NAME)
                                 if (File(audioDirs, UPDATE_TIME_FILE_NAME).exists()) {
-                                    audioDirectoryToModificationTime.put(audioDirs.name, updateTimeFile.lastModified())
+                                    audioDirectoryToModificationTime.put(
+                                        audioDirs.name,
+                                        updateTimeFile.lastModified()
+                                    )
                                 } else {
                                     markAudioDirectoryWithUpdateTime(audioDirs)
                                 }
-                                audioDirectoryToAudioFiles.put(audioDirs.name, audioDirs.listFiles().filter { it.isFile })
+                                audioDirectoryToAudioFiles.put(
+                                    audioDirs.name,
+                                    audioDirs.listFiles().filter { it.isFile })
                             } else {
                                 TtsSpeaker.error("Audio directory contained unknown file")
                             }
@@ -209,7 +217,8 @@ object IncrementalBackupManager {
                             continue
                         }
 
-                        val fileDescriptor = contentResolver.openFileDescriptor(databaseZip.uri, "w")
+                        val fileDescriptor =
+                            contentResolver.openFileDescriptor(databaseZip.uri, "w")
                         val descriptor = fileDescriptor?.fileDescriptor
                         if (descriptor == null) {
                             TtsSpeaker.error("Database zipping failed for missing file " + uri.key)
@@ -234,24 +243,32 @@ object IncrementalBackupManager {
                         audioDirectoryToAudioFiles.forEach { (dirName, fileList) ->
                             taskList.add(GlobalScope.async(Dispatchers.IO) {
                                 val previousBackup = backupRoot.findFile("$dirName.zip")
+
                                 if (previousBackup?.exists() == true) {
-                                    val lastDirMod = audioDirectoryToModificationTime[dirName]
-                                    if (lastDirMod == null) {
-                                        if (fileList.indexOfFirst { it.lastModified() >= previousBackup.lastModified() } == -1) {
-                                            println("Done Search times stamps for $dirName none")
-                                            return@async false
-                                        }
+                                    if (previousBackup.length() == 0L) {
+                                        // If there is an empty backup zip. Write the file again.
+                                        TtsSpeaker.error("Fixing empty $dirName")
+                                        previousBackup.delete()
                                     } else {
-                                        if (lastDirMod < previousBackup.lastModified()) {
-                                            println("Done No Search needed for $dirName")
-                                            return@async false
+                                        val lastDirMod = audioDirectoryToModificationTime[dirName]
+                                        if (lastDirMod == null) {
+                                            if (fileList.indexOfFirst { it.lastModified() >= previousBackup.lastModified() } == -1) {
+                                                println("Done Search times stamps for $dirName none")
+                                                return@async false
+                                            }
+                                        } else {
+                                            if (lastDirMod < previousBackup.lastModified()) {
+                                                println("Done No Search needed for $dirName")
+                                                return@async false
+                                            }
                                         }
                                     } // else out of date. Recreate backup.
 
                                     previousBackup.delete()
                                 }
 
-                                val dirZip = backupRoot.createFile("application/zip", "$dirName.zip")
+                                val dirZip =
+                                    backupRoot.createFile("application/zip", "$dirName.zip")
                                 if (dirZip == null) {
                                     TtsSpeaker.error("Couldn't create audio backup file $dirName")
                                 } else {
@@ -259,7 +276,8 @@ object IncrementalBackupManager {
                                         val output = FileOutputStream(it.fileDescriptor)
                                         if (MemPrimeManager.zip(fileList, dirsToZip, output)) {
                                             GlobalScope.launch(Dispatchers.Main) {
-                                                ToastSingleton.getInstance().msg("Memprime backed up $dirName")
+                                                ToastSingleton.getInstance()
+                                                    .msg("Memprime backed up $dirName")
                                             }
                                             return@async true
                                         } else {
@@ -275,10 +293,10 @@ object IncrementalBackupManager {
                         taskList.forEach { it.await() }
                         if (shouldSpeak) TtsSpeaker.speak("Backup finished for" + uri.key)
                     } catch (e: FileNotFoundException) {
-                        if (shouldSpeak) TtsSpeaker.speak("FileNotFoundException for "  + uri.key)
+                        if (shouldSpeak) TtsSpeaker.speak("FileNotFoundException for " + uri.key)
                         System.err.println("Missing file during backup: $uri")
                     } catch (e: SecurityException) {
-                        if (shouldSpeak) TtsSpeaker.speak("security exception for $uri" + uri.key )
+                        if (shouldSpeak) TtsSpeaker.speak("security exception for $uri" + uri.key)
                     }
                 }
             }
