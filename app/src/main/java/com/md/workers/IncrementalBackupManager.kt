@@ -247,7 +247,7 @@ object IncrementalBackupManager {
                                 if (previousBackup?.exists() == true) {
                                     if (previousBackup.length() == 0L) {
                                         // If there is an empty backup zip. Write the file again.
-                                        TtsSpeaker.error("Fixing empty $dirName")
+                                        TtsSpeaker.speak("Empty $dirName")
                                         previousBackup.delete()
                                     } else {
                                         val lastDirMod = audioDirectoryToModificationTime[dirName]
