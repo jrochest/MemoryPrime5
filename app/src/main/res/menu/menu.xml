@@ -18,6 +18,9 @@
 		android:id="@+id/backup_previous_location"
 		android:title="Run backup now."/>
 	<item
+		android:id="@+id/slow_incremental_backup"
+		android:title="Incremental backup with extra validation"/>
+	<item
 		android:id="@+id/learningModeMenuItem"
 		android:title="Learning"
 		android:icon="@android:drawable/ic_menu_mapmode" />

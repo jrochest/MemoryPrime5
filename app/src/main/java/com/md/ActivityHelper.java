@@ -60,7 +60,13 @@ public class ActivityHelper {
 
 		menu.findItem(R.id.incremental_backup).setOnMenuItemClickListener(item -> {
 			IncrementalBackupManager.INSTANCE.createAndWriteZipBackToPreviousLocation(
-					activity, activity.getContentResolver(), true);
+					activity, activity.getContentResolver(), true, false);
+			return true;
+		});
+
+		menu.findItem(R.id.slow_incremental_backup).setOnMenuItemClickListener(item -> {
+			IncrementalBackupManager.INSTANCE.createAndWriteZipBackToPreviousLocation(
+					activity, activity.getContentResolver(), true, true);
 			return true;
 		});
 

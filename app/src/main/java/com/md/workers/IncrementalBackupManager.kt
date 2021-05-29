@@ -7,7 +7,6 @@ import android.content.Intent
 import android.net.Uri
 import androidx.core.app.ActivityCompat
 import androidx.documentfile.provider.DocumentFile
-import com.md.DbNoteEditor
 import com.md.MemPrimeManager
 import com.md.NotesProvider
 import com.md.SpacedRepeaterActivity
@@ -16,9 +15,10 @@ import com.md.utils.ToastSingleton
 import com.md.workers.BackupToUsbManager.UPDATE_TIME_FILE_NAME
 import com.md.workers.BackupToUsbManager.markAudioDirectoryWithUpdateTime
 import kotlinx.coroutines.*
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.FileOutputStream
+import java.io.*
+import java.util.zip.ZipEntry
+import java.util.zip.ZipException
+import java.util.zip.ZipInputStream
 
 object IncrementalBackupManager {
     fun openBackupDir(activity: Activity, requestCode: Int) {
@@ -38,12 +38,13 @@ object IncrementalBackupManager {
     fun createAndWriteZipBackToPreviousLocation(
         context: SpacedRepeaterActivity,
         contentResolver: ContentResolver,
-        shouldSpeak: Boolean
+        shouldSpeak: Boolean,
+        runExtraValidation: Boolean = false
     ) {
         val backupLocations = IncrementalBackupPreferences.getBackupLocations(context)
 
         if (backupLocations.isNotEmpty()) {
-            backupToUris(context, contentResolver, backupLocations, shouldSpeak)
+            backupToUris(context, contentResolver, backupLocations, shouldSpeak, runExtraValidation)
         } else {
             TtsSpeaker.speak("No backup needed")
         }
@@ -77,7 +78,8 @@ object IncrementalBackupManager {
         context: Context,
         contentResolver: ContentResolver,
         backupUris: MutableMap<String, Uri>,
-        shouldSpeak: Boolean = false
+        shouldSpeak: Boolean = false,
+        runExtraValidation: Boolean
     ) {
         GlobalScope.launch(Dispatchers.Main) {
             if (shouldSpeak) TtsSpeaker.speak("starting backup")
@@ -88,7 +90,8 @@ object IncrementalBackupManager {
                     backupUris,
                     context.filesDir,
                     shouldSpeak,
-                    context
+                    context,
+                    runExtraValidation
                 )
             }
 
@@ -103,7 +106,8 @@ object IncrementalBackupManager {
         backupUris: MutableMap<String, Uri>,
         filesDir: File,
         shouldSpeak: Boolean,
-        context: Context
+        context: Context,
+        runExtraValidation: Boolean
     ) {
 
         val validBackupUris = backupUris.filter { uri ->
@@ -136,7 +140,7 @@ object IncrementalBackupManager {
         val audioDirectoryToAudioFiles = mutableMapOf<String, List<File>>()
         var databaseLastModTime: Long? = 0
         val audioDirectoryToModificationTime = mutableMapOf<String, Long>()
-        allFiles.forEach {
+        allFiles.forEach { it ->
             if (it.isDirectory && it.name == "com.md.MemoryPrime") {
                 val dirsToZip = mutableListOf<File>()
                 val databaseFilesToZip = mutableListOf<File>()
@@ -243,11 +247,14 @@ object IncrementalBackupManager {
                         audioDirectoryToAudioFiles.forEach { (dirName, fileList) ->
                             taskList.add(GlobalScope.async(Dispatchers.IO) {
                                 val previousBackup = backupRoot.findFile("$dirName.zip")
-
-                                if (previousBackup?.exists() == true) {
+                                if (previousBackup != null && previousBackup.exists()) {
                                     if (previousBackup.length() == 0L) {
                                         // If there is an empty backup zip. Write the file again.
                                         TtsSpeaker.speak("Empty $dirName")
+                                        previousBackup.delete()
+                                    } else if (runExtraValidation && !isValidZip(previousBackup, contentResolver, fileList)) {
+                                        // If there is an empty backup zip. Write the file again.
+                                        TtsSpeaker.speak("Extra validation $dirName")
                                         previousBackup.delete()
                                     } else {
                                         val lastDirMod = audioDirectoryToModificationTime[dirName]
@@ -299,6 +306,46 @@ object IncrementalBackupManager {
                         if (shouldSpeak) TtsSpeaker.speak("security exception for $uri" + uri.key)
                     }
                 }
+            }
+        }
+    }
+
+    private fun isValidZip(
+        zipToValidate: DocumentFile,
+        contentResolver: ContentResolver,
+        expectedFileList: List<File>
+    ): Boolean {
+        var zis: ZipInputStream? = null
+        val expectedCount = expectedFileList.size
+        var count = 0
+        val openFileDescriptor = contentResolver.openFileDescriptor(zipToValidate.uri, "r") ?: return false
+        return try {
+            zis = ZipInputStream(FileInputStream(openFileDescriptor.fileDescriptor))
+            var ze: ZipEntry? = zis.nextEntry
+            while (ze != null) {
+                count++
+                // if it throws an exception fetching any of the following then we know the file is corrupted.
+                ze.crc
+                ze.compressedSize
+                ze.name
+                ze = zis.nextEntry
+            }
+            println("expectedCount $expectedCount actualCount $count")
+            // Validate that current number of files in the directory matches the number in the zip.
+            expectedCount == count
+        } catch (e: ZipException) {
+            println("extra validation error " + e)
+            false
+        } catch (e: IOException) {
+            println("expectedCount $expectedCount actualCount $count")
+            println("extra IO exception validation error " + e)
+            false
+        } finally {
+            try {
+                zis?.close()
+            } catch (e: IOException) {
+                println("extra close validation error " + e)
+                return false
             }
         }
     }
