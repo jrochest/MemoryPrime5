@@ -62,10 +62,7 @@ class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager by ToneMana
     override fun onPause() {
         super.onPause()
         // Hiding stops the repeat playback in learning mode.
-        if (instance.shouldRepeat) {
-            instance.pause()
-            instance.shouldRepeat = false
-        }
+        instance.pause()
 
         playbackServiceOnPause()
         maybeStopTone()

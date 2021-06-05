@@ -10,7 +10,6 @@ import java.io.File
 import java.io.IOException
 
 class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
-    var shouldRepeat: Boolean = false;
     private var mp: MediaPlayer? = null
     private var mFiredOnceCompletionListener: OnCompletionListener? = null
     private var loudnessEnhancer: LoudnessEnhancer? = null
@@ -32,7 +31,6 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
         }
 
         lastFile = originalFile
-        this.shouldRepeat = shouldRepeat
 
         cleanUp()
         // Note: noise supressor seem to fail and say not enough memory. NoiseSuppressor.
@@ -46,6 +44,7 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
 
         val mediaPlayer = MediaPlayer()
         mp = mediaPlayer
+        mediaPlayer.isLooping = shouldRepeat
         try {
             mediaPlayer.setDataSource(path)
             loudnessEnhancer = LoudnessEnhancer(mediaPlayer.audioSessionId)
@@ -91,10 +90,7 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
             mFiredOnceCompletionListener!!.onCompletion(mp)
             mFiredOnceCompletionListener = null
         }
-        if (CategorySingleton.getInstance().shouldRepeat() && shouldRepeat) {
-            mp.seekTo(0)
-            mp.start()
-        } else {
+        if (!CategorySingleton.getInstance().shouldRepeat()) {
             cleanUp()
         }
     }
@@ -115,16 +111,23 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
 
     fun pause() {
         val mp = mp ?: return
-        if (mp.isPlaying) {
+        if (mp.isPlaying || mp.isLooping) {
             mp.pause()
         }
     }
 
-    fun unpause() {
+    fun toggleLooping() {
         val mp = mp ?: return
-        if (!mp.isPlaying) {
-            mp.start();
+
+        if (mp.isLooping) {
+            mp.isLooping = false
+            mp.pause()
+        } else {
+            mp.isLooping = true
+            mp.start()
         }
+
+
     }
 
     companion object {

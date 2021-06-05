@@ -27,7 +27,6 @@ abstract class ModeSetter {
 
         }
         setupModeImpl(context)
-        updateShouldRepeat()
     }
 
     abstract fun setupModeImpl(context: Activity)
@@ -35,11 +34,6 @@ abstract class ModeSetter {
     fun parentSetup(context: Activity?, modeHand: ModeHandler?) {
         mActivity = context as SpacedRepeaterActivity?
         this.modeHand = modeHand
-    }
-
-    protected open fun updateShouldRepeat() {
-        // Hiding stops the repeat playback in all besides learning mode.
-        instance.shouldRepeat = false
     }
 
     protected fun commonSetup(context: Activity, view: Int) {

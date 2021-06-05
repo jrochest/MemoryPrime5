@@ -75,18 +75,17 @@ public class LearningModeSetter extends ModeSetter implements
         setupQuestionMode(context);
     }
 
-    protected void updateShouldRepeat() {
-        AudioPlayer.getInstance().setShouldRepeat(true);
-    }
-
     private void commonLayoutSetup() {
         ViewGroup gestures = this.memoryDroid
                 .findViewById(R.id.gestures);
-        gestures.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mActivity.handleRhythmUiTaps(LearningModeSetter.this, SystemClock.uptimeMillis(), SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN);
-            }
+        gestures.setOnClickListener(view -> {
+                    mActivity.handleRhythmUiTaps(LearningModeSetter.this, SystemClock.uptimeMillis(), SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN);
+                }
+            );
+
+        gestures.setOnLongClickListener(v -> {
+            AudioPlayer.getInstance().toggleLooping();
+            return true;
         });
 
         final TextView reviewNumber = (TextView) this.memoryDroid
@@ -135,13 +134,7 @@ public class LearningModeSetter extends ModeSetter implements
         View audioFocusToggle = memoryDroid.findViewById(R.id.audio_focus_toggle);
 
         audioFocusToggle.setOnClickListener(v -> {
-            boolean shouldRepeat = AudioPlayer.getInstance().getShouldRepeat();
-            if (shouldRepeat) {
-                AudioPlayer.getInstance().pause();
-            } else {
-                AudioPlayer.getInstance().unpause();
-            }
-            AudioPlayer.getInstance().setShouldRepeat(!shouldRepeat);
+            AudioPlayer.getInstance().toggleLooping();
         });
     }
 

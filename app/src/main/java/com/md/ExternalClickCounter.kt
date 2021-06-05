@@ -66,7 +66,7 @@ class ExternalClickCounter {
                     message = "postpone"
                 }
                 9, 10 -> {
-                    AudioPlayer.instance.shouldRepeat = false
+                    AudioPlayer.instance.pause()
                     message = "repeat off"
                 }
                 else -> {
