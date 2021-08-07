@@ -58,40 +58,37 @@ public class RecordOnClickListener implements OnTouchListener {
 								"Do you want to save this recording, and overwrite the old one?")
 								.setCancelable(false)
 								.setPositiveButton("Yes",
-										new DialogInterface.OnClickListener() {
-											public void onClick(
-													DialogInterface dialog,
-													int id) {
-												AudioPlayer
-														.getInstance()
-														.playFile(
-																audioRecorder
-																		.getOriginalFile(), null);
+										(dialog, id) -> {
+											AudioPlayer
+													.getInstance()
+													.playFile(
+															audioRecorder
+																	.getOriginalFile(), null,
+													true);
 
-												System.err.println("TEMP: "
-														+ mNote);
-												// If the revision queue has one in it's history
-												// replace that too.
-												// We only care if it is a match.
+											System.err.println("TEMP: "
+													+ mNote);
+											// If the revision queue has one in it's history
+											// replace that too.
+											// We only care if it is a match.
 
-												if (isAnswer) {
-													mNote.setAnswer(audioRecorder
+											if (isAnswer) {
+												mNote.setAnswer(audioRecorder
+														.getOriginalFile());
+												if (lastNote != null) {
+													lastNote.setAnswer(audioRecorder
 															.getOriginalFile());
-													if (lastNote != null) {
-														lastNote.setAnswer(audioRecorder
-																.getOriginalFile());
-													}
-												} else {
-													mNote.setQuestion(audioRecorder
-															.getOriginalFile());
-													if (lastNote != null) {
-														lastNote.setQuestion(audioRecorder
-																.getOriginalFile());
-													}
 												}
-
-												DbNoteEditor.getInstance().update(context, mNote);
+											} else {
+												mNote.setQuestion(audioRecorder
+														.getOriginalFile());
+												if (lastNote != null) {
+													lastNote.setQuestion(audioRecorder
+															.getOriginalFile());
+												}
 											}
+
+											DbNoteEditor.getInstance().update(context, mNote);
 										})
 								.setNegativeButton("No",
 										new DialogInterface.OnClickListener() {

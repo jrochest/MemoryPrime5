@@ -177,6 +177,9 @@ public class LearningModeSetter extends ModeSetter implements
             }
         } else {
             undoThisQuestion(mActivity);
+            if (AudioPlayer.getInstance().looping()) {
+                AudioPlayer.getInstance().toggleLooping();
+            }
         }
     }
 
