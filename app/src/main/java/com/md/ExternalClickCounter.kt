@@ -73,7 +73,7 @@ class ExternalClickCounter {
                     message = "unrecognized count"
                 }
             }
-            message?.let { TtsSpeaker.speak(it, 3.5f, pitch = .2f) }
+            message?.let { TtsSpeaker.speak(it) }
         }
 
         return true
