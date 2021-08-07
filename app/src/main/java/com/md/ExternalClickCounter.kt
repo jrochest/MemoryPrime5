@@ -73,6 +73,7 @@ class ExternalClickCounter {
                     message = "unrecognized count"
                 }
             }
+            println("TEMP $message")
             message?.let { TtsSpeaker.speak(it) }
         }
 

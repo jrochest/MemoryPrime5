@@ -1,446 +1,423 @@
-package com.md.modesetters;
+package com.md.modesetters
 
-import android.app.Activity;
-import android.os.SystemClock;
-import android.view.KeyEvent;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.TextView;
+import android.app.Activity
+import android.os.SystemClock
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.TextView
+import com.md.*
+import com.md.RevisionQueue.Companion.currentDeckReviewQueue
+import com.md.modesetters.TtsSpeaker.speak
+import com.md.provider.AbstractRep
+import com.md.provider.Note
+import com.md.utils.ScreenDimmer
+import com.md.utils.ToastSingleton
+import com.md.workers.BackupPreferences.markAllStale
+import java.util.*
+import java.util.concurrent.TimeUnit
 
-import com.md.AudioPlayer;
-import com.md.DbNoteEditor;
-import com.md.DbRepEditor;
-import com.md.ModeHandler;
-import com.md.R;
-import com.md.RevisionQueue;
-import com.md.SpacedRepeaterActivity;
-import com.md.provider.AbstractRep;
-import com.md.provider.Note;
-import com.md.utils.ScreenDimmer;
-import com.md.utils.ToastSingleton;
-import com.md.workers.BackupPreferences;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.concurrent.TimeUnit;
-
-import static com.md.SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_INSTANT;
-
-public class LearningModeSetter extends ModeSetter implements
-        ItemDeletedHandler {
-
-    private static LearningModeSetter instance = null;
-
-    protected LearningModeSetter() {
-    }
-
-    public static LearningModeSetter getInstance() {
-        if (instance == null) {
-            instance = new LearningModeSetter();
-        }
-        return instance;
-    }
-
+class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHandler {
     /**
      * @param memoryDroid
      * @param modeHand
      */
-    public void setUp(SpacedRepeaterActivity memoryDroid, ModeHandler modeHand) {
-        parentSetup(memoryDroid, modeHand);
-        this.memoryDroid = memoryDroid;
+    fun setUp(memoryDroid: SpacedRepeaterActivity?, modeHand: ModeHandler?) {
+        parentSetup(memoryDroid, modeHand)
+        this.memoryDroid = memoryDroid
     }
 
-    private final Deque<Note> lastNoteList = new ArrayDeque<>();
-
-    private AbstractRep lastNoteRep;
-    private SpacedRepeaterActivity memoryDroid;
-    private Note currentNote;
-    private int originalSize;
-    public int repCounter;
-    private int missCounter;
-    private boolean questionMode = true;
-
-    public void setupModeImpl(@NotNull final Activity context) {
-        originalSize = RevisionQueue.getCurrentDeckReviewQueue().getSize();
-
-        lastNoteList.clear();
-
-        commonSetup(context, R.layout.learnquestion);
+    private val lastNoteList: Deque<Note> = ArrayDeque()
+    private var lastNoteRep: AbstractRep? = null
+    private var memoryDroid: SpacedRepeaterActivity? = null
+    private var currentNote: Note? = null
+    private var originalSize = 0
+    var repCounter = 0
+    private var missCounter = 0
+    private var questionMode = true
+    override fun setupModeImpl(context: Activity) {
+        originalSize = currentDeckReviewQueue!!.getSize()
+        lastNoteList.clear()
+        commonSetup(context, R.layout.learnquestion)
 
         // Let's just load up the learn question also to get it ready.
-        setupQuestionMode(context);
+        setupQuestionMode(context, shouldAutoPlay = true)
     }
 
-    private void commonLayoutSetup() {
-        ViewGroup gestures = this.memoryDroid
-                .findViewById(R.id.gestures);
-        gestures.setOnClickListener(view -> {
-                    mActivity.handleRhythmUiTaps(LearningModeSetter.this, SystemClock.uptimeMillis(), SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN);
-                }
-            );
-
-        gestures.setOnLongClickListener(v -> {
-            AudioPlayer.getInstance().toggleLooping();
-            return true;
-        });
-
-        final TextView reviewNumber = (TextView) this.memoryDroid
-                .findViewById(R.id.reviewNumber);
-
-        String firstLine = "Scheduled: " + originalSize;
-        firstLine += "\nPerformed: " + repCounter;
-        String secondLine = "\nItems Missed: " + missCounter;
-        secondLine += "\nRemaining: " + RevisionQueue.getCurrentDeckReviewQueue().getSize();
-        if (currentNote != null) {
-            secondLine += "\n\nEasiness: " + currentNote.getEasiness();
-            secondLine += "\nInterval: " + currentNote.interval();
+    private fun commonLayoutSetup() {
+        val memoryDroid = memoryDroid!!
+        val gestures = memoryDroid
+            .findViewById<ViewGroup>(R.id.gestures)
+        gestures.setOnClickListener { view: View? ->
+            mActivity!!.handleRhythmUiTaps(
+                this@LearningModeSetter,
+                SystemClock.uptimeMillis(),
+                SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN
+            )
         }
-
-        reviewNumber.setText("::::" + ((questionMode) ? "Question" : "Answer") + "::::\n"
-                + firstLine + "\n" + secondLine);
-
-        final DbNoteEditor noteEditor = DbNoteEditor.getInstance();
-
-        Button deleteButton = memoryDroid
-                .findViewById(R.id.deleteButton);
-
-        deleteButton.setOnClickListener(new DeleterOnClickListener(noteEditor, mActivity, this));
-
-        memoryDroid.findViewById(R.id.new_note_button).setOnClickListener(new MultiClickListener() {
-            @Override
-            public void onMultiClick(View v) {
-                CreateModeSetter.getInstance().setupMode(memoryDroid);
-            }
-        });
-
-        memoryDroid.findViewById(R.id.dim_screen_button).setOnClickListener(new MultiClickListener() {
-            @Override
-            public void onMultiClick(View v) {
-                toggleDim();
-            }
-        });
-
-        memoryDroid.findViewById(R.id.back_button).setOnClickListener(new MultiClickListener() {
-            @Override
-            public void onMultiClick(View v) {
-                mActivity.onBackPressed();
-            }
-        });
-
-        View audioFocusToggle = memoryDroid.findViewById(R.id.audio_focus_toggle);
-
-        audioFocusToggle.setOnClickListener(v -> {
-            AudioPlayer.getInstance().toggleLooping();
-        });
+        gestures.setOnLongClickListener { v: View? ->
+            AudioPlayer.instance.pause()
+            true
+        }
+        val reviewNumber = memoryDroid
+            .findViewById<View>(R.id.reviewNumber) as TextView
+        var firstLine = "Scheduled: $originalSize"
+        firstLine += "\nPerformed: $repCounter"
+        var secondLine = "\nItems Missed: $missCounter"
+        secondLine += """
+            
+            Remaining: ${currentDeckReviewQueue!!.getSize()}
+            """.trimIndent()
+        if (currentNote != null) {
+            secondLine += """
+                
+                
+                Easiness: ${currentNote!!.easiness}
+                """.trimIndent()
+            secondLine += """
+                
+                Interval: ${currentNote!!.interval()}
+                """.trimIndent()
+        }
+        reviewNumber.text = """
+            ::::${if (questionMode) "Question" else "Answer"}::::
+            $firstLine
+            $secondLine
+            """.trimIndent()
+        val noteEditor = DbNoteEditor.instance
+        val deleteButton = memoryDroid
+            .findViewById<Button>(R.id.deleteButton)
+        deleteButton.setOnClickListener(DeleterOnClickListener(noteEditor, mActivity, this))
+        memoryDroid!!.findViewById<View>(R.id.new_note_button)
+            .setOnClickListener(object : MultiClickListener() {
+                override fun onMultiClick(v: View?) {
+                    CreateModeSetter.getInstance().setupMode(memoryDroid!!)
+                }
+            })
+        memoryDroid!!.findViewById<View>(R.id.dim_screen_button)
+            .setOnClickListener(object : MultiClickListener() {
+                override fun onMultiClick(v: View?) {
+                    toggleDim()
+                }
+            })
+        memoryDroid!!.findViewById<View>(R.id.back_button)
+            .setOnClickListener(object : MultiClickListener() {
+                override fun onMultiClick(v: View?) {
+                    mActivity!!.onBackPressed()
+                }
+            })
+        val audioFocusToggle = memoryDroid!!.findViewById<View>(R.id.audio_focus_toggle)
+        audioFocusToggle.setOnClickListener { v: View? -> AudioPlayer.instance.playWhenReady() }
     }
 
-    public void handleTapCount(int count) {
-        memoryDroid.handleRhythmUiTaps(this, SystemClock.uptimeMillis(), PRESS_GROUP_MAX_GAP_MS_INSTANT, count);
+    fun handleTapCount(count: Int) {
+        memoryDroid!!.handleRhythmUiTaps(
+            this,
+            SystemClock.uptimeMillis(),
+            SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_INSTANT,
+            count
+        )
     }
 
     /**
      * Note: currently this is hardcoded to 3 clicks.
      */
-    public static abstract class MultiClickListener implements View.OnClickListener {
-
-        private long mClickWindowStartMillis = 0L;
-        private int mClickCount = 0;
-
-        public abstract void onMultiClick(View v);
-
-        @Override
-        public void onClick(View v) {
-            final long currentTimeMillis = SystemClock.uptimeMillis();
+    abstract class MultiClickListener : View.OnClickListener {
+        private var mClickWindowStartMillis = 0L
+        private var mClickCount = 0
+        abstract fun onMultiClick(v: View?)
+        override fun onClick(v: View) {
+            val currentTimeMillis = SystemClock.uptimeMillis()
             if (currentTimeMillis - mClickWindowStartMillis < TimeUnit.SECONDS.toMillis(1)) {
-                mClickCount++;
+                mClickCount++
                 if (mClickCount == 3) {
-                    onMultiClick(v);
+                    onMultiClick(v)
                 }
             } else {
                 // Start new window.
-                mClickWindowStartMillis = currentTimeMillis;
-                mClickCount = 1;
+                mClickWindowStartMillis = currentTimeMillis
+                mClickCount = 1
             }
         }
     }
 
-    public void undo() {
+    override fun undo() {
         if (questionMode) {
-            if (!AudioPlayer.getInstance().looping()) {
-                AudioPlayer.getInstance().toggleLooping();
+            if (!AudioPlayer.instance.wantsToPlay) {
+                println("TEMPJ toggleLooping in undo")
+                AudioPlayer.instance.playWhenReady()
             } else {
-                undoLastQuestion(mActivity);
+                println("TEMPJ undoLastQuestion in undo")
+                undoLastQuestion(mActivity!!)
             }
         } else {
-            undoThisQuestion(mActivity);
-            if (AudioPlayer.getInstance().looping()) {
-                AudioPlayer.getInstance().toggleLooping();
-            }
+            println("TEMPJ undoThisQuestion in undo")
+            undoThisQuestion(mActivity!!)
         }
     }
 
-    public void handleReplay() {
-        mActivity.keepHeadphoneAlive();
+    override fun handleReplay() {
+        mActivity!!.keepHeadphoneAlive()
         if (questionMode) {
-            replay();
+            replay()
         } else {
-            replayA();
+            replayA()
         }
-        hideSystemUi();
+        hideSystemUi()
     }
 
-    public void proceedFailure() {
+    override fun proceedFailure() {
         if (questionMode) {
-            proceed(mActivity);
+            proceed(mActivity!!)
         } else {
-            updateScoreAndMoveToNext(mActivity, 1);
+            updateScoreAndMoveToNext(mActivity!!, 1)
         }
-        mActivity.keepHeadphoneAlive();
+        mActivity!!.keepHeadphoneAlive()
     }
 
-    public String secondaryAction() {
-        if (questionMode) {
-            return "question mode";
+    override fun secondaryAction(): String? {
+        return if (questionMode) {
+            "question mode"
         } else {
-            proceedFailure();
-            return "bad bad";
+            proceedFailure()
+            "bad bad"
         }
     }
 
-    /** Moves this note to the end of the queue. */
-    public void postponeNote() {
+    /** Moves this note to the end of the queue.  */
+    override fun postponeNote() {
         if (currentNote == null) {
-          return;
+            return
         }
 
         // Place at end of queue.
-        RevisionQueue.getCurrentDeckReviewQueue().updateNote(currentNote, false);
+        currentDeckReviewQueue!!.updateNote(currentNote!!, false)
         // Prepare the next note in the queue.
-        setupQuestionMode(mActivity);
+        setupQuestionMode(mActivity!!, shouldAutoPlay = true)
     }
 
-    public void proceed() {
-        ScreenDimmer.getInstance().keepScreenOn(mActivity);
+    override fun proceed() {
+        ScreenDimmer.getInstance().keepScreenOn(mActivity)
         if (questionMode) {
-            if (AudioPlayer.getInstance().looping()) {
-                AudioPlayer.getInstance().toggleLooping();
+            if (AudioPlayer.instance.wantsToPlay) {
+                AudioPlayer.instance.pause()
             } else {
-                proceed(mActivity);
+                proceed(mActivity!!)
             }
         } else {
-            updateScoreAndMoveToNext(mActivity, 4);
+            updateScoreAndMoveToNext(mActivity!!, 4)
         }
-        hideSystemUi();
-        mActivity.keepHeadphoneAlive();
+        hideSystemUi()
+        mActivity!!.keepHeadphoneAlive()
     }
 
-    private void setupQuestionMode(final Activity context,
-                                   boolean shouldUpdateQuestion) {
+    private fun setupQuestionMode(
+        context: Activity,
+        shouldUpdateQuestion: Boolean = true,
+        shouldAutoPlay: Boolean
+    ) {
         if (shouldUpdateQuestion) {
-            updateVal();
+            updateVal()
         }
-        memoryDroid.setContentView(R.layout.learnquestion);
-        applyDim(mIsDimmed);
-        questionMode = true;
-
+        memoryDroid!!.setContentView(R.layout.learnquestion)
+        applyDim(mIsDimmed)
+        questionMode = true
         if (currentNote != null) {
-            AudioPlayer.getInstance().playFile(currentNote.getQuestion(), null, true);
+            println("TEMPJ setupQuestionMode shouldAutoPlay= $shouldAutoPlay")
+            AudioPlayer.instance.playFile(
+                currentNote!!.question,
+                firedOnceCompletionListener = null,
+                shouldRepeat = true,
+                autoPlay = shouldAutoPlay)
         } else {
             if (mActivity != null) {
                 // Release audio focus since the dialog prevents keyboards from controlling memprime.
-                mActivity.maybeChangeAudioFocus(false);
+                mActivity!!.maybeChangeAudioFocus(false)
             }
-            TtsSpeaker.speak("Great job! Deck done.");
-
-            DeckChooseModeSetter deckChooser = DeckChooseModeSetter.getInstance();
-            DeckInfo nextDeckWithItems = deckChooser.getNextDeckWithItems();
+            speak("Great job! Deck done.")
+            val deckChooser = DeckChooseModeSetter.getInstance()
+            val nextDeckWithItems = deckChooser.nextDeckWithItems
             if (nextDeckWithItems != null) {
-                deckChooser.loadDeck(nextDeckWithItems);
-                TtsSpeaker.speak("Loading " + nextDeckWithItems.getName());
+                deckChooser.loadDeck(nextDeckWithItems)
+                speak("Loading " + nextDeckWithItems.name)
             } else {
-                TtsSpeaker.speak("All decks done..");
+                speak("All decks done..")
             }
         }
-
-        commonLayoutSetup();
-        memoryDroid.findViewById(R.id.rerecord)
-                .setOnTouchListener(
-                        new RecordOnClickListener(currentNote, context, false,
-                                getLastOrNull()));
+        commonLayoutSetup()
+        memoryDroid!!.findViewById<View>(R.id.rerecord)
+            .setOnTouchListener(
+                RecordOnClickListener(
+                    currentNote, context, false,
+                    lastOrNull
+                )
+            )
     }
 
-    @Nullable
-    private Note getLastOrNull() {
-        return !lastNoteList.isEmpty() ? lastNoteList.getLast() : null;
-    }
+    private val lastOrNull: Note?
+        private get() = if (!lastNoteList.isEmpty()) lastNoteList.last else null
 
-    private void setupQuestionMode(final Activity context) {
-        setupQuestionMode(context, true);
-    }
-
-    private void setupAnswerMode(final Activity context) {
-
-        questionMode = false;
-        memoryDroid.setContentView(R.layout.learnquestion);
-        applyDim(mIsDimmed);
-
+    private fun setupAnswerMode(context: Activity) {
+        questionMode = false
+        memoryDroid!!.setContentView(R.layout.learnquestion)
+        applyDim(mIsDimmed)
         if (currentNote != null) {
-            AudioPlayer.getInstance().playFile(currentNote.getAnswer(), null, true);
+            AudioPlayer.instance.playFile(currentNote!!.answer, null, true)
         }
-
-        commonLayoutSetup();
-
-        memoryDroid.findViewById(R.id.rerecord)
-                .setOnTouchListener(
-                        new RecordOnClickListener(currentNote, context, true,
-                                getLastOrNull()));
+        commonLayoutSetup()
+        memoryDroid!!.findViewById<View>(R.id.rerecord)
+            .setOnTouchListener(
+                RecordOnClickListener(
+                    currentNote, context, true,
+                    lastOrNull
+                )
+            )
     }
 
-    private void updateVal() {
-        currentNote = RevisionQueue.getCurrentDeckReviewQueue().peekQueue();
+    private fun updateVal() {
+        currentNote = currentDeckReviewQueue!!.peekQueue()
         if (currentNote != null) {
-            repCounter++;
+            repCounter++
             if (repCounter % 10 == 9) {
-                BackupPreferences.INSTANCE.markAllStale(mActivity);
+                markAllStale(mActivity!!)
             }
         }
     }
 
-    private void updateScoreAndMoveToNext(Activity context, int newGrade) {
+    private fun updateScoreAndMoveToNext(context: Activity, newGrade: Int) {
         if (currentNote != null) {
-            applyGradeStatic(context, newGrade, currentNote);
-            ToastSingleton.getInstance().msg("Easiness: " + currentNote.getEasiness() + " Interval " + currentNote.getInterval());
-            setupQuestionMode(context);
+            applyGradeStatic(context, newGrade, currentNote!!)
+            ToastSingleton.getInstance()
+                .msg("Easiness: " + currentNote!!.easiness + " Interval " + currentNote!!.interval)
+            setupQuestionMode(context, shouldAutoPlay = true)
         }
     }
 
-    public void applyGradeStatic(Activity context, int newGrade,
-                                 Note currentNote) {
-        DbNoteEditor noteEditor = DbNoteEditor.getInstance();
-
-        if (lastNoteRep != null && getLastOrNull() != null) {
-            DbRepEditor repEditor = DbRepEditor.getInstance();
-            repEditor.insert(lastNoteRep);
+    fun applyGradeStatic(
+        context: Activity?, newGrade: Int,
+        currentNote: Note
+    ) {
+        val noteEditor = DbNoteEditor.instance
+        if (lastNoteRep != null && lastOrNull != null) {
+            val repEditor = DbRepEditor.getInstance()
+            repEditor.insert(lastNoteRep)
         }
-
-        lastNoteList.addLast(currentNote.clone());
+        lastNoteList.addLast(currentNote.clone())
         // Create the rep info before updating the note with the new internal.
-        lastNoteRep = new AbstractRep(currentNote.getId(),
-                currentNote.getInterval(), newGrade, System.currentTimeMillis());
-
-        currentNote.process_answer(newGrade);
-
-        noteEditor.update(context, currentNote);
+        lastNoteRep = AbstractRep(
+            currentNote.id,
+            currentNote.interval, newGrade, System.currentTimeMillis()
+        )
+        currentNote.process_answer(newGrade)
+        noteEditor!!.update(context!!, currentNote)
 
         // If you scored too low review it again, at the end.
-        if (currentNote.is_due_for_acquisition_rep()) {
-            RevisionQueue.getCurrentDeckReviewQueue().updateNote(currentNote, false);
-            missCounter++;
+        if (currentNote.is_due_for_acquisition_rep) {
+            currentDeckReviewQueue!!.updateNote(currentNote, false)
+            missCounter++
         } else {
-            RevisionQueue.getCurrentDeckReviewQueue().removeNote(currentNote.getId());
+            currentDeckReviewQueue!!.removeNote(currentNote.id)
         }
     }
 
-    @Override
-    public void deleteNote() {
-        final DbNoteEditor noteEditor = DbNoteEditor.getInstance();
-        Note note = currentNote;
+    override fun deleteNote() {
+        val noteEditor = DbNoteEditor.instance
+        val note = currentNote
         if (note != null) {
-            noteEditor.deleteCurrent(mActivity, note);
-            RevisionQueue.getCurrentDeckReviewQueue().removeNote(note.getId());
+            noteEditor!!.deleteCurrent(mActivity!!, note)
+            currentDeckReviewQueue!!.removeNote(note.id)
         }
-
-        setupQuestionMode(mActivity);
+        setupQuestionMode(mActivity!!, shouldAutoPlay = true)
     }
 
-    private void replayA() {
-        ScreenDimmer.getInstance().keepScreenOn(mActivity);
+    private fun replayA() {
+        ScreenDimmer.getInstance().keepScreenOn(mActivity)
         if (currentNote != null) {
-            AudioPlayer.getInstance().playFile(currentNote.getAnswer(), null, true);
+            AudioPlayer.instance.playFile(currentNote!!.answer, null, true)
         }
     }
 
-    private void replay() {
-        ScreenDimmer.getInstance().keepScreenOn(mActivity);
+    private fun replay() {
+        ScreenDimmer.getInstance().keepScreenOn(mActivity)
         if (currentNote != null) {
-            AudioPlayer.getInstance().playFile(currentNote.getQuestion(), null, true);
+            AudioPlayer.instance.playFile(currentNote!!.question, null, true)
         }
     }
 
-    private void proceed(final Activity context) {
+    private fun proceed(context: Activity) {
         if (currentNote != null) {
-            setupAnswerMode(context);
+            setupAnswerMode(context)
         }
     }
 
-    private void undoLastQuestion(final Activity context) {
+    private fun undoLastQuestion(context: Activity) {
         if (!lastNoteList.isEmpty()) {
-            currentNote = lastNoteList.removeLast();
-            repCounter--;
-            DbNoteEditor noteEditor = DbNoteEditor.getInstance();
-            noteEditor.update(context, currentNote);
+            val currentNote = lastNoteList.removeLast()
+            this.currentNote = currentNote
+            repCounter--
+            val noteEditor = DbNoteEditor.instance
+            noteEditor!!.update(context, currentNote)
             // In case the grade was bad take it out of revision queue.
-            RevisionQueue.getCurrentDeckReviewQueue().removeNote(currentNote.getId());
-            RevisionQueue.getCurrentDeckReviewQueue().addToFront(currentNote);
-            setupAnswerMode(context);
+            currentDeckReviewQueue!!.removeNote(currentNote.id)
+            currentDeckReviewQueue!!.addToFront(currentNote)
+            setupAnswerMode(context)
         } else {
-            TtsSpeaker.speak("Nothing to undo");
+            speak("Nothing to undo")
         }
     }
 
-    public void resetActivity() {
-        setupMode(mActivity);
+    override fun resetActivity() {
+        setupMode(mActivity!!)
     }
 
-    private void undoThisQuestion(final Activity context) {
-        setupQuestionMode(context, false);
+    private fun undoThisQuestion(context: Activity) {
+        setupQuestionMode(context, false, shouldAutoPlay = false)
     }
 
-    protected void adjustScreenLock() {
-        ScreenDimmer.getInstance().keepScreenOn(mActivity);
-        hideSystemUi();
-        mIsDimmed = false;
+    override fun adjustScreenLock() {
+        ScreenDimmer.getInstance().keepScreenOn(mActivity)
+        hideSystemUi()
+        mIsDimmed = false
     }
 
-    private boolean mIsDimmed = false;
-
-    public void toggleDim() {
-        mIsDimmed = !mIsDimmed;
-        applyDim(mIsDimmed);
-        showSystemUi();
+    private var mIsDimmed = false
+    override fun toggleDim() {
+        mIsDimmed = !mIsDimmed
+        applyDim(mIsDimmed)
+        showSystemUi()
     }
 
-    public void mark() {
+    override fun mark() {
         if (currentNote != null) {
-            currentNote.setMarked(true);
-            final DbNoteEditor noteEditor = DbNoteEditor.getInstance();
-            noteEditor.update(mActivity, currentNote);
-            ToastSingleton.getInstance().msg("Marked note");
+            currentNote!!.isMarked = true
+            val noteEditor = DbNoteEditor.instance
+            noteEditor!!.update(mActivity!!, currentNote!!)
+            ToastSingleton.getInstance().msg("Marked note")
         }
     }
 
-    private void applyDim(boolean isDimmed) {
+    private fun applyDim(isDimmed: Boolean) {
         // Note making the root invisible makes the background grey.
-        ViewGroup layout = this.memoryDroid.findViewById(R.id.learn_layout_root);
-        for (int i = 0; i < layout.getChildCount(); i++) {
-            applyDimToView(isDimmed, layout.getChildAt(i));
+        val layout = memoryDroid!!.findViewById<ViewGroup>(R.id.learn_layout_root)
+        for (i in 0 until layout.childCount) {
+            applyDimToView(isDimmed, layout.getChildAt(i))
         }
-
-        applyDimToView(isDimmed, this.memoryDroid.findViewById(R.id.reviewNumber));
+        applyDimToView(isDimmed, memoryDroid!!.findViewById(R.id.reviewNumber))
 
         // Gestures listeners don't work if dimmed.
-        applyDimToView(false, this.memoryDroid.findViewById(R.id.gestures));
+        applyDimToView(false, memoryDroid!!.findViewById(R.id.gestures))
     }
 
-    private void applyDimToView(boolean isDimmed, View view) {
+    private fun applyDimToView(isDimmed: Boolean, view: View) {
         if (!isDimmed) {
-            view.setVisibility(View.VISIBLE);
+            view.visibility = View.VISIBLE
         } else {
-            view.setVisibility(View.INVISIBLE);
+            view.visibility = View.INVISIBLE
         }
+    }
+
+    companion object {
+        @JvmStatic
+        val instance: LearningModeSetter by lazy { LearningModeSetter() }
     }
 }

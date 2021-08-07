@@ -118,7 +118,7 @@ class PlayerService : MediaBrowserServiceCompat() {
     }
 
     private fun handleTapCount(tapCount: Int) {
-        val learningModeSetter = LearningModeSetter.getInstance() ?: return
+        val learningModeSetter = LearningModeSetter.instance ?: return
         learningModeSetter.handleTapCount(tapCount)
     }
 

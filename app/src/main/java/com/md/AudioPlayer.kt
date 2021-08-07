@@ -11,10 +11,17 @@ import java.io.IOException
 
 class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
 
+    private var isPrepared: Boolean = false
     private var mp: MediaPlayer? = null
     private var mFiredOnceCompletionListener: OnCompletionListener? = null
     private var loudnessEnhancer: LoudnessEnhancer? = null
     private var lastFile: String? = null
+    var wantsToPlay = false
+        get() = field
+        set(value) {
+            println("TEMP set wantsToPlay = $wantsToPlay")
+            field = value
+        }
 
     /**
      * @param originalFile name of the file, without the save path
@@ -24,7 +31,10 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
     fun playFile(originalFile: String? = lastFile,
                  firedOnceCompletionListener: OnCompletionListener? = null,
                  shouldRepeat: Boolean = false,
-                 playbackSpeed: Float = 1.5f) {
+                 playbackSpeed: Float = 1.5f,
+                 autoPlay: Boolean = true) {
+        println("TEMPJ playFile autoPlay= $autoPlay")
+
 
         if (originalFile == null) {
             ToastSingleton.getInstance().error("Null file path. You should probably delete this note Jacob.")
@@ -33,7 +43,8 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
 
         lastFile = originalFile
 
-        cleanUp()
+        mp?.let { cleanUp(it) }
+        mp = null
         // Note: noise supressor seem to fail and say not enough memory. NoiseSuppressor.
         mFiredOnceCompletionListener = firedOnceCompletionListener
         val path = sanitizePath(originalFile)
@@ -45,6 +56,10 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
 
         val mediaPlayer = MediaPlayer()
         mp = mediaPlayer
+        println("TEMPJ playFile set wants to play autoPlay= $autoPlay")
+
+        wantsToPlay = autoPlay
+        isPrepared = false
         mediaPlayer.isLooping = shouldRepeat
         try {
             mediaPlayer.setDataSource(path)
@@ -54,10 +69,9 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
 
             mediaPlayer.setOnErrorListener(this)
             mediaPlayer.setOnCompletionListener(this)
-            mediaPlayer.setOnPreparedListener({
-                setSpeed(mediaPlayer, playbackSpeed)
-                mediaPlayer.start()
-            })
+            mediaPlayer.setOnPreparedListener {
+                onPrepared(it, playbackSpeed)
+            }
             mediaPlayer.prepareAsync()
         } catch (e: IllegalArgumentException) {
             e.printStackTrace()
@@ -69,21 +83,25 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
 
     }
 
-    private fun setSpeed(mediaPlayer: MediaPlayer, playbackSpeed: Float) {
-        mediaPlayer.playbackParams = mediaPlayer.playbackParams.setSpeed(playbackSpeed)
+    private fun onPrepared(mediaPlayer: MediaPlayer, playbackSpeed: Float) {
+        if (mp != mediaPlayer) {
+            cleanUp(mediaPlayer)
+            return
+        }
+
+        isPrepared = true
+        setSpeed(mediaPlayer, playbackSpeed)
+        println("TEMP onPrepared wantsToPlay = $wantsToPlay")
+        if (wantsToPlay) {
+            mediaPlayer.start()
+        } else {
+            // It seems like the looping = true auto plays.
+            mediaPlayer.pause()
+        }
     }
 
-    fun cleanUp() {
-        val mediaPlayer = mp ?: return
-        mp = null
-        mediaPlayer.stop()
-            // Once the MP is released it can't be used again.
-        mediaPlayer.release()
-
-        if (loudnessEnhancer != null) {
-            loudnessEnhancer!!.release()
-            loudnessEnhancer = null
-        }
+    private fun setSpeed(mediaPlayer: MediaPlayer, playbackSpeed: Float) {
+        mediaPlayer.playbackParams = mediaPlayer.playbackParams.setSpeed(playbackSpeed)
     }
 
     override fun onCompletion(mp: MediaPlayer) {
@@ -92,7 +110,21 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
             mFiredOnceCompletionListener = null
         }
         if (!CategorySingleton.getInstance().shouldRepeat()) {
-            cleanUp()
+            cleanUp(mp)
+        }
+    }
+
+    @JvmOverloads
+    fun cleanUp(mediaPlayer : MediaPlayer? = mp) {
+        if (mediaPlayer == null) return
+
+        mediaPlayer.stop()
+        // Once the MP is released it can't be used again.
+        mediaPlayer.release()
+
+        if (loudnessEnhancer != null) {
+            loudnessEnhancer!!.release()
+            loudnessEnhancer = null
         }
     }
 
@@ -100,42 +132,30 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
         println("TODOJ error during playback what=$what extra $extra $lastFile")
         if (MEDIA_ERROR_UNKNOWN == what) {
             TtsSpeaker.speak("play error. speed")
-            cleanUp()
+            cleanUp(mediaPlayer)
             playFile(playbackSpeed = 1f, shouldRepeat = true)
         } else {
             TtsSpeaker.speak("play error. code $what")
-            cleanUp()
+            cleanUp(mediaPlayer)
         }
 
         return true
     }
 
     fun pause() {
+        wantsToPlay = false
         val mp = mp ?: return
-        if (playing()) {
+        if (isPrepared) {
             mp.pause()
         }
     }
 
-    fun toggleLooping() {
+    fun playWhenReady() {
+        wantsToPlay = true
         val mp = mp ?: return
-        if (mp.isLooping) {
-            mp.isLooping = false
-            mp.pause()
-        } else {
-            mp.isLooping = true
+        if (isPrepared) {
             mp.start()
         }
-    }
-
-    fun looping(): Boolean {
-        val mp = mp ?: return false
-        return  mp.isLooping
-    }
-
-    fun playing(): Boolean {
-        val mp = mp ?: return false
-        return mp.isPlaying || mp.isLooping
     }
 
     companion object {

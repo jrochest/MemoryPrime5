@@ -79,7 +79,7 @@ abstract class ModeSetter {
 
     open fun proceed() {
         // If play is pressed setup learning mode.
-        LearningModeSetter.getInstance().setupMode(mActivity!!)
+        LearningModeSetter.instance.setupMode(mActivity!!)
     }
 
     open fun undo() {}
