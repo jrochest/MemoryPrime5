@@ -170,7 +170,11 @@ public class LearningModeSetter extends ModeSetter implements
 
     public void undo() {
         if (questionMode) {
-            undoLastQuestion(mActivity);
+            if (!AudioPlayer.getInstance().looping()) {
+                AudioPlayer.getInstance().toggleLooping();
+            } else {
+                undoLastQuestion(mActivity);
+            }
         } else {
             undoThisQuestion(mActivity);
         }
@@ -219,7 +223,11 @@ public class LearningModeSetter extends ModeSetter implements
     public void proceed() {
         ScreenDimmer.getInstance().keepScreenOn(mActivity);
         if (questionMode) {
-            proceed(mActivity);
+            if (AudioPlayer.getInstance().looping()) {
+                AudioPlayer.getInstance().toggleLooping();
+            } else {
+                proceed(mActivity);
+            }
         } else {
             updateScoreAndMoveToNext(mActivity, 4);
         }

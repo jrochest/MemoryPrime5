@@ -10,6 +10,7 @@ import java.io.File
 import java.io.IOException
 
 class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
+
     private var mp: MediaPlayer? = null
     private var mFiredOnceCompletionListener: OnCompletionListener? = null
     private var loudnessEnhancer: LoudnessEnhancer? = null
@@ -111,14 +112,13 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
 
     fun pause() {
         val mp = mp ?: return
-        if (mp.isPlaying || mp.isLooping) {
+        if (playing()) {
             mp.pause()
         }
     }
 
     fun toggleLooping() {
         val mp = mp ?: return
-
         if (mp.isLooping) {
             mp.isLooping = false
             mp.pause()
@@ -126,8 +126,16 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
             mp.isLooping = true
             mp.start()
         }
+    }
 
+    fun looping(): Boolean {
+        val mp = mp ?: return false
+        return  mp.isLooping
+    }
 
+    fun playing(): Boolean {
+        val mp = mp ?: return false
+        return mp.isPlaying || mp.isLooping
     }
 
     companion object {
