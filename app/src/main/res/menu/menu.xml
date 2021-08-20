@@ -2,12 +2,11 @@
 <menu
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto">
-
 	<item
-		android:id="@+id/incremental_backup"
+		android:id="@+id/slow_incremental_backup"
 		android:icon="@android:drawable/ic_popup_sync"
 		app:showAsAction="always"
-		android:title="Incremental backup."/>
+		android:title="Incremental backup with extra validation"/>
 	<item
 		android:id="@+id/creationModeMenuItem"
 		android:title="New Note"
@@ -18,8 +17,8 @@
 		android:id="@+id/backup_previous_location"
 		android:title="Run backup now."/>
 	<item
-		android:id="@+id/slow_incremental_backup"
-		android:title="Incremental backup with extra validation"/>
+		android:id="@+id/incremental_backup"
+		android:title="Fast incremental backup."/>
 	<item
 		android:id="@+id/learningModeMenuItem"
 		android:title="Learning"

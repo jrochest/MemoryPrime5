@@ -4,6 +4,7 @@ import android.app.Activity
 import android.os.Build
 import android.view.WindowInsetsController
 import android.view.WindowManager
+import com.md.AudioPlayer
 import com.md.CategorySingleton
 import com.md.ModeHandler
 import com.md.SpacedRepeaterActivity
@@ -23,8 +24,9 @@ abstract class ModeSetter {
             if (defaultDeck != null) {
                 deckChooser.loadDeck(defaultDeck)
             }
-
         }
+        // Switching away from learning mode should stop playback.
+        AudioPlayer.instance.pause()
         switchModeImpl(context)
     }
 
