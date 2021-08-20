@@ -57,7 +57,7 @@ public class DeckChooseModeSetter extends ModeSetter {
 		this.memoryDroid = memoryDroid;
 	}
 
-	public void setupModeImpl(@NotNull final Activity context) {
+	public void switchModeImpl(@NotNull final Activity context) {
 		commonSetup(context, R.layout.deckchoosetemp);
 		setupCreateMode();
 	}
@@ -270,7 +270,7 @@ public class DeckChooseModeSetter extends ModeSetter {
 			RevisionQueue.setCurrentDeckReviewQueue(deckInfo.getRevisionQueue());
 		}
 
-		LearningModeSetter.getInstance().setupMode(memoryDroid);
+		LearningModeSetter.getInstance().switchMode(memoryDroid);
 	}
 
     public DeckInfo getDefaultDeck() {

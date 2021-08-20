@@ -40,7 +40,7 @@ public class CleanUpAudioFilesModeSetter extends ModeSetter {
 		return sInstance;
 	}
 
-	public void setupModeImpl(@NotNull final Activity activity) {
+	public void switchModeImpl(@NotNull final Activity activity) {
 		commonSetup(activity, R.layout.clean_up_audio_files);
 		setupBrowsing(activity);
 	}

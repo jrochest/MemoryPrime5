@@ -47,7 +47,7 @@ public class ImportModeSetter extends ModeSetter implements
 		this.memoryDroid = memoryDroid;
 	}
 
-	public void setupModeImpl(@NotNull final Activity context) {
+	public void switchModeImpl(@NotNull final Activity context) {
 
 		commonSetup(context, R.layout.debug);
 		setupBrowsing(context);

@@ -4,7 +4,6 @@ import java.util.Stack;
 
 import android.app.Activity;
 
-import com.md.modesetters.DeckChooseModeSetter;
 import com.md.modesetters.ModeSetter;
 
 public class ModeHandler {
@@ -31,7 +30,7 @@ public class ModeHandler {
 		// Must have two.
 		if (modeStack.size() > 1) {
 			ModeSetter pop = modeStack.pop();
-			modeStack.peek().setupMode(context);
+			modeStack.peek().switchMode(context);
 			return true;
 		}
 		return false;

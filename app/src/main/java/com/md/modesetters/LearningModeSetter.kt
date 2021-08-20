@@ -35,7 +35,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
     var repCounter = 0
     private var missCounter = 0
     private var questionMode = true
-    override fun setupModeImpl(context: Activity) {
+    override fun switchModeImpl(context: Activity) {
         originalSize = currentDeckReviewQueue!!.getSize()
         lastNoteList.clear()
         commonSetup(context, R.layout.learnquestion)
@@ -91,7 +91,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         memoryDroid!!.findViewById<View>(R.id.new_note_button)
             .setOnClickListener(object : MultiClickListener() {
                 override fun onMultiClick(v: View?) {
-                    CreateModeSetter.getInstance().setupMode(memoryDroid!!)
+                    CreateModeSetter.getInstance().switchMode(memoryDroid!!)
                 }
             })
         memoryDroid!!.findViewById<View>(R.id.dim_screen_button)
@@ -367,7 +367,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
     }
 
     override fun resetActivity() {
-        setupMode(mActivity!!)
+        switchMode(mActivity!!)
     }
 
     private fun undoThisQuestion(context: Activity) {

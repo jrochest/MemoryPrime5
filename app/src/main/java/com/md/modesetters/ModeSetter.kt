@@ -4,7 +4,6 @@ import android.app.Activity
 import android.os.Build
 import android.view.WindowInsetsController
 import android.view.WindowManager
-import com.md.AudioPlayer.Companion.instance
 import com.md.CategorySingleton
 import com.md.ModeHandler
 import com.md.SpacedRepeaterActivity
@@ -15,7 +14,7 @@ abstract class ModeSetter {
     protected var mActivity: SpacedRepeaterActivity? = null
     @JvmField
     protected var modeHand: ModeHandler? = null
-    fun setupMode(context: Activity) {
+    fun switchMode(context: Activity) {
         if (this !is DeckChooseModeSetter &&
                 !CategorySingleton.getInstance().hasCategory()) {
             ToastSingleton.getInstance().msg("No deck selected. \nUsing default")
@@ -26,10 +25,10 @@ abstract class ModeSetter {
             }
 
         }
-        setupModeImpl(context)
+        switchModeImpl(context)
     }
 
-    abstract fun setupModeImpl(context: Activity)
+    abstract fun switchModeImpl(context: Activity)
 
     fun parentSetup(context: Activity?, modeHand: ModeHandler?) {
         mActivity = context as SpacedRepeaterActivity?
@@ -79,7 +78,7 @@ abstract class ModeSetter {
 
     open fun proceed() {
         // If play is pressed setup learning mode.
-        LearningModeSetter.instance.setupMode(mActivity!!)
+        LearningModeSetter.instance.switchMode(mActivity!!)
     }
 
     open fun undo() {}

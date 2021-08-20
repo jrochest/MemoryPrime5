@@ -35,7 +35,7 @@ class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager by ToneMana
         BrowsingModeSetter.getInstance().setup(this, modeHand)
         DeckChooseModeSetter.getInstance().setUp(this, modeHand)
         LearningModeSetter.instance.setUp(this, modeHand)
-        DeckChooseModeSetter.getInstance().setupMode(this)
+        DeckChooseModeSetter.getInstance().switchMode(this)
         SettingModeSetter.setup(this, modeHand)
         CleanUpAudioFilesModeSetter.getInstance().setup(this, modeHand)
 
@@ -186,7 +186,7 @@ class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager by ToneMana
             return super.onKeyDown(keyCode, event)
         }
         if (modeSetter !is LearningModeSetter) {
-            LearningModeSetter.instance.setupMode(this)
+            LearningModeSetter.instance.switchMode(this)
             return true
         }
         val eventTimeMs = event.eventTime

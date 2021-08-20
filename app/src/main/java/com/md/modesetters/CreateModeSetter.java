@@ -50,7 +50,7 @@ public class CreateModeSetter extends ModeSetter {
 		parentSetup(memoryDroid, modeHand);
 	}
 
-	public void setupModeImpl(@NotNull final Activity context) {
+	public void switchModeImpl(@NotNull final Activity context) {
 		commonSetup(context, R.layout.creation);
 		setupCreateMode(context);
 
@@ -253,7 +253,7 @@ public class CreateModeSetter extends ModeSetter {
 				{
 					// So what we restart back to the initial state.
 					note = null;
-					BrowsingModeSetter.getInstance().setupMode(memoryDroid);
+					BrowsingModeSetter.getInstance().switchMode(memoryDroid);
 
 				}
 			}

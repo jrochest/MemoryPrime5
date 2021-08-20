@@ -42,7 +42,7 @@ public class BrowsingModeSetter extends ModeSetter implements
 
 	}
 
-	public void setupModeImpl(@NotNull final Activity context) {
+	public void switchModeImpl(@NotNull final Activity context) {
 
 		commonSetup(context, R.layout.browsing);
 		setupBrowsing(context);
@@ -153,7 +153,7 @@ public class BrowsingModeSetter extends ModeSetter implements
 
 					createModeSetter.setNote(note);
 
-					createModeSetter.setupMode(memoryDroid);
+					createModeSetter.switchMode(memoryDroid);
 
 				}
 			}
