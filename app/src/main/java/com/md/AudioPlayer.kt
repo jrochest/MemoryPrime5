@@ -6,13 +6,14 @@ import android.media.MediaPlayer.OnCompletionListener
 import android.media.audiofx.LoudnessEnhancer
 import com.md.modesetters.TtsSpeaker
 import com.md.utils.ToastSingleton
+import kotlinx.coroutines.*
 import java.io.File
 import java.io.IOException
 
 class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
-
     private var isPrepared: Boolean = false
     private var mp: MediaPlayer? = null
+    private var repeatsRemaining: Int? = null
     private var mFiredOnceCompletionListener: OnCompletionListener? = null
     private var loudnessEnhancer: LoudnessEnhancer? = null
     private var lastFile: String? = null
@@ -60,7 +61,8 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
 
         wantsToPlay = autoPlay
         isPrepared = false
-        mediaPlayer.isLooping = shouldRepeat
+        mediaPlayer.isLooping = false
+        repeatsRemaining = if (shouldRepeat) 1 else 0
         try {
             mediaPlayer.setDataSource(path)
             loudnessEnhancer = LoudnessEnhancer(mediaPlayer.audioSessionId)
@@ -105,6 +107,18 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
     }
 
     override fun onCompletion(mp: MediaPlayer) {
+        repeatsRemaining?.let {
+            if (it == 0 && wantsToPlay) {
+                pause()
+            } else {
+                mp.seekTo(0)
+                mp.start()
+                repeatsRemaining = it - 1
+                // This avoid firing the completion listener
+                return
+            }
+        }
+
         if (mFiredOnceCompletionListener != null) {
             mFiredOnceCompletionListener!!.onCompletion(mp)
             mFiredOnceCompletionListener = null

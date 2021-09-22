@@ -1,6 +1,7 @@
 package com.md
 
 import android.os.SystemClock
+import com.md.modesetters.LearningModeSetter
 import com.md.modesetters.ModeSetter
 import com.md.modesetters.TtsSpeaker
 import kotlinx.coroutines.*
@@ -34,6 +35,8 @@ class ExternalClickCounter {
         }
         mPressGroupLastPressEventMs = eventTimeMs
         mPressGroupLastPressMs = currentTimeMs
+
+        LearningModeSetter.instance.autoProceedJob?.cancel()
 
         currentJob = GlobalScope.launch(Dispatchers.Main) {
             if (mPressGroupCount == 1) {

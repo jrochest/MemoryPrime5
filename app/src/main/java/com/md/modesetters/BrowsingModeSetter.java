@@ -185,7 +185,8 @@ public class BrowsingModeSetter extends ModeSetter implements
 				Note note = noteEditor.getNote();
 
 				if (note != null) {
-					AudioPlayer.getInstance().playFile(note.getQuestion(), null, true);
+					AudioPlayer.getInstance().playFile(
+							note.getQuestion(), null, true);
 				}
 			}
 		});

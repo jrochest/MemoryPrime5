@@ -14,6 +14,7 @@ import com.md.provider.Note
 import com.md.utils.ScreenDimmer
 import com.md.utils.ToastSingleton
 import com.md.workers.BackupPreferences.markAllStale
+import kotlinx.coroutines.*
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -43,6 +44,8 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         // Let's just load up the learn question also to get it ready.
         setupQuestionMode(context, shouldAutoPlay = true)
     }
+
+    var autoProceedJob: Job? = null
 
     private fun commonLayoutSetup() {
         val memoryDroid = memoryDroid!!
@@ -226,7 +229,16 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
             println("TEMPJ setupQuestionMode shouldAutoPlay= $shouldAutoPlay")
             AudioPlayer.instance.playFile(
                 currentNote!!.question,
-                firedOnceCompletionListener = null,
+                firedOnceCompletionListener = {
+                    autoProceedJob = GlobalScope.launch(Dispatchers.Main) {
+                        delay(20_000)
+                        speak("breath")
+                        delay(20_000)
+                        speak("mindfulness")
+                        delay(20_000)
+                        postponeNote()
+                    }
+                } ,
                 shouldRepeat = true,
                 autoPlay = shouldAutoPlay)
         } else {
@@ -262,7 +274,14 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         memoryDroid!!.setContentView(R.layout.learnquestion)
         applyDim(mIsDimmed)
         if (currentNote != null) {
-            AudioPlayer.instance.playFile(currentNote!!.answer, null, true)
+            AudioPlayer.instance.playFile(currentNote!!.answer,
+                    {
+                        autoProceedJob = GlobalScope.launch(Dispatchers.Main) {
+                            delay(3_000)
+                            proceed()
+                        }
+                    }
+                    , true)
         }
         commonLayoutSetup()
         memoryDroid!!.findViewById<View>(R.id.rerecord)
@@ -272,6 +291,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
                     lastOrNull
                 )
             )
+
     }
 
     private fun updateVal() {
