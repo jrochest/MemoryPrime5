@@ -119,10 +119,11 @@ class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager by ToneMana
 
         val device = event.device ?: return false
 
+        // On Android 12 the Mpow device is:
+        // Mpow isnap X2 Mouse
         val name = device.name
-        // https://www.amazon.com/gp/product/B0872BC4MY/ref=ppx_yo_dt_b_asin_title_o03_s00
         if (name.contains("Virtual") ||
-                name.contains("Mpow isnap X2 Consumer Control") ||
+                name.contains("Mpow") ||
                 name.contains("AB Shutter3") ||
                 name.contains("AK LIFE BT") ||
                 name.contains("BLE") ||
