@@ -145,14 +145,12 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
     override fun undo() {
         if (questionMode) {
             if (!AudioPlayer.instance.wantsToPlay) {
-                println("TEMPJ toggleLooping in undo")
+
                 AudioPlayer.instance.playWhenReady()
             } else {
-                println("TEMPJ undoLastQuestion in undo")
                 undoLastQuestion(mActivity!!)
             }
         } else {
-            println("TEMPJ undoThisQuestion in undo")
             undoThisQuestion(mActivity!!)
         }
     }
