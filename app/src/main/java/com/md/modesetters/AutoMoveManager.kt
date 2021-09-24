@@ -11,7 +11,7 @@ object AutoMoveManager {
         lastProceedTime = SystemClock.uptimeMillis()
     }
 
-    // Wait enough time between the proceeds to avoid overlapping proceeds.
+    // Wait enough time between the proceeds to avoid overlapping proceeds to new question.
     fun safeToProceedToNewQuestion() = lastProceedTime + 1500 < SystemClock.uptimeMillis()
 
     private val currentJobs = mutableListOf<Job>()
