@@ -3,7 +3,7 @@ package com.md.modesetters
 import android.os.SystemClock
 import kotlinx.coroutines.Job
 
-object AutoMoveManager {
+object MoveManager {
 
     private var lastProceedTime = 0L
 

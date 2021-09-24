@@ -200,7 +200,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         if (questionMode) {
             if (AudioPlayer.instance.wantsToPlay) {
                 // Avoid a double move.
-                if (!AutoMoveManager.safeToProceedToNewQuestion()) {
+                if (!MoveManager.safeToProceedToNewQuestion()) {
                     return
                 }
                 AudioPlayer.instance.pause()
@@ -219,7 +219,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         shouldUpdateQuestion: Boolean = true,
         shouldAutoPlay: Boolean
     ) {
-        AutoMoveManager.recordQuestionProceed()
+        MoveManager.recordQuestionProceed()
         if (shouldUpdateQuestion) {
             updateVal()
         }
@@ -230,7 +230,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
             AudioPlayer.instance.playFile(
                 currentNote!!.question,
                 firedOnceCompletionListener = {
-                    AutoMoveManager.addJob(GlobalScope.launch(Dispatchers.Main) {
+                    MoveManager.addJob(GlobalScope.launch(Dispatchers.Main) {
                         delay(20_000)
                         speak("breathe")
                         delay(20_000)
@@ -276,7 +276,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         if (currentNote != null) {
             AudioPlayer.instance.playFile(currentNote!!.answer,
                     {
-                        AutoMoveManager.addJob(GlobalScope.launch(Dispatchers.Main) {
+                        MoveManager.addJob(GlobalScope.launch(Dispatchers.Main) {
                             delay(3_000)
                             proceed()
                         })
