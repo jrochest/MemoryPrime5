@@ -63,8 +63,8 @@ public class DeckChooseModeSetter extends ModeSetter {
 	}
 
 	private ListView mListView;
-	private Vector<Deck> mAdapterDecks = new Vector<Deck>();
-	private HashMap<Integer, DeckInfo> deckInfoMap;
+	private Vector<Deck> mAdapterDecks = new Vector<>();
+	private final HashMap<Integer, DeckInfo> deckInfoMap;
 	private boolean loadComplete;
 	private ProgressBar progressBar;
 
