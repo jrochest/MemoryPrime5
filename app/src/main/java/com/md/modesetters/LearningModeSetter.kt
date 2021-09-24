@@ -45,8 +45,6 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         setupQuestionMode(context, shouldAutoPlay = true)
     }
 
-    var autoProceedJob: Job? = null
-
     private fun commonLayoutSetup() {
         val memoryDroid = memoryDroid!!
         val gestures = memoryDroid
@@ -178,7 +176,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         mActivity!!.keepHeadphoneAlive()
     }
 
-    override fun secondaryAction(): String? {
+    override fun secondaryAction(): String {
         return if (questionMode) {
             "question mode"
         } else {
@@ -226,18 +224,17 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         applyDim(mIsDimmed)
         questionMode = true
         if (currentNote != null) {
-            println("TEMPJ setupQuestionMode shouldAutoPlay= $shouldAutoPlay")
             AudioPlayer.instance.playFile(
                 currentNote!!.question,
                 firedOnceCompletionListener = {
-                    autoProceedJob = GlobalScope.launch(Dispatchers.Main) {
+                    AutoMoveManager.addJob(GlobalScope.launch(Dispatchers.Main) {
                         delay(20_000)
-                        speak("breath")
+                        speak("breathe")
                         delay(20_000)
                         speak("mindfulness")
                         delay(20_000)
                         postponeNote()
-                    }
+                    })
                 } ,
                 shouldRepeat = true,
                 autoPlay = shouldAutoPlay)
@@ -276,10 +273,10 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         if (currentNote != null) {
             AudioPlayer.instance.playFile(currentNote!!.answer,
                     {
-                        autoProceedJob = GlobalScope.launch(Dispatchers.Main) {
+                        AutoMoveManager.addJob(GlobalScope.launch(Dispatchers.Main) {
                             delay(3_000)
                             proceed()
-                        }
+                        })
                     }
                     , true)
         }
