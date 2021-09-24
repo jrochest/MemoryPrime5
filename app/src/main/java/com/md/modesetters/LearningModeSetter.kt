@@ -166,11 +166,10 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
     }
 
     override fun proceedFailure() {
+        if (!AutoMoveManager.safeToProceedToNewQuestion()) {
+            return
+        }
         if (questionMode) {
-            if (!AutoMoveManager.safeToProceedToNewQuestion()) {
-                return
-            }
-            AutoMoveManager.recordQuestionProceed()
             proceed(mActivity!!)
         } else {
             updateScoreAndMoveToNext(mActivity!!, 1)
@@ -200,12 +199,11 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
     }
 
     override fun proceed() {
+        if (!AutoMoveManager.safeToProceedToNewQuestion()) {
+            return
+        }
         ScreenDimmer.getInstance().keepScreenOn(mActivity)
         if (questionMode) {
-            if (!AutoMoveManager.safeToProceedToNewQuestion()) {
-                return
-            }
-            AutoMoveManager.recordQuestionProceed()
             if (AudioPlayer.instance.wantsToPlay) {
                 AudioPlayer.instance.pause()
             } else {
@@ -223,6 +221,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         shouldUpdateQuestion: Boolean = true,
         shouldAutoPlay: Boolean
     ) {
+        AutoMoveManager.recordQuestionProceed()
         if (shouldUpdateQuestion) {
             updateVal()
         }
