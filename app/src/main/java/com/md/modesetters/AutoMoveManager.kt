@@ -1,8 +1,18 @@
 package com.md.modesetters
 
+import android.os.SystemClock
 import kotlinx.coroutines.Job
 
 object AutoMoveManager {
+
+    private var lastProceedTime = 0L
+
+    fun recordQuestionProceed() {
+        lastProceedTime = SystemClock.uptimeMillis()
+    }
+
+    // Wait enough time between the proceeds to avoid overlapping proceeds.
+    fun safeToProceedToNewQuestion() = lastProceedTime + 2000 < SystemClock.uptimeMillis()
 
     private val currentJobs = mutableListOf<Job>()
 
