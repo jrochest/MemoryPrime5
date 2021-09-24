@@ -166,9 +166,6 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
     }
 
     override fun proceedFailure() {
-        if (!AutoMoveManager.safeToProceedToNewQuestion()) {
-            return
-        }
         if (questionMode) {
             proceed(mActivity!!)
         } else {
@@ -199,12 +196,13 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
     }
 
     override fun proceed() {
-        if (!AutoMoveManager.safeToProceedToNewQuestion()) {
-            return
-        }
         ScreenDimmer.getInstance().keepScreenOn(mActivity)
         if (questionMode) {
             if (AudioPlayer.instance.wantsToPlay) {
+                // Avoid a double move.
+                if (!AutoMoveManager.safeToProceedToNewQuestion()) {
+                    return
+                }
                 AudioPlayer.instance.pause()
             } else {
                 proceed(mActivity!!)
