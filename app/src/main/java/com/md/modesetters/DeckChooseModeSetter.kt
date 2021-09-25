@@ -130,14 +130,13 @@ object DeckChooseModeSetter : ModeSetter() {
             mTotalNotes = 0
             val childCount = deckList.size
             for (idx in 0 until childCount) {
-                val elementAt = deckList.elementAt(idx)
-
                 // Stop if we aren't loaded anymore.
                 if (modeHand!!.whoseOnTop() !== dcChooseModeSetter) {
                     break
                 }
+                val deck = deckList.elementAt(idx)
                 val revisionQueue = RevisionQueue()
-                revisionQueue.populate(DbNoteEditor.instance!!, elementAt.id)
+                revisionQueue.populate(DbNoteEditor.instance!!, deck.id)
 
                 // Stop if we aren't loaded anymore. We want this before
                 // and after the query
@@ -145,8 +144,8 @@ object DeckChooseModeSetter : ModeSetter() {
                     break
                 }
 
-                val deckCount = DbNoteEditor.instance!!.getDeckCount(elementAt.id)
-                val deckInfo = DeckInfo(elementAt, revisionQueue, deckCount)
+                val deckCount = DbNoteEditor.instance!!.getDeckCount(deck.id)
+                val deckInfo = DeckInfo(deck, revisionQueue, deckCount)
                 publishProgessVisible(deckInfo)
             }
             return null
