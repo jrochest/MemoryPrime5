@@ -1,5 +1,6 @@
 package com.md.modesetters
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.os.AsyncTask
 import android.view.View
@@ -18,8 +19,10 @@ import com.md.provider.Deck
 import com.md.utils.ToastSingleton
 import java.util.*
 
+@SuppressLint("StaticFieldLeak")
 object DeckChooseModeSetter : ModeSetter() {
     private var mTotalNotes = 0
+    @SuppressLint("StaticFieldLeak")
     private var memoryDroid: Activity? = null
     fun setUp(memoryDroid: Activity?,
               modeHand: ModeHandler?) {
@@ -34,7 +37,7 @@ object DeckChooseModeSetter : ModeSetter() {
 
     var listView: ListView? = null
     private val mAdapterDecks = Vector<Deck>()
-    private val deckInfoMap: HashMap<Int, DeckInfo>
+    private var deckInfoMap: HashMap<Int, DeckInfo> = LinkedHashMap()
     private var loadComplete = false
     private var progressBar: ProgressBar? = null
     fun setupCreateMode() {
@@ -52,8 +55,6 @@ object DeckChooseModeSetter : ModeSetter() {
         progressBar!!.max = mAdapterDecks.size
         progressBar!!.progress = 0
         progressBar!!.visibility = View.VISIBLE
-        val arrayAdapter = ArrayAdapter(memoryDroid!!,
-                R.layout.deck_item_for_list, mAdapterDecks)
 
         // By using setAdpater method in listview we an add string array in
         // list.
@@ -61,19 +62,7 @@ object DeckChooseModeSetter : ModeSetter() {
         val onItemClickListener: OnItemClickListener = OnItemClickListenerImplementation(
                 memoryDroid)
         listView!!.onItemClickListener = onItemClickListener
-        val onItemLongClickListener = OnItemLongClickListener { av, v, index, arg ->
-            if (!loadComplete) {
-                return@OnItemLongClickListener true
-            }
-            val deckInfo = deckInfoMap[arg.toInt()]
-            val alert = AlertDialog.Builder(memoryDroid!!)
-            alert.setTitle("Choose action or press off screen")
-            alert.setPositiveButton("Rename") { dialog, whichButton -> DeckNameUpdater(memoryDroid, deckInfo, this).onClick(v) }
-            alert.setNegativeButton("Delete") { dialog, whichButton -> DeckDeleter(memoryDroid, deckInfo, this).onClick(v) }
-            alert.show()
-            true
-        }
-        listView!!.onItemLongClickListener = onItemLongClickListener
+
         val deckPopulator = DeckPopulator(this)
         deckPopulator.execute(this)
     }
@@ -96,10 +85,20 @@ object DeckChooseModeSetter : ModeSetter() {
 
             val deck = decks[position]
             val deckInfo = deckInfoMap[deck.id]
+            val textView = (view.findViewById<View>(R.id.deck_name) as TextView)
             if (deckInfo != null) {
                 populate(position, view, deckInfo)
             } else {
                 (view.findViewById<View>(R.id.deck_name) as TextView).text = deck.name
+            }
+            textView.setOnLongClickListener { v ->
+                val info = deckInfoMap[deck.id] ?: return@setOnLongClickListener true
+                val alert = AlertDialog.Builder(memoryDroid!!)
+                alert.setTitle("Choose action or press off screen")
+                alert.setPositiveButton("Rename") { _, _ -> DeckNameUpdater(memoryDroid, info, getInstance()).onClick(v) }
+                alert.setNegativeButton("Delete") { _, _ -> DeckDeleter(memoryDroid, info, getInstance()).onClick(v) }
+                alert.show()
+                true
             }
             view.findViewById<View>(R.id.new_note_button).setOnClickListener { v: View? ->
                 val info = deckInfoMap[deck.id] ?: return@setOnClickListener
@@ -237,7 +236,4 @@ object DeckChooseModeSetter : ModeSetter() {
         fun getInstance() = this
 
 
-    init {
-        deckInfoMap = LinkedHashMap()
-    }
 }
