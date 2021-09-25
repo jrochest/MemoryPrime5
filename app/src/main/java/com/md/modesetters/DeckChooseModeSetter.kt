@@ -7,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import android.widget.AdapterView.OnItemClickListener
-import android.widget.AdapterView.OnItemLongClickListener
 import androidx.appcompat.app.AlertDialog
 import com.md.*
 import com.md.RevisionQueue.Companion.currentDeckReviewQueue
@@ -37,7 +36,7 @@ object DeckChooseModeSetter : ModeSetter() {
 
     var listView: ListView? = null
     private val mAdapterDecks = Vector<Deck>()
-    private var deckInfoMap: HashMap<Int, DeckInfo> = LinkedHashMap()
+    private var deckIdToInfo: HashMap<Int, DeckInfo> = LinkedHashMap()
     private var loadComplete = false
     private var progressBar: ProgressBar? = null
     fun setupCreateMode() {
@@ -59,9 +58,6 @@ object DeckChooseModeSetter : ModeSetter() {
         // By using setAdpater method in listview we an add string array in
         // list.
         listView!!.adapter = DeckAdapter(mAdapterDecks, mActivity!!)
-        val onItemClickListener: OnItemClickListener = OnItemClickListenerImplementation(
-                memoryDroid)
-        listView!!.onItemClickListener = onItemClickListener
 
         val deckPopulator = DeckPopulator(this)
         deckPopulator.execute(this)
@@ -84,7 +80,7 @@ object DeckChooseModeSetter : ModeSetter() {
             val view = convertView ?: context.layoutInflater.inflate(R.layout.deck_item_for_list, parent, false)
 
             val deck = decks[position]
-            val deckInfo = deckInfoMap[deck.id]
+            val deckInfo = deckIdToInfo[deck.id]
             val textView = (view.findViewById<View>(R.id.deck_name) as TextView)
             if (deckInfo != null) {
                 populate(position, view, deckInfo)
@@ -92,7 +88,7 @@ object DeckChooseModeSetter : ModeSetter() {
                 (view.findViewById<View>(R.id.deck_name) as TextView).text = deck.name
             }
             textView.setOnLongClickListener { v ->
-                val info = deckInfoMap[deck.id] ?: return@setOnLongClickListener true
+                val info = deckIdToInfo[deck.id] ?: return@setOnLongClickListener true
                 val alert = AlertDialog.Builder(memoryDroid!!)
                 alert.setTitle("Choose action or press off screen")
                 alert.setPositiveButton("Rename") { _, _ -> DeckNameUpdater(memoryDroid, info, getInstance()).onClick(v) }
@@ -101,23 +97,14 @@ object DeckChooseModeSetter : ModeSetter() {
                 true
             }
             view.findViewById<View>(R.id.new_note_button).setOnClickListener { v: View? ->
-                val info = deckInfoMap[deck.id] ?: return@setOnClickListener
+                val info = deckIdToInfo[deck.id] ?: return@setOnClickListener
                 loadDeck(info)
             }
             view.findViewById<View>(R.id.learn_button).setOnClickListener { v: View? ->
-                val info = deckInfoMap[deck.id] ?: return@setOnClickListener
+                val info = deckIdToInfo[deck.id] ?: return@setOnClickListener
                 loadDeck(info)
             }
             return view
-        }
-    }
-
-    private  class OnItemClickListenerImplementation(memoryDroid: Activity?) : OnItemClickListener {
-        override fun onItemClick(av: AdapterView<*>?, v: View, index: Int, arg: Long) {
-            if (loadComplete) {
-                val deckInfo = deckInfoMap[Integer.valueOf(arg.toInt())]
-                loadDeck(deckInfo)
-            }
         }
     }
 
@@ -193,7 +180,7 @@ object DeckChooseModeSetter : ModeSetter() {
             if (elementAt.id == state.category) {
                 elementAt.setSize(state.deckCount)
                 elementAt.setTodayReview(state.revisionQueue.getSize())
-                deckInfoMap[Integer.valueOf(idx)] = state
+                deckIdToInfo[elementAt.id] = state
                 // TODO(jrochest) Why is the necessary. It only needs it when returning from
                 // a different mode, but it is not needed initially.
                 if (listView!!.childCount - 1 >= idx) {
@@ -211,18 +198,12 @@ object DeckChooseModeSetter : ModeSetter() {
         LearningModeSetter.instance.switchMode(memoryDroid!!)
     }
 
-    // Return the first and the default.
-    val defaultDeck: DeckInfo?
-        get() = if (!deckInfoMap.isEmpty()) {
-            // Return the first and the default.
-            deckInfoMap.entries.iterator().next().value
-        } else null
     val nextDeckWithItems: DeckInfo?
         get() {
-            if (deckInfoMap.isEmpty()) {
+            if (deckIdToInfo.isEmpty()) {
                 return null
             }
-            for ((_, value) in deckInfoMap) {
+            for ((_, value) in deckIdToInfo) {
                 if (value.name.contains("inactive")) {
                     continue
                 }
