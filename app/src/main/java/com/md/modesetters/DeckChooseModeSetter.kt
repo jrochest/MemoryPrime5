@@ -81,7 +81,7 @@ object DeckChooseModeSetter : ModeSetter() {
             val deckInfo = deckIdToInfo[deck.id]
             val textView = view.findViewById<TextView>(R.id.deck_name)
             if (deckInfo != null) {
-                populate(position, view, deckInfo)
+                populate(view, deckInfo)
             } else {
                 textView.text = deck.name
             }
@@ -99,11 +99,13 @@ object DeckChooseModeSetter : ModeSetter() {
                 loadDeck(info)
                 CreateModeSetter.getInstance().switchMode(memoryDroid!!)
             }
-            view.findViewById<View>(R.id.learn_button).setOnClickListener {
+
+                view.findViewById<Button>(R.id.learn_button).setOnClickListener {
                 val info = deckIdToInfo[deck.id] ?: return@setOnClickListener
                 loadDeck(info)
                 LearningModeSetter.instance.switchMode(memoryDroid!!)
             }
+
             return view
         }
     }
@@ -175,7 +177,7 @@ object DeckChooseModeSetter : ModeSetter() {
                 // TODO(jrochest) Why is the necessary. It only needs it when returning from
                 // a different mode, but it is not needed initially.
                 if (listView!!.childCount - 1 >= idx) {
-                    populate(idx, listView!!.getChildAt(idx), state)
+                    populate(listView!!.getChildAt(idx), state)
                 }
             }
         }
