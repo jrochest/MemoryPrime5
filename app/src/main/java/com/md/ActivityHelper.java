@@ -115,8 +115,7 @@ public class ActivityHelper {
 		addMenu(menu, R.id.creationModeMenuItem, CreateModeSetter.getInstance(), activity);
 		addMenu(menu, R.id.browseDeckModeMenuItem, BrowsingModeSetter.getInstance(), activity);
 		addMenu(menu, R.id.learningModeMenuItem, LearningModeSetter.getInstance(), activity);
-		addMenu(menu, R.id.selectDeckModeMenuItem, DeckChooseModeSetter.getInstance(), activity);
-		addMenu(menu, R.id.selectDeckModeMenuItem, DeckChooseModeSetter.getInstance(), activity);
+		addMenu(menu, R.id.selectDeckModeMenuItem, DeckChooseModeSetter.INSTANCE, activity);
 		addMenu(menu, R.id.settings, SettingModeSetter.INSTANCE, activity);
 		addMenu(menu, R.id.clean_up_files, CleanUpAudioFilesModeSetter.getInstance(), activity);
 	}

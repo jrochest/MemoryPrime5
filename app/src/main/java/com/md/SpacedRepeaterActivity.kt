@@ -33,7 +33,7 @@ class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager by ToneMana
         // Normal mode.
         CreateModeSetter.getInstance().setUp(this, modeHand)
         BrowsingModeSetter.getInstance().setup(this, modeHand)
-        DeckChooseModeSetter.getInstance().setUp(this, modeHand)
+        DeckChooseModeSetter.getInstance()?.setUp(this, modeHand)
         LearningModeSetter.instance.setUp(this, modeHand)
         DeckChooseModeSetter.getInstance().switchMode(this)
         SettingModeSetter.setup(this, modeHand)
