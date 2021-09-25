@@ -251,6 +251,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
             val nextDeckWithItems = deckChooser.nextDeckWithItems
             if (nextDeckWithItems != null) {
                 deckChooser.loadDeck(nextDeckWithItems)
+                instance.switchMode(mActivity!!)
                 speak("Loading " + nextDeckWithItems.name)
             } else {
                 speak("All decks done..")

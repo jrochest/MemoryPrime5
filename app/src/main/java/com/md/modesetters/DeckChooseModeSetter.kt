@@ -97,10 +97,12 @@ object DeckChooseModeSetter : ModeSetter() {
             view.findViewById<View>(R.id.new_note_button).setOnClickListener {
                 val info = deckIdToInfo[deck.id] ?: return@setOnClickListener
                 loadDeck(info)
+                CreateModeSetter.getInstance().switchMode(memoryDroid!!)
             }
             view.findViewById<View>(R.id.learn_button).setOnClickListener {
                 val info = deckIdToInfo[deck.id] ?: return@setOnClickListener
                 loadDeck(info)
+                LearningModeSetter.instance.switchMode(memoryDroid!!)
             }
             return view
         }
@@ -184,7 +186,6 @@ object DeckChooseModeSetter : ModeSetter() {
             CategorySingleton.getInstance().setDeckInfo(deckInfo)
             currentDeckReviewQueue = deckInfo.revisionQueue
         }
-        LearningModeSetter.instance.switchMode(memoryDroid!!)
     }
 
     val nextDeckWithItems: DeckInfo?
