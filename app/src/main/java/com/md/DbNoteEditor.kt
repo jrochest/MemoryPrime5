@@ -161,34 +161,6 @@ class DbNoteEditor protected constructor() {
         return DatabaseResult(query, openDatabase)
     }
 
-    val upcomingReps: Vector<Int>
-        get() {
-            val reps = Vector<Int>()
-            var query: DatabaseResult? = null
-            val NUMBER_TO_COUNT = 12
-            for (idx in 0 until NUMBER_TO_COUNT) {
-                val currentDay = (idx
-                        + CategorySingleton.getInstance().daysSinceStart)
-                val queryString = ("SELECT COUNT(" + Note._ID + ") FROM "
-                        + NotesProvider.NOTES_TABLE_NAME + " WHERE " + currentDay
-                        + " = " + Note.NEXT_REP)
-                try {
-                    query = rawQuery(queryString)
-                } catch (e: Exception) {
-                    val getMsg = e.message
-                    println(getMsg)
-                }
-                while (query != null && query.cursor.moveToNext()) {
-                    reps.add(query.cursor.getInt(0))
-                }
-                if (query != null) {
-                    query.cursor.close()
-                    query.database.close()
-                }
-            }
-            return reps
-        }
-
     fun getOverdue(category: Int): Vector<Note> {
 
         // TODO make this look for ones that actually need to be reviewed.
