@@ -145,11 +145,8 @@ object DeckChooseModeSetter : ModeSetter() {
                     break
                 }
 
-                // TODO why is the counting when we have the size.
-                val deckCount = DbNoteEditor.instance!!.getDeckCount(
-                        elementAt.id)
-                val deckInfo = DeckInfo(elementAt, revisionQueue,
-                        deckCount)
+                val deckCount = DbNoteEditor.instance!!.getDeckCount(elementAt.id)
+                val deckInfo = DeckInfo(elementAt, revisionQueue, deckCount)
                 publishProgessVisible(deckInfo)
             }
             return null
