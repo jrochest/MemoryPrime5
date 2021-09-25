@@ -79,11 +79,11 @@ object DeckChooseModeSetter : ModeSetter() {
 
             val deck = decks[position]
             val deckInfo = deckIdToInfo[deck.id]
-            val textView = (view.findViewById<View>(R.id.deck_name) as TextView)
+            val textView = view.findViewById<TextView>(R.id.deck_name)
             if (deckInfo != null) {
                 populate(position, view, deckInfo)
             } else {
-                (view.findViewById<View>(R.id.deck_name) as TextView).text = deck.name
+                textView.text = deck.name
             }
             textView.setOnLongClickListener { v ->
                 val info = deckIdToInfo[deck.id] ?: return@setOnLongClickListener true
@@ -94,11 +94,11 @@ object DeckChooseModeSetter : ModeSetter() {
                 alert.show()
                 true
             }
-            view.findViewById<View>(R.id.new_note_button).setOnClickListener { v: View? ->
+            view.findViewById<View>(R.id.new_note_button).setOnClickListener {
                 val info = deckIdToInfo[deck.id] ?: return@setOnClickListener
                 loadDeck(info)
             }
-            view.findViewById<View>(R.id.learn_button).setOnClickListener { v: View? ->
+            view.findViewById<View>(R.id.learn_button).setOnClickListener {
                 val info = deckIdToInfo[deck.id] ?: return@setOnClickListener
                 loadDeck(info)
             }
@@ -120,7 +120,7 @@ object DeckChooseModeSetter : ModeSetter() {
             }
         }
 
-        protected override fun onProgressUpdate(vararg state: DeckInfo?) {
+        override fun onProgressUpdate(vararg state: DeckInfo?) {
             val stateFirst = state[0] ?: return
 
             dcChooseModeSetter.setState(stateFirst)
