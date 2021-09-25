@@ -115,23 +115,32 @@ class DbNoteEditor protected constructor() {
             return returnValue
         }
 
-    fun queryDeck(): Vector<Deck> {
-        val vector = Vector<Deck>()
+    fun queryDeck(): List<Deck> {
+        val activateList = ArrayList<Deck>()
+        val inactivateList = ArrayList<Deck>()
         val result = rawQuery("SELECT * FROM "
-                + NotesProvider.DECKS_TABLE_NAME) ?: return vector
+                + NotesProvider.DECKS_TABLE_NAME) ?: return activateList
         val query = result.cursor
         var keyword = ""
         while (query.moveToNext()) {
             keyword += "\n"
-            val _id = query.getInt(query.getColumnIndex("_id"))
+            val id = query.getInt(query.getColumnIndex("_id"))
             val name = query.getString(query
                     .getColumnIndex(AbstractDeck.NAME))
             println("name: $name")
-            vector.add(Deck(_id, name))
+
+            val deck = Deck(id, name)
+
+            if (name.contains("inactive")) {
+                inactivateList.add(deck)
+            } else {
+                activateList.add(deck)
+            }
         }
         result.cursor.close()
         result.database.close()
-        return vector
+        activateList.addAll(inactivateList)
+        return activateList
     }
 
     class DatabaseResult(val cursor: Cursor, val database: SQLiteDatabase)

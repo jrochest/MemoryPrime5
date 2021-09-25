@@ -6,7 +6,6 @@ import android.os.AsyncTask
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
-import android.widget.AdapterView.OnItemClickListener
 import androidx.appcompat.app.AlertDialog
 import com.md.*
 import com.md.RevisionQueue.Companion.currentDeckReviewQueue
@@ -35,29 +34,28 @@ object DeckChooseModeSetter : ModeSetter() {
     }
 
     var listView: ListView? = null
-    private val mAdapterDecks = Vector<Deck>()
+    private val deckList = Vector<Deck>()
     private var deckIdToInfo: HashMap<Int, DeckInfo> = LinkedHashMap()
     private var loadComplete = false
     private var progressBar: ProgressBar? = null
     fun setupCreateMode() {
         loadComplete = false
         val insertButton = memoryDroid!!.findViewById<View>(R.id.addNew) as Button
-        insertButton.setOnClickListener(InsertNewHandler(memoryDroid,
-                this))
-        mAdapterDecks.clear()
+        insertButton.setOnClickListener(InsertNewHandler(memoryDroid, this))
+        deckList.clear()
         val queryDeck = DbNoteEditor.instance!!.queryDeck()
         for (deck in queryDeck) {
-            addDeck(deck.name, deck.id)
+            deckList.add(Deck(deck.id, deck.name))
         }
         listView = memoryDroid!!.findViewById<View>(R.id.ListView01) as ListView
         progressBar = memoryDroid!!.findViewById<View>(R.id.progressBar) as ProgressBar
-        progressBar!!.max = mAdapterDecks.size
+        progressBar!!.max = deckList.size
         progressBar!!.progress = 0
         progressBar!!.visibility = View.VISIBLE
 
         // By using setAdpater method in listview we an add string array in
         // list.
-        listView!!.adapter = DeckAdapter(mAdapterDecks, mActivity!!)
+        listView!!.adapter = DeckAdapter(deckList, mActivity!!)
 
         val deckPopulator = DeckPopulator(this)
         deckPopulator.execute(this)
@@ -130,9 +128,9 @@ object DeckChooseModeSetter : ModeSetter() {
 
         override fun doInBackground(vararg params: DeckChooseModeSetter?): DeckInfo? {
             mTotalNotes = 0
-            val childCount = mAdapterDecks.size
+            val childCount = deckList.size
             for (idx in 0 until childCount) {
-                val elementAt = mAdapterDecks.elementAt(idx)
+                val elementAt = deckList.elementAt(idx)
 
                 // Stop if we aren't loaded anymore.
                 if (modeHand!!.whoseOnTop() !== dcChooseModeSetter) {
@@ -159,11 +157,6 @@ object DeckChooseModeSetter : ModeSetter() {
 
     }
 
-    private fun addDeck(name: String, id: Int) {
-        val deck = Deck(id, name)
-        mAdapterDecks.add(deck)
-    }
-
     fun onComplete() {
         val loadingOrSelect = memoryDroid?.findViewById<View>(R.id.loadingOrSelect) as TextView
         if (loadingOrSelect != null) {
@@ -175,8 +168,8 @@ object DeckChooseModeSetter : ModeSetter() {
 
     fun setState(state: DeckInfo) {
         progressBar!!.progress = progressBar!!.progress + 1
-        for (idx in mAdapterDecks.indices) {
-            val elementAt = mAdapterDecks.elementAt(idx)
+        for (idx in deckList.indices) {
+            val elementAt = deckList.elementAt(idx)
             if (elementAt.id == state.category) {
                 elementAt.setSize(state.deckCount)
                 elementAt.setTodayReview(state.revisionQueue.getSize())
