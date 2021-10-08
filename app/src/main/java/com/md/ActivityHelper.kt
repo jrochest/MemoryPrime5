@@ -1,142 +1,102 @@
-package com.md;
+package com.md
 
-import java.io.File;
+import android.app.Activity
+import android.view.Menu
+import android.view.MenuItem
+import com.md.modesetters.*
+import com.md.utils.ToastSingleton
+import com.md.workers.BackupToUsbManager
+import com.md.workers.IncrementalBackupManager.createAndWriteZipBackToPreviousLocation
+import java.io.File
 
-import android.app.Activity;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.MenuItem.OnMenuItemClickListener;
+class ActivityHelper {
+    var timerManager = TimerManager()
+    fun commonActivitySetup(activity: Activity?) {
+        val theFile = File(DbContants.getDatabasePath())
+        val parentFile = File(theFile.parent)
+        if (!parentFile.exists()) {
+            parentFile.mkdirs()
+        }
+        DbNoteEditor.instance!!.setContext(activity)
+        ToastSingleton.getInstance().context = activity
 
-import com.md.modesetters.BrowsingModeSetter;
-import com.md.modesetters.CleanUpAudioFilesModeSetter;
-import com.md.modesetters.CreateModeSetter;
-import com.md.modesetters.DeckChooseModeSetter;
-import com.md.modesetters.LearningModeSetter;
-import com.md.modesetters.ModeSetter;
-import com.md.modesetters.SettingModeSetter;
-import com.md.utils.ToastSingleton;
-import com.md.workers.BackupToUsbManager;
-import com.md.workers.IncrementalBackupManager;
+        // Init the db with this:
+        DbNoteEditor.instance!!.first
+    }
 
-public class ActivityHelper {
+    fun createCommonMenu(menu: Menu, activity: SpacedRepeaterActivity) {
+        val inflater = activity.menuInflater
+        inflater.inflate(R.menu.menu, menu)
+        val quitMenuItem = menu.findItem(R.id.dimMenuItem)
+        quitMenuItem.setOnMenuItemClickListener {
+            activity.maybeDim()
+            true
+        }
+        menu.findItem(R.id.backup_previous_location).setOnMenuItemClickListener { item: MenuItem? ->
+            BackupToUsbManager.createAndWriteZipBackToPreviousLocation(activity, activity.contentResolver, true)
+            true
+        }
+        menu.findItem(R.id.incremental_backup).setOnMenuItemClickListener { item: MenuItem? ->
+            createAndWriteZipBackToPreviousLocation(
+                    activity, activity.contentResolver, true, false)
+            true
+        }
+        menu.findItem(R.id.slow_incremental_backup).setOnMenuItemClickListener { item: MenuItem? ->
 
-	TimerManager timerManager = new TimerManager();
+            val item = item ?: return@setOnMenuItemClickListener true
+            if (!item.isEnabled) return@setOnMenuItemClickListener true
 
-	public void commonActivitySetup(Activity activity) {
-		File theFile = new File(DbContants.getDatabasePath());
-		File parentFile = new File(theFile.getParent());
+            item.isEnabled = false
+            item.setIcon(R.drawable.greysave)
 
+            createAndWriteZipBackToPreviousLocation(
+                    activity, activity.contentResolver, true, true) {
+                item.setIcon(android.R.drawable.ic_popup_sync)
+                item.isEnabled = true
+            }
+            true
+        }
+        menu.findItem(R.id.restore).setOnMenuItemClickListener { item: MenuItem? ->
+            RestoreFromZipManager.openZipFileDocument(activity)
+            true
+        }
+        menu.findItem(R.id.incremental_restore).setOnMenuItemClickListener { item: MenuItem? ->
+            RestoreFromIncrementalDirectoryManager.openZipFileDocument(activity)
+            true
+        }
+        menu.findItem(R.id.small_timer).setOnMenuItemClickListener {
+            timerManager.addTimer(7, 30)
+            true
+        }
+        menu.findItem(R.id.medium_timer).setOnMenuItemClickListener {
+            timerManager.addTimer(9, 30)
+            true
+        }
+        menu.findItem(R.id.large_timer).setOnMenuItemClickListener {
+            timerManager.addTimer(10, 120)
+            true
+        }
+        menu.findItem(R.id.cancel_timer).setOnMenuItemClickListener {
+            timerManager.cancelTimer()
+            true
+        }
+        addMenu(menu, R.id.creationModeMenuItem, CreateModeSetter.getInstance(), activity)
+        addMenu(menu, R.id.browseDeckModeMenuItem, BrowsingModeSetter.getInstance(), activity)
+        addMenu(menu, R.id.learningModeMenuItem, LearningModeSetter.instance, activity)
+        addMenu(menu, R.id.selectDeckModeMenuItem, DeckChooseModeSetter, activity)
+        addMenu(menu, R.id.settings, SettingModeSetter, activity)
+        addMenu(menu, R.id.clean_up_files, CleanUpAudioFilesModeSetter.getInstance(), activity)
+    }
 
-		if (!parentFile.exists()) {
-			parentFile.mkdirs();
-		}
-
-		DbNoteEditor.getInstance().setContext(activity);
-		ToastSingleton.getInstance().setContext(activity);
-
-		// Init the db with this:
-		DbNoteEditor.getInstance().getFirst();
-	}
-
-	public void createCommonMenu(Menu menu, final SpacedRepeaterActivity activity) {
-		MenuInflater inflater = activity.getMenuInflater();
-		inflater.inflate(R.menu.menu, menu);
-
-		MenuItem quitMenuItem = menu.findItem(R.id.dimMenuItem);
-		quitMenuItem.setOnMenuItemClickListener(new OnMenuItemClickListener() {
-			@Override
-			public boolean onMenuItemClick(MenuItem item) {
-				activity.maybeDim();
-				return true;
-			}
-		});
-
-		menu.findItem(R.id.backup_previous_location).setOnMenuItemClickListener(item -> {
-			BackupToUsbManager.INSTANCE.createAndWriteZipBackToPreviousLocation(activity, activity.getContentResolver(), true);
-			return true;
-		});
-
-		menu.findItem(R.id.incremental_backup).setOnMenuItemClickListener(item -> {
-			IncrementalBackupManager.INSTANCE.createAndWriteZipBackToPreviousLocation(
-					activity, activity.getContentResolver(), true, false);
-			return true;
-		});
-
-		menu.findItem(R.id.slow_incremental_backup).setOnMenuItemClickListener(item -> {
-			IncrementalBackupManager.INSTANCE.createAndWriteZipBackToPreviousLocation(
-					activity, activity.getContentResolver(), true, true);
-			return true;
-		});
-
-		menu.findItem(R.id.restore).setOnMenuItemClickListener(item -> {
-			RestoreFromZipManager.INSTANCE.openZipFileDocument(activity);
-			return true;
-		});
-
-		menu.findItem(R.id.incremental_restore).setOnMenuItemClickListener(item -> {
-			RestoreFromIncrementalDirectoryManager.INSTANCE.openZipFileDocument(activity);
-			return true;
-		});
-
-		menu.findItem(R.id.small_timer).setOnMenuItemClickListener(new OnMenuItemClickListener() {
-			@Override
-			public boolean onMenuItemClick(MenuItem item) {
-				timerManager.addTimer(7, 30);
-				return true;
-			}
-		});
-
-		menu.findItem(R.id.medium_timer).setOnMenuItemClickListener(new OnMenuItemClickListener() {
-			@Override
-			public boolean onMenuItemClick(MenuItem item) {
-				timerManager.addTimer(9, 30);
-				return true;
-			}
-		});
-
-
-		menu.findItem(R.id.large_timer).setOnMenuItemClickListener(new OnMenuItemClickListener() {
-			@Override
-			public boolean onMenuItemClick(MenuItem item) {
-				timerManager.addTimer(10, 120);
-				return true;
-			}
-		});
-
-		menu.findItem(R.id.cancel_timer).setOnMenuItemClickListener(new OnMenuItemClickListener() {
-			@Override
-			public boolean onMenuItemClick(MenuItem item) {
-				timerManager.cancelTimer();
-				return true;
-			}
-		});
-
-		addMenu(menu, R.id.creationModeMenuItem, CreateModeSetter.getInstance(), activity);
-		addMenu(menu, R.id.browseDeckModeMenuItem, BrowsingModeSetter.getInstance(), activity);
-		addMenu(menu, R.id.learningModeMenuItem, LearningModeSetter.getInstance(), activity);
-		addMenu(menu, R.id.selectDeckModeMenuItem, DeckChooseModeSetter.INSTANCE, activity);
-		addMenu(menu, R.id.settings, SettingModeSetter.INSTANCE, activity);
-		addMenu(menu, R.id.clean_up_files, CleanUpAudioFilesModeSetter.getInstance(), activity);
-	}
-
-	private void addMenu(Menu menu, int item, final ModeSetter ms,
-			Activity activity) {
-		MenuItem findItem = menu.findItem(item);
-
-		final Activity context = activity;
-
-		findItem.setOnMenuItemClickListener(new OnMenuItemClickListener() {
-			@Override
-			public boolean onMenuItemClick(MenuItem item) {
-				if (ms instanceof CreateModeSetter) {
-					((CreateModeSetter) ms).setNote(null);
-				}
-
-				ms.switchMode(context);
-
-				return true;
-			}
-		});
-	}
+    private fun addMenu(menu: Menu, item: Int, ms: ModeSetter,
+                        activity: Activity) {
+        val findItem = menu.findItem(item)
+        findItem.setOnMenuItemClickListener {
+            if (ms is CreateModeSetter) {
+                ms.setNote(null)
+            }
+            ms.switchMode(activity)
+            true
+        }
+    }
 }

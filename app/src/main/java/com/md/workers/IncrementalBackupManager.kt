@@ -36,17 +36,19 @@ object IncrementalBackupManager {
     }
 
     fun createAndWriteZipBackToPreviousLocation(
-        context: SpacedRepeaterActivity,
-        contentResolver: ContentResolver,
-        shouldSpeak: Boolean,
-        runExtraValidation: Boolean = false
+            context: SpacedRepeaterActivity,
+            contentResolver: ContentResolver,
+            shouldSpeak: Boolean,
+            runExtraValidation: Boolean = false,
+            onFinished: ((Boolean) -> Unit)? = null
     ) {
         val backupLocations = IncrementalBackupPreferences.getBackupLocations(context)
 
         if (backupLocations.isNotEmpty()) {
-            backupToUris(context, contentResolver, backupLocations, shouldSpeak, runExtraValidation)
+            backupToUris(context, contentResolver, backupLocations, shouldSpeak, runExtraValidation, onFinished)
         } else {
             TtsSpeaker.speak("No backup needed")
+            onFinished?.invoke(true)
         }
     }
 
@@ -75,11 +77,12 @@ object IncrementalBackupManager {
     }
 
     private fun backupToUris(
-        context: Context,
-        contentResolver: ContentResolver,
-        backupUris: MutableMap<String, Uri>,
-        shouldSpeak: Boolean = false,
-        runExtraValidation: Boolean
+            context: Context,
+            contentResolver: ContentResolver,
+            backupUris: MutableMap<String, Uri>,
+            shouldSpeak: Boolean = false,
+            runExtraValidation: Boolean,
+            onFinished: ((Boolean) -> Unit)?
     ) {
         GlobalScope.launch(Dispatchers.Main) {
             if (shouldSpeak) TtsSpeaker.speak("starting backup")
@@ -96,6 +99,8 @@ object IncrementalBackupManager {
             }
 
             deferred.await()
+
+            onFinished?.invoke(true)
             // We don't really need this due to the toasts.
             // if (shouldSpeak) TtsSpeaker.speak("backup finished: " + deferred.await())
         }
