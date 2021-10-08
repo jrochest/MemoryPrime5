@@ -107,12 +107,12 @@ object IncrementalBackupManager {
     }
 
     private suspend fun backupOnBackground(
-        contentResolver: ContentResolver,
-        backupUris: MutableMap<String, Uri>,
-        filesDir: File,
-        shouldSpeak: Boolean,
-        context: Context,
-        runExtraValidation: Boolean
+            contentResolver: ContentResolver,
+            backupUris: MutableMap<String, Uri>,
+            appStorageRoot: File,
+            shouldSpeak: Boolean,
+            context: Context,
+            runExtraValidation: Boolean
     ) {
 
         val validBackupUris = backupUris.filter { uri ->
@@ -121,7 +121,7 @@ object IncrementalBackupManager {
                     return@filter true
                 }
             } catch (e: FileNotFoundException) {
-                System.err.println("Missing file during backup: $uri")
+                if (shouldSpeak) TtsSpeaker.speak("missing exception for $uri")
             } catch (e: SecurityException) {
                 if (shouldSpeak) TtsSpeaker.speak("security exception for $uri")
             }
@@ -133,7 +133,7 @@ object IncrementalBackupManager {
             return
         }
 
-        val allFiles = filesDir.listFiles()
+        val allFiles = appStorageRoot.listFiles()
         if (allFiles == null || allFiles.isEmpty()) {
             TtsSpeaker.error("All files empty")
             return
@@ -165,7 +165,7 @@ object IncrementalBackupManager {
                         audioDirectory.forEach { audioDirs ->
                             if (audioDirs.isDirectory) {
                                 val updateTimeFile = File(audioDirs, UPDATE_TIME_FILE_NAME)
-                                if (File(audioDirs, UPDATE_TIME_FILE_NAME).exists()) {
+                                if (updateTimeFile.exists()) {
                                     audioDirectoryToModificationTime.put(
                                         audioDirs.name,
                                         updateTimeFile.lastModified()
