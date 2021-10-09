@@ -73,5 +73,5 @@ object MemPrimeManager {
         }
     }
 
-    private const val BUFFER = 800000
+    const val BUFFER = 800000
 }

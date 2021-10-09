@@ -13,7 +13,7 @@ import com.md.utils.ToastSingleton;
 import com.md.workers.BackupToUsbManager;
 
 public class AudioRecorder {
-	private static final String sessionSuffixTwoDigitNumber = createSuffix();
+	public static final String sessionSuffixTwoDigitNumber = createSuffix();
 	private static final String sessionSuffixTwoDigitNumberWithExtension = sessionSuffixTwoDigitNumber + ".m4a";
 
 	private static String createSuffix() {

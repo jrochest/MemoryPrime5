@@ -19,6 +19,9 @@ import java.io.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipException
 import java.util.zip.ZipInputStream
+import com.md.AudioRecorder
+import java.lang.IllegalStateException
+
 
 object IncrementalBackupManager {
     fun openBackupDir(activity: Activity, requestCode: Int) {
@@ -148,169 +151,339 @@ object IncrementalBackupManager {
         allFiles.forEach { it ->
             if (it.isDirectory && it.name == "com.md.MemoryPrime") {
                 val dirsToZip = mutableListOf<File>()
-                val databaseFilesToZip = mutableListOf<File>()
-                val databaseOrAudioDirectory = it.listFiles()
-                if (databaseOrAudioDirectory == null || databaseOrAudioDirectory.isEmpty()) {
+                var databaseFileOrNull: File? = null
+                val databaseOrAudioDirectoryList = it.listFiles()
+                if (databaseOrAudioDirectoryList == null || databaseOrAudioDirectoryList.isEmpty()) {
                     TtsSpeaker.error("no data base or audio directory")
                     return
                 }
 
-                databaseOrAudioDirectory.forEach { databaseOrAudioDirectory ->
+                databaseOrAudioDirectoryList.forEach { databaseOrAudioDirectory ->
                     if (databaseOrAudioDirectory.isDirectory) {
-                        val audioDirectory = databaseOrAudioDirectory.listFiles()
-                        if (audioDirectory == null || audioDirectory.isEmpty()) {
-                            TtsSpeaker.error("audio directory empty")
+                        // com.md.MemoryPrime/AudioMemo/
+                        val audioDirectoryList = databaseOrAudioDirectory.listFiles()
+                        // com.md.MemoryPrime/AudioMemo/1
+                        // com.md.MemoryPrime/AudioMemo/2
+                        if (audioDirectoryList == null || audioDirectoryList.isEmpty()) {
+                            TtsSpeaker.error("numbered audio directory empty")
                             return
                         }
-                        audioDirectory.forEach { audioDirs ->
-                            if (audioDirs.isDirectory) {
-                                val updateTimeFile = File(audioDirs, UPDATE_TIME_FILE_NAME)
+                        audioDirectoryList.forEach { numberedAudioDir ->
+                            if (numberedAudioDir.isDirectory) {
+                                val updateTimeFile = File(numberedAudioDir, UPDATE_TIME_FILE_NAME)
                                 if (updateTimeFile.exists()) {
                                     audioDirectoryToModificationTime.put(
-                                        audioDirs.name,
+                                        numberedAudioDir.name,
                                         updateTimeFile.lastModified()
                                     )
                                 } else {
-                                    markAudioDirectoryWithUpdateTime(audioDirs)
+                                    markAudioDirectoryWithUpdateTime(numberedAudioDir)
                                 }
                                 audioDirectoryToAudioFiles.put(
-                                    audioDirs.name,
-                                    audioDirs.listFiles().filter { it.isFile })
+                                    numberedAudioDir.name,
+                                    numberedAudioDir.listFiles().filter { it.isFile })
                             } else {
                                 TtsSpeaker.error("Audio directory contained unknown file")
                             }
                         }
                     } else { // Else it's the database.
                         // Files only. No directories
-                        if (databaseOrAudioDirectory.name.endsWith(".db")) {
+                        if (databaseOrAudioDirectory.name.equals("memory_droid.db")) {
                             // This if adds memory_droid.db, but not memory_droid.db-journal
                             databaseLastModTime = databaseOrAudioDirectory.lastModified()
-                            databaseFilesToZip.add(databaseOrAudioDirectory)
+                            databaseFileOrNull = databaseOrAudioDirectory
                         } else {
                             println("backup ignoring non-db file: >$databaseOrAudioDirectory<")
                         }
                     }
                 }
 
-                for (uri: Map.Entry<String, Uri> in validBackupUris) {
-                    try {
-                        val backupRoot = DocumentFile.fromTreeUri(context, uri.value)
-                        if (backupRoot == null) {
-                            TtsSpeaker.error("Couldn't open backup dir")
-                            continue
+
+                val databaseFile = databaseFileOrNull
+                if (databaseFile == null) {
+                    TtsSpeaker.error("No database file! ")
+                    return
+                }
+
+                zipBackup(validBackupUris, context, contentResolver, mutableListOf(databaseFile), dirsToZip, audioDirectoryToAudioFiles, runExtraValidation, audioDirectoryToModificationTime, shouldSpeak)
+
+                // Deleted this:
+                // fileBackup(validBackupUris, context, contentResolver, databaseFileOrNull, dirsToZip, audioDirectoryToAudioFiles, runExtraValidation, audioDirectoryToModificationTime, shouldSpeak)
+
+
+            }
+        }
+    }
+
+    private suspend fun fileBackup(validBackupUris: Map<String, Uri>, context: Context, contentResolver: ContentResolver, databaseFileOrNull: File?, dirsToZip: MutableList<File>, audioDirectoryToAudioFiles: MutableMap<String, List<File>>, runExtraValidation: Boolean, audioDirectoryToModificationTime: MutableMap<String, Long>, shouldSpeak: Boolean) {
+
+        if (databaseFileOrNull == null) {
+            TtsSpeaker.error("No database file! ")
+            return
+        }
+
+        val databaseFile = databaseFileOrNull
+
+        for (uri: Map.Entry<String, Uri> in validBackupUris) {
+
+
+
+            try {
+                val backupRoot = DocumentFile.fromTreeUri(context, uri.value)
+                if (backupRoot == null) {
+                    TtsSpeaker.error("Couldn't open backup dir")
+                    continue
+                }
+
+                val fileBackupRootOrEmpty = backupRoot.findFile("filebasedBackup")
+                val fileBackupRoot = if (fileBackupRootOrEmpty?.exists() == true) {
+                    fileBackupRootOrEmpty
+                } else {
+                    backupRoot.createDirectory("filebasedBackup")
+                }
+                if (fileBackupRoot == null) {
+                    TtsSpeaker.error("Couldn't open fileBackupRoot")
+                    continue
+                }
+
+                val oldOldDatabaseFile = fileBackupRoot.findFile("memory_droid.db.last")
+                if (oldOldDatabaseFile?.exists() == true) {
+                    oldOldDatabaseFile.delete()
+                }
+
+                val oldDatabaseFile = fileBackupRoot.findFile("memory_droid.db")
+                if (oldDatabaseFile?.exists() == true) {
+                    oldDatabaseFile.renameTo("memory_droid.db.last")
+                }
+
+                val backUpDb = fileBackupRoot.createFile("application/octet-stream", "memory_droid.db") ?: throw IllegalStateException("Coudln't create audio backup file")
+                writeFileToDocumentFile(contentResolver, backUpDb, databaseFile)
+
+                val taskList = mutableListOf<Deferred<Boolean>>()
+                // TODOJ remove filter
+//                audioDirectoryToAudioFiles.filterKeys {   it == AudioRecorder.sessionSuffixTwoDigitNumber  }.forEach { (dirName, appAudiofileList) ->
+
+                audioDirectoryToAudioFiles.forEach { (dirName, appAudiofileList) ->
+                    taskList.add(GlobalScope.async(Dispatchers.IO) {
+                        val audioNumberRootOrEmpty =  fileBackupRoot.findFile(dirName)
+                        val audioNumberBackDir = if (audioNumberRootOrEmpty?.exists() == true) {
+                            audioNumberRootOrEmpty
+                        } else {
+                            fileBackupRoot.createDirectory(dirName)
                         }
 
-
-                        val oldOldDatabaseFile = backupRoot.findFile("database.zip.last")
-                        if (oldOldDatabaseFile?.exists() == true) {
-                            oldOldDatabaseFile.delete()
+                        if (audioNumberBackDir == null) {
+                            TtsSpeaker.error("Couldn't open audioNumberRoot $dirName")
+                            return@async false
                         }
 
-                        val oldDatabaseFile = backupRoot.findFile("database.zip")
-                        if (oldDatabaseFile?.exists() == true) {
-                            oldDatabaseFile.renameTo("database.zip.last")
+                        val backupAudioFiles = audioNumberBackDir.listFiles()
+
+
+                        val backupDirUpdateCompleteMarker = audioNumberBackDir.findFile(UPDATE_TIME_FILE_NAME)
+                        val backDirLastCompleteBackupTime = if (backupDirUpdateCompleteMarker?.exists() == true) {
+                            backupDirUpdateCompleteMarker.lastModified()
+                        } else {
+                            0L
                         }
 
-                        var databaseZip: DocumentFile? = null
-                        for (attempt in 1..3) {
-                            databaseZip = backupRoot.createFile("application/zip", "database.zip")
-                            if (databaseZip == null) {
-                                TtsSpeaker.error("Database backup create failed. Try $attempt")
-                            } else {
-                                break
+                        val filesToBackup = if (backupAudioFiles.isEmpty()) {
+                            // Backup everything.
+                            appAudiofileList
+                        } else {
+                            val appAudioNumDirModTime = audioDirectoryToModificationTime[dirName]
+                            if (appAudioNumDirModTime != null && backDirLastCompleteBackupTime > appAudioNumDirModTime) {
+                                // Backup is never than audio dir mod time, so nothing to backup.
+                                listOf<File>()
+                            }
+
+                            appAudiofileList.filter {
+                                if (backDirLastCompleteBackupTime > it.lastModified()) {
+                                    // don't backup backup dir more recent than audio file.
+                                    return@filter false
+                                    // TODOJ maybe double check this.
+                                }
+
+                                val backUpAudioFile = audioNumberBackDir.findFile(it.name) ?: return@filter true
+                                if (!backUpAudioFile.exists()) {
+                                    // Needs a backup since no backup exists.
+                                    return@filter true
+                                }
+
+                                return@filter backUpAudioFile.lastModified() < it.lastModified()
                             }
                         }
 
-                        if (databaseZip == null) {
-                            TtsSpeaker.error("Database backup failed repeatedly for " + uri.key)
-                            continue
+                        filesToBackup.forEach { appAudioFile ->
+                            val backupOrEmpty = audioNumberBackDir.findFile(appAudioFile.name)
+                            if (backupOrEmpty?.exists() == true) {
+                                backupOrEmpty.delete()
+                            }
+                            val backUp = audioNumberBackDir.createFile("application/octet-stream", appAudioFile.name)
+                            if (backUp == null) {
+                                TtsSpeaker.speak("could not create audio backup finished for" + appAudioFile.name)
+                                throw IllegalStateException("Coudln't create audio backup file")
+                            }
+                            writeFileToDocumentFile(contentResolver, backUp, appAudioFile)
                         }
 
-                        val fileDescriptor =
-                            contentResolver.openFileDescriptor(databaseZip.uri, "w")
-                        val descriptor = fileDescriptor?.fileDescriptor
-                        if (descriptor == null) {
-                            TtsSpeaker.error("Database zipping failed for missing file " + uri.key)
-                            continue
+                        if (backupDirUpdateCompleteMarker?.exists() == true) {
+                            backupDirUpdateCompleteMarker.delete()
                         }
-                        val output = FileOutputStream(descriptor)
-                        println("zipping database $databaseFilesToZip")
-                        if (MemPrimeManager.zip(databaseFilesToZip, dirsToZip, output)) {
-                            println("Backed up database successful")
-                        } else {
-                            TtsSpeaker.error("Database zipping failed for " + uri.key)
-                            continue
-                        }
-                        fileDescriptor.close()
+                        // Update the time marker.
+                        audioNumberBackDir.createFile("application/octet-stream", UPDATE_TIME_FILE_NAME)
 
-                        // Now delete
-                        if (oldDatabaseFile?.exists() == true) {
-                            oldDatabaseFile.delete()
-                        }
+                        return@async false
+                    })
+                }
+                taskList.forEach { it.await() }
+                if (shouldSpeak) TtsSpeaker.speak("Backup finished for" + uri.key)
+            } catch (e: FileNotFoundException) {
+                if (shouldSpeak) TtsSpeaker.speak("FileNotFoundException for " + uri.key)
+                System.err.println("Missing file during backup: $uri")
+            } catch (e: SecurityException) {
+                if (shouldSpeak) TtsSpeaker.speak("security exception for $uri" + uri.key)
+            }
+        }
+    }
 
-                        val taskList = mutableListOf<Deferred<Boolean>>()
-                        audioDirectoryToAudioFiles.forEach { (dirName, fileList) ->
-                            taskList.add(GlobalScope.async(Dispatchers.IO) {
-                                val previousBackup = backupRoot.findFile("$dirName.zip")
-                                if (previousBackup != null && previousBackup.exists()) {
-                                    if (previousBackup.length() == 0L) {
-                                        // If there is an empty backup zip. Write the file again.
-                                        TtsSpeaker.speak("Empty $dirName")
-                                        previousBackup.delete()
-                                    } else if (runExtraValidation && !isValidZip(previousBackup, contentResolver, fileList)) {
-                                        // If there is an empty backup zip. Write the file again.
-                                        TtsSpeaker.speak("Extra validation $dirName")
-                                        previousBackup.delete()
-                                    } else {
-                                        val lastDirMod = audioDirectoryToModificationTime[dirName]
-                                        if (lastDirMod == null) {
-                                            if (fileList.indexOfFirst { it.lastModified() >= previousBackup.lastModified() } == -1) {
-                                                println("Done Search times stamps for $dirName none")
-                                                return@async false
-                                            }
-                                        } else {
-                                            if (lastDirMod < previousBackup.lastModified()) {
-                                                println("Done No Search needed for $dirName")
-                                                return@async false
-                                            }
-                                        }
-                                    } // else out of date. Recreate backup.
+    private fun writeFileToDocumentFile(contentResolver: ContentResolver, backUp: DocumentFile, appAudioFile: File) {
+        val data = ByteArray(MemPrimeManager.BUFFER)
+        contentResolver.openFileDescriptor(backUp.uri, "w")?.use {
+            val output = FileOutputStream(it.fileDescriptor)
+            val fi = FileInputStream(appAudioFile)
+            val origin = BufferedInputStream(fi, MemPrimeManager.BUFFER)
 
-                                    previousBackup.delete()
-                                }
+            while (true) {
+                val count = origin.read(data, 0, MemPrimeManager.BUFFER)
+                if (count == -1) {
+                    break
+                }
+                output.write(data, 0, count)
+            }
+            origin.close()
+            output.close()
+        }
+    }
 
-                                val dirZip =
-                                    backupRoot.createFile("application/zip", "$dirName.zip")
-                                if (dirZip == null) {
-                                    TtsSpeaker.error("Couldn't create audio backup file $dirName")
-                                } else {
-                                    contentResolver.openFileDescriptor(dirZip.uri, "w")?.use {
-                                        val output = FileOutputStream(it.fileDescriptor)
-                                        if (MemPrimeManager.zip(fileList, dirsToZip, output)) {
-                                            GlobalScope.launch(Dispatchers.Main) {
-                                                ToastSingleton.getInstance()
-                                                    .msg("Memprime backed up $dirName")
-                                            }
-                                            return@async true
-                                        } else {
-                                            GlobalScope.launch(Dispatchers.Main) {
-                                                TtsSpeaker.error("zip write failed audio backup file $dirName")
-                                            }
-                                        }
-                                    }
-                                }
-                                return@async false
-                            })
-                        }
-                        taskList.forEach { it.await() }
-                        if (shouldSpeak) TtsSpeaker.speak("Backup finished for" + uri.key)
-                    } catch (e: FileNotFoundException) {
-                        if (shouldSpeak) TtsSpeaker.speak("FileNotFoundException for " + uri.key)
-                        System.err.println("Missing file during backup: $uri")
-                    } catch (e: SecurityException) {
-                        if (shouldSpeak) TtsSpeaker.speak("security exception for $uri" + uri.key)
+    private suspend fun zipBackup(validBackupUris: Map<String, Uri>, context: Context, contentResolver: ContentResolver, databaseFilesToZip: MutableList<File>, dirsToZip: MutableList<File>, audioDirectoryToAudioFiles: MutableMap<String, List<File>>, runExtraValidation: Boolean, audioDirectoryToModificationTime: MutableMap<String, Long>, shouldSpeak: Boolean) {
+        for (uri: Map.Entry<String, Uri> in validBackupUris) {
+            try {
+                val backupRoot = DocumentFile.fromTreeUri(context, uri.value)
+                if (backupRoot == null) {
+                    TtsSpeaker.error("Couldn't open backup dir")
+                    continue
+                }
+
+
+                val oldOldDatabaseFile = backupRoot.findFile("database.zip.last")
+                if (oldOldDatabaseFile?.exists() == true) {
+                    oldOldDatabaseFile.delete()
+                }
+
+                val oldDatabaseFile = backupRoot.findFile("database.zip")
+                if (oldDatabaseFile?.exists() == true) {
+                    oldDatabaseFile.renameTo("database.zip.last")
+                }
+
+                var databaseZip: DocumentFile? = null
+                for (attempt in 1..3) {
+                    databaseZip = backupRoot.createFile("application/zip", "database.zip")
+                    if (databaseZip == null) {
+                        TtsSpeaker.error("Database backup create failed. Try $attempt")
+                    } else {
+                        break
                     }
                 }
+
+                if (databaseZip == null) {
+                    TtsSpeaker.error("Database backup failed repeatedly for " + uri.key)
+                    continue
+                }
+
+                val fileDescriptor =
+                        contentResolver.openFileDescriptor(databaseZip.uri, "w")
+                val descriptor = fileDescriptor?.fileDescriptor
+                if (descriptor == null) {
+                    TtsSpeaker.error("Database zipping failed for missing file " + uri.key)
+                    continue
+                }
+                val output = FileOutputStream(descriptor)
+                println("zipping database $databaseFilesToZip")
+                if (MemPrimeManager.zip(databaseFilesToZip, dirsToZip, output)) {
+                    println("Backed up database successful")
+                } else {
+                    TtsSpeaker.error("Database zipping failed for " + uri.key)
+                    continue
+                }
+                fileDescriptor.close()
+
+                // Now delete
+                if (oldDatabaseFile?.exists() == true) {
+                    oldDatabaseFile.delete()
+                }
+
+                val taskList = mutableListOf<Deferred<Boolean>>()
+                audioDirectoryToAudioFiles.forEach { (dirName, fileList) ->
+                    taskList.add(GlobalScope.async(Dispatchers.IO) {
+                        val previousBackup = backupRoot.findFile("$dirName.zip")
+                        if (previousBackup != null && previousBackup.exists()) {
+                            if (previousBackup.length() == 0L) {
+                                // If there is an empty backup zip. Write the file again.
+                                TtsSpeaker.speak("Empty $dirName")
+                                previousBackup.delete()
+                            } else if (runExtraValidation && !isValidZip(previousBackup, contentResolver, fileList)) {
+                                // If there is an empty backup zip. Write the file again.
+                                TtsSpeaker.speak("Extra validation $dirName")
+                                previousBackup.delete()
+                            } else {
+                                val lastDirMod = audioDirectoryToModificationTime[dirName]
+                                if (lastDirMod == null) {
+                                    if (fileList.indexOfFirst { it.lastModified() >= previousBackup.lastModified() } == -1) {
+                                        println("Done Search times stamps for $dirName none")
+                                        return@async false
+                                    }
+                                } else {
+                                    if (lastDirMod < previousBackup.lastModified()) {
+                                        println("Done No Search needed for $dirName")
+                                        return@async false
+                                    }
+                                }
+                            } // else out of date. Recreate backup.
+
+                            previousBackup.delete()
+                        }
+
+                        val dirZip =
+                                backupRoot.createFile("application/zip", "$dirName.zip")
+                        if (dirZip == null) {
+                            TtsSpeaker.error("Couldn't create audio backup file $dirName")
+                        } else {
+                            contentResolver.openFileDescriptor(dirZip.uri, "w")?.use {
+                                val output = FileOutputStream(it.fileDescriptor)
+                                if (MemPrimeManager.zip(fileList, dirsToZip, output)) {
+                                    GlobalScope.launch(Dispatchers.Main) {
+                                        ToastSingleton.getInstance()
+                                                .msg("Memprime backed up $dirName")
+                                    }
+                                    return@async true
+                                } else {
+                                    GlobalScope.launch(Dispatchers.Main) {
+                                        TtsSpeaker.error("zip write failed audio backup file $dirName")
+                                    }
+                                }
+                            }
+                        }
+                        return@async false
+                    })
+                }
+                taskList.forEach { it.await() }
+                if (shouldSpeak) TtsSpeaker.speak("Backup finished for" + uri.key)
+            } catch (e: FileNotFoundException) {
+                if (shouldSpeak) TtsSpeaker.speak("FileNotFoundException for " + uri.key)
+                System.err.println("Missing file during backup: $uri")
+            } catch (e: SecurityException) {
+                if (shouldSpeak) TtsSpeaker.speak("security exception for $uri" + uri.key)
             }
         }
     }
