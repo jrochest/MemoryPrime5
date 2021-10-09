@@ -146,7 +146,6 @@ object IncrementalBackupManager {
         openHelper?.close()
 
         val audioDirectoryToAudioFiles = mutableMapOf<String, List<File>>()
-        var databaseLastModTime: Long? = 0
         val audioDirectoryToModificationTime = mutableMapOf<String, Long>()
         allFiles.forEach { it ->
             if (it.isDirectory && it.name == "com.md.MemoryPrime") {
@@ -190,7 +189,6 @@ object IncrementalBackupManager {
                         // Files only. No directories
                         if (databaseOrAudioDirectory.name.equals("memory_droid.db")) {
                             // This if adds memory_droid.db, but not memory_droid.db-journal
-                            databaseLastModTime = databaseOrAudioDirectory.lastModified()
                             databaseFileOrNull = databaseOrAudioDirectory
                         } else {
                             println("backup ignoring non-db file: >$databaseOrAudioDirectory<")
