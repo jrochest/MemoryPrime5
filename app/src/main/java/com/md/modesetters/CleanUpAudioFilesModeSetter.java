@@ -130,7 +130,7 @@ public class CleanUpAudioFilesModeSetter extends ModeSetter {
 			final String filePathString = AudioPlayer.sanitizePath(goodFiles);
 			File f = new File(filePathString);
 			if(!f.exists()) {
-				System.out.println("TODOJ missing file " + filePathString);
+				System.out.println("Missing file " + filePathString);
 				missingFileCount++;
 			}
 		}
