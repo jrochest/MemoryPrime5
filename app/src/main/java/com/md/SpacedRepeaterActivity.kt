@@ -10,6 +10,9 @@ import android.os.Bundle
 import android.view.KeyEvent
 import android.view.Menu
 import androidx.core.view.InputDeviceCompat.SOURCE_KEYBOARD
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
 import com.md.AudioPlayer.Companion.instance
 import com.md.modesetters.*
 import com.md.workers.BackupPreferences
@@ -18,13 +21,16 @@ import com.md.workers.IncrementalBackupManager
 import com.md.workers.IncrementalBackupPreferences
 
 
-class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager by ToneManagerImpl() {
+class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneManager by ToneManagerImpl() {
 
     private val externalClickCounter = ExternalClickCounter()
 
     /** Called when the activity is first created.  */
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        lifecycleRegistry = LifecycleRegistry(this)
+        lifecycleRegistry.currentState = Lifecycle.State.CREATED
 
         DbContants.setup(this)
         volumeControlStream = AudioManager.STREAM_MUSIC
@@ -48,6 +54,8 @@ class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager by ToneMana
     override fun onResume() {
         super.onResume()
 
+        lifecycleRegistry.currentState = Lifecycle.State.RESUMED
+
         // This is also needed to keep audio focus.
         keepHeadphoneAlive()
 
@@ -61,6 +69,9 @@ class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager by ToneMana
 
     override fun onPause() {
         super.onPause()
+
+        lifecycleRegistry.currentState = Lifecycle.State.STARTED
+
         // Hiding stops the repeat playback in learning mode.
         instance.pause()
         MoveManager.cancelJobs()
@@ -91,11 +102,15 @@ class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager by ToneMana
 
     override fun onStart() {
         super.onStart()
+
+        lifecycleRegistry.currentState = Lifecycle.State.STARTED
         maybeStartTone(this)
     }
 
     override fun onStop() {
         super.onStop()
+
+        lifecycleRegistry.currentState = Lifecycle.State.CREATED
         maybeStopTone()
     }
 
@@ -270,6 +285,12 @@ class SpacedRepeaterActivity : PlaybackServiceControl(), ToneManager by ToneMana
     @JvmOverloads
     fun handleRhythmUiTaps(learningModeSetter: LearningModeSetter, uptimeMillis: Long, pressGroupMaxGapMsScreen: Long, tapCount: Int = 1) {
         externalClickCounter.handleRhythmUiTaps(learningModeSetter, uptimeMillis, pressGroupMaxGapMsScreen, tapCount)
+    }
+
+    private lateinit var lifecycleRegistry: LifecycleRegistry
+
+    override fun getLifecycle(): Lifecycle {
+        return lifecycleRegistry
     }
 
 }
