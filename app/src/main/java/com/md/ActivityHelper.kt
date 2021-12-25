@@ -50,8 +50,13 @@ class ActivityHelper {
             item.setIcon(R.drawable.greysave)
 
             createAndWriteZipBackToPreviousLocation(
-                    activity, activity.contentResolver, true, true) {
-                item.setIcon(android.R.drawable.ic_popup_sync)
+                    activity, activity.contentResolver, true, true) { success ->
+                if (success) {
+                    item.setIcon(android.R.drawable.ic_menu_save)
+                } else {
+                    item.setIcon(android.R.drawable.ic_popup_sync)
+                }
+
                 item.isEnabled = true
             }
             true

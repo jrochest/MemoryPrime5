@@ -51,7 +51,7 @@ object IncrementalBackupManager {
             backupToUris(context, contentResolver, backupLocations, shouldSpeak, runExtraValidation, onFinished)
         } else {
             TtsSpeaker.speak("No backup needed")
-            onFinished?.invoke(true)
+            onFinished?.invoke(false)
         }
     }
 
@@ -89,9 +89,8 @@ object IncrementalBackupManager {
     ) {
         GlobalScope.launch(Dispatchers.Main) {
             if (shouldSpeak) TtsSpeaker.speak("starting backup")
-
-            val deferred = async(Dispatchers.IO) {
-                backupOnBackground(
+            launch(Dispatchers.IO) {
+                val result = backupOnBackground(
                     contentResolver,
                     backupUris,
                     context.filesDir,
@@ -99,13 +98,10 @@ object IncrementalBackupManager {
                     context,
                     runExtraValidation
                 )
+                launch (Dispatchers.Main) {
+                    onFinished?.invoke(result)
+                }
             }
-
-            deferred.await()
-
-            onFinished?.invoke(true)
-            // We don't really need this due to the toasts.
-            // if (shouldSpeak) TtsSpeaker.speak("backup finished: " + deferred.await())
         }
     }
 
@@ -116,8 +112,8 @@ object IncrementalBackupManager {
             shouldSpeak: Boolean,
             context: Context,
             runExtraValidation: Boolean
-    ) {
-
+    ) : Boolean {
+        var success = false
         val validBackupUris = backupUris.filter { uri ->
             try {
                 if (DocumentFile.fromTreeUri(context, uri.value)?.isDirectory == true) {
@@ -133,13 +129,13 @@ object IncrementalBackupManager {
         val backupsNeeded = validBackupUris.size
         if (shouldSpeak) TtsSpeaker.speak("backups needed $backupsNeeded")
         if (backupsNeeded == 0) {
-            return
+            return false
         }
 
         val allFiles = appStorageRoot.listFiles()
         if (allFiles == null || allFiles.isEmpty()) {
             TtsSpeaker.error("All files empty")
-            return
+            return false
         }
 
         val openHelper = NotesProvider.mOpenHelper
@@ -154,7 +150,7 @@ object IncrementalBackupManager {
                 val databaseOrAudioDirectoryList = it.listFiles()
                 if (databaseOrAudioDirectoryList == null || databaseOrAudioDirectoryList.isEmpty()) {
                     TtsSpeaker.error("no data base or audio directory")
-                    return
+                    return false
                 }
 
                 databaseOrAudioDirectoryList.forEach { databaseOrAudioDirectory ->
@@ -165,7 +161,7 @@ object IncrementalBackupManager {
                         // com.md.MemoryPrime/AudioMemo/2
                         if (audioDirectoryList == null || audioDirectoryList.isEmpty()) {
                             TtsSpeaker.error("numbered audio directory empty")
-                            return
+                            return false
                         }
                         audioDirectoryList.forEach { numberedAudioDir ->
                             if (numberedAudioDir.isDirectory) {
@@ -200,16 +196,18 @@ object IncrementalBackupManager {
                 val databaseFile = databaseFileOrNull
                 if (databaseFile == null) {
                     TtsSpeaker.error("No database file! ")
-                    return
+                    return false
                 }
 
-                zipBackup(validBackupUris, context, contentResolver, mutableListOf(databaseFile), dirsToZip, audioDirectoryToAudioFiles, runExtraValidation, audioDirectoryToModificationTime, shouldSpeak)
-
+                // consider it a success if just one succeeds.
+                success = success or zipBackup(validBackupUris, context, contentResolver, mutableListOf(databaseFile), dirsToZip, audioDirectoryToAudioFiles, runExtraValidation, audioDirectoryToModificationTime, shouldSpeak)
             }
         }
+        return success
     }
 
-    private suspend fun zipBackup(validBackupUris: Map<String, Uri>, context: Context, contentResolver: ContentResolver, databaseFilesToZip: MutableList<File>, dirsToZip: MutableList<File>, audioDirectoryToAudioFiles: MutableMap<String, List<File>>, runExtraValidation: Boolean, audioDirectoryToModificationTime: MutableMap<String, Long>, shouldSpeak: Boolean) {
+    private suspend fun zipBackup(validBackupUris: Map<String, Uri>, context: Context, contentResolver: ContentResolver, databaseFilesToZip: MutableList<File>, dirsToZip: MutableList<File>, audioDirectoryToAudioFiles: MutableMap<String, List<File>>, runExtraValidation: Boolean, audioDirectoryToModificationTime: MutableMap<String, Long>, shouldSpeak: Boolean) : Boolean {
+        var success = false
         for (uri: Map.Entry<String, Uri> in validBackupUris) {
             try {
                 val backupRoot = DocumentFile.fromTreeUri(context, uri.value)
@@ -321,14 +319,21 @@ object IncrementalBackupManager {
                     })
                 }
                 taskList.forEach { it.await() }
-                if (shouldSpeak) TtsSpeaker.speak("Backup finished for" + uri.key)
+                if (shouldSpeak) {
+                    TtsSpeaker.speak("Backup finished for" + uri.key)
+                }
+                // consider it a success if one backup finishes without issue.
+                success = true
             } catch (e: FileNotFoundException) {
                 if (shouldSpeak) TtsSpeaker.speak("FileNotFoundException for " + uri.key)
                 System.err.println("Missing file during backup: $uri")
+                return false
             } catch (e: SecurityException) {
                 if (shouldSpeak) TtsSpeaker.speak("security exception for $uri" + uri.key)
+                return false
             }
         }
+        return success
     }
 
     private fun isValidZip(
