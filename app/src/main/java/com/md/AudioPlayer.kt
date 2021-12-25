@@ -25,7 +25,6 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
     var wantsToPlay = false
         get() = field
         set(value) {
-            println("TEMP set wantsToPlay = $wantsToPlay")
             field = value
         }
 
@@ -41,7 +40,6 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
         playbackSpeed: Float = 1.5f,
         autoPlay: Boolean = true
     ) {
-        println("TEMPJ playFile autoPlay= $autoPlay")
         lifecycleOwner?.lifecycleScope?.launch {
             if (originalFile == null) {
                 ToastSingleton.getInstance()
