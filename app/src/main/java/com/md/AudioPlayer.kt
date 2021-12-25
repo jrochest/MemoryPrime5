@@ -119,6 +119,7 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
                     if ((it == 0 && wantsToPlay)) {
                         pause()
                     } else {
+                        // This was added to avoid playing when not resumed.
                         if (true == lifecycleOwner?.lifecycle?.currentState?.isAtLeast(Lifecycle.State.RESUMED)) {
                             mp.seekTo(0)
                             mp.start()
