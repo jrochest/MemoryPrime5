@@ -29,8 +29,7 @@ class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneMan
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        lifecycleRegistry = LifecycleRegistry(this)
-        lifecycleRegistry.currentState = Lifecycle.State.CREATED
+        AudioPlayer.instance.setLifeCycleOwner(this)
 
         DbContants.setup(this)
         volumeControlStream = AudioManager.STREAM_MUSIC
@@ -54,8 +53,6 @@ class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneMan
     override fun onResume() {
         super.onResume()
 
-        lifecycleRegistry.currentState = Lifecycle.State.RESUMED
-
         // This is also needed to keep audio focus.
         keepHeadphoneAlive()
 
@@ -69,8 +66,6 @@ class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneMan
 
     override fun onPause() {
         super.onPause()
-
-        lifecycleRegistry.currentState = Lifecycle.State.STARTED
 
         // Hiding stops the repeat playback in learning mode.
         instance.pause()
@@ -103,14 +98,12 @@ class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneMan
     override fun onStart() {
         super.onStart()
 
-        lifecycleRegistry.currentState = Lifecycle.State.STARTED
         maybeStartTone(this)
     }
 
     override fun onStop() {
         super.onStop()
 
-        lifecycleRegistry.currentState = Lifecycle.State.CREATED
         maybeStopTone()
     }
 
@@ -286,12 +279,5 @@ class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneMan
     fun handleRhythmUiTaps(learningModeSetter: LearningModeSetter, uptimeMillis: Long, pressGroupMaxGapMsScreen: Long, tapCount: Int = 1) {
         externalClickCounter.handleRhythmUiTaps(learningModeSetter, uptimeMillis, pressGroupMaxGapMsScreen, tapCount)
     }
-
-    private lateinit var lifecycleRegistry: LifecycleRegistry
-
-    override fun getLifecycle(): Lifecycle {
-        return lifecycleRegistry
-    }
-
 }
 

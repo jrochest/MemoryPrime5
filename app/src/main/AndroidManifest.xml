@@ -21,7 +21,8 @@
             android:label="${appName}"
             android:screenOrientation="portrait"
             android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation"
-            >
+            android:exported="true"
+            tools:ignore="LockedOrientationActivity">
             <intent-filter>
                 <action
                     android:name="android.intent.action.MAIN" />
@@ -33,12 +34,14 @@
             android:name="NotesProvider"
             android:authorities="${applicationId}"
             android:exported="false" />
-        <receiver android:name="androidx.media.session.MediaButtonReceiver">
+        <receiver android:name="androidx.media.session.MediaButtonReceiver"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON"/>
             </intent-filter>
         </receiver>
-        <service android:name="PlayerService">
+        <service android:name="PlayerService"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON"/>
             </intent-filter>

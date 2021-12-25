@@ -4,13 +4,18 @@ import android.media.MediaPlayer
 import android.media.MediaPlayer.MEDIA_ERROR_UNKNOWN
 import android.media.MediaPlayer.OnCompletionListener
 import android.media.audiofx.LoudnessEnhancer
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import com.md.modesetters.TtsSpeaker
 import com.md.utils.ToastSingleton
-import kotlinx.coroutines.*
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.IOException
 
 class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
+    private var lifecycleOwner: LifecycleOwner? = null
     private var isPrepared: Boolean = false
     private var mp: MediaPlayer? = null
     private var repeatsRemaining: Int? = null
@@ -29,60 +34,62 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
      * @param firedOnceCompletionListener
      */
     @JvmOverloads
-    fun playFile(originalFile: String? = lastFile,
-                 firedOnceCompletionListener: OnCompletionListener? = null,
-                 shouldRepeat: Boolean = false,
-                 playbackSpeed: Float = 1.5f,
-                 autoPlay: Boolean = true) {
+    fun playFile(
+        originalFile: String? = lastFile,
+        firedOnceCompletionListener: OnCompletionListener? = null,
+        shouldRepeat: Boolean = false,
+        playbackSpeed: Float = 1.5f,
+        autoPlay: Boolean = true
+    ) {
         println("TEMPJ playFile autoPlay= $autoPlay")
-
-
-        if (originalFile == null) {
-            ToastSingleton.getInstance().error("Null file path. You should probably delete this note Jacob.")
-            return
-        }
-
-        lastFile = originalFile
-
-        mp?.let { cleanUp(it) }
-        mp = null
-        // Note: noise supressor seem to fail and say not enough memory. NoiseSuppressor.
-        mFiredOnceCompletionListener = firedOnceCompletionListener
-        val path = sanitizePath(originalFile)
-        val audioFile = File(path)
-        if (!audioFile.exists()) {
-            ToastSingleton.getInstance().error("$path does not exist.")
-            return
-        }
-
-        val mediaPlayer = MediaPlayer()
-        mp = mediaPlayer
-        println("TEMPJ playFile set wants to play autoPlay= $autoPlay")
-
-        wantsToPlay = autoPlay
-        isPrepared = false
-        mediaPlayer.isLooping = false
-        repeatsRemaining = if (shouldRepeat) 1 else 0
-        try {
-            mediaPlayer.setDataSource(path)
-            loudnessEnhancer = LoudnessEnhancer(mediaPlayer.audioSessionId)
-            loudnessEnhancer!!.setTargetGain(700)
-            loudnessEnhancer!!.enabled = true
-
-            mediaPlayer.setOnErrorListener(this)
-            mediaPlayer.setOnCompletionListener(this)
-            mediaPlayer.setOnPreparedListener {
-                onPrepared(it, playbackSpeed)
+        lifecycleOwner?.lifecycleScope?.launch {
+            if (originalFile == null) {
+                ToastSingleton.getInstance()
+                    .error("Null file path. You should probably delete this note Jacob.")
+                return@launch
             }
-            mediaPlayer.prepareAsync()
-        } catch (e: IllegalArgumentException) {
-            e.printStackTrace()
-        } catch (e: IllegalStateException) {
-            e.printStackTrace()
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
 
+            lastFile = originalFile
+
+            mp?.let { cleanUp(it) }
+            mp = null
+            // Note: noise supressor seem to fail and say not enough memory. NoiseSuppressor.
+            mFiredOnceCompletionListener = firedOnceCompletionListener
+            val path = sanitizePath(originalFile)
+            val audioFile = File(path)
+            if (!audioFile.exists()) {
+                ToastSingleton.getInstance().error("$path does not exist.")
+                return@launch
+            }
+
+            val mediaPlayer = MediaPlayer()
+            mp = mediaPlayer
+            println("TEMPJ playFile set wants to play autoPlay= $autoPlay")
+
+            wantsToPlay = autoPlay
+            isPrepared = false
+            mediaPlayer.isLooping = false
+            repeatsRemaining = if (shouldRepeat) 1 else 0
+            try {
+                mediaPlayer.setDataSource(path)
+                loudnessEnhancer = LoudnessEnhancer(mediaPlayer.audioSessionId)
+                loudnessEnhancer!!.setTargetGain(700)
+                loudnessEnhancer!!.enabled = true
+
+                mediaPlayer.setOnErrorListener(instance)
+                mediaPlayer.setOnCompletionListener(instance)
+                mediaPlayer.setOnPreparedListener {
+                    onPrepared(it, playbackSpeed)
+                }
+                mediaPlayer.prepareAsync()
+            } catch (e: IllegalArgumentException) {
+                e.printStackTrace()
+            } catch (e: IllegalStateException) {
+                e.printStackTrace()
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
     }
 
     private fun onPrepared(mediaPlayer: MediaPlayer, playbackSpeed: Float) {
@@ -107,29 +114,32 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
     }
 
     override fun onCompletion(mp: MediaPlayer) {
-        repeatsRemaining?.let {
-            if (it == 0 && wantsToPlay) {
-                pause()
-            } else {
-                mp.seekTo(0)
-                mp.start()
-                repeatsRemaining = it - 1
-                // This avoid firing the completion listener
-                return
+        lifecycleOwner?.lifecycleScope?.launch {
+                repeatsRemaining?.let {
+                    if ((it == 0 && wantsToPlay)) {
+                        pause()
+                    } else {
+                        if (true == lifecycleOwner?.lifecycle?.currentState?.isAtLeast(Lifecycle.State.RESUMED)) {
+                            mp.seekTo(0)
+                            mp.start()
+                            repeatsRemaining = it - 1
+                            // This avoid firing the completion listener
+                            return@launch
+                        }
+                }
+                if (mFiredOnceCompletionListener != null) {
+                    mFiredOnceCompletionListener!!.onCompletion(mp)
+                    mFiredOnceCompletionListener = null
+                }
+                if (!CategorySingleton.getInstance().shouldRepeat()) {
+                    cleanUp(mp)
+                }
             }
-        }
-
-        if (mFiredOnceCompletionListener != null) {
-            mFiredOnceCompletionListener!!.onCompletion(mp)
-            mFiredOnceCompletionListener = null
-        }
-        if (!CategorySingleton.getInstance().shouldRepeat()) {
-            cleanUp(mp)
         }
     }
 
     @JvmOverloads
-    fun cleanUp(mediaPlayer : MediaPlayer? = mp) {
+    fun cleanUp(mediaPlayer: MediaPlayer? = mp) {
         if (mediaPlayer == null) return
 
         mediaPlayer.stop()
@@ -172,9 +182,13 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
         }
     }
 
+    fun setLifeCycleOwner(lifecycleOwner: LifecycleOwner) {
+        this.lifecycleOwner = lifecycleOwner
+    }
+
     companion object {
         @JvmStatic
-        val instance: AudioPlayer by lazy {  AudioPlayer() }
+        val instance: AudioPlayer by lazy { AudioPlayer() }
 
         @JvmStatic
         fun transformToM4a(filename: String): String {
