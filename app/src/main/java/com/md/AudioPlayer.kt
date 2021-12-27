@@ -4,12 +4,10 @@ import android.media.MediaPlayer
 import android.media.MediaPlayer.MEDIA_ERROR_UNKNOWN
 import android.media.MediaPlayer.OnCompletionListener
 import android.media.audiofx.LoudnessEnhancer
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import com.md.modesetters.TtsSpeaker
 import com.md.utils.ToastSingleton
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.IOException
@@ -45,6 +43,10 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
                 ToastSingleton.getInstance()
                     .error("Null file path. You should probably delete this note Jacob.")
                 return@launch
+            }
+
+            if (!lifecycleOwner.isAtLeastResumed()) {
+                return@launch;
             }
 
             lastFile = originalFile
@@ -118,7 +120,7 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
                         pause()
                     } else {
                         // This was added to avoid playing when not resumed.
-                        if (true == lifecycleOwner?.lifecycle?.currentState?.isAtLeast(Lifecycle.State.RESUMED)) {
+                        if (lifecycleOwner.isAtLeastResumed()) {
                             mp.seekTo(0)
                             mp.start()
                             repeatsRemaining = it - 1

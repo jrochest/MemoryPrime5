@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import androidx.lifecycle.lifecycleScope
 import com.md.*
 import com.md.RevisionQueue.Companion.currentDeckReviewQueue
 import com.md.modesetters.TtsSpeaker.speak
@@ -230,12 +231,24 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
             AudioPlayer.instance.playFile(
                 currentNote!!.question,
                 firedOnceCompletionListener = {
-                    MoveManager.addJob(GlobalScope.launch(Dispatchers.Main) {
+
+                    val lifeCycleOwner = mActivity ?: return@playFile
+
+                    MoveManager.addJob(lifeCycleOwner.lifecycleScope.launch(Dispatchers.Main) {
                         delay(20_000)
+                        if (!mActivity.isAtLeastResumed()) {
+                            return@launch;
+                        }
                         speak("breathe")
                         delay(20_000)
+                        if (!mActivity.isAtLeastResumed()) {
+                            return@launch;
+                        }
                         speak("mindfulness")
                         delay(20_000)
+                        if (!mActivity.isAtLeastResumed()) {
+                            return@launch;
+                        }
                         postponeNote()
                     })
                 } ,
