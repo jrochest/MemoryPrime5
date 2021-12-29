@@ -1,11 +1,9 @@
 package com.md
 
 import android.app.Activity
-import android.content.Context
-import android.os.PowerManager
 import android.view.Menu
 import android.view.MenuItem
-import androidx.core.content.ContextCompat.getSystemService
+import android.view.WindowManager
 import com.md.modesetters.*
 import com.md.utils.ToastSingleton
 import com.md.workers.BackupToUsbManager
@@ -16,11 +14,9 @@ class ActivityHelper {
     private var activity: Activity? = null
 
     var timerManager = TimerManager()
-    fun commonActivitySetup(activity: Activity?) {
+    fun commonActivitySetup(activity: SpacedRepeaterActivity?) {
 
         this.activity = activity
-
-
         val theFile = File(DbContants.getDatabasePath())
         val parentFile = File(theFile.parent)
         if (!parentFile.exists()) {
@@ -33,26 +29,6 @@ class ActivityHelper {
         DbNoteEditor.instance!!.first
     }
 
-    var wakeLock: PowerManager.WakeLock? = null
-
-    fun acquireWakeLock() {
-        releaseWakeLockifPresent()
-        val activity = activity ?: return
-        wakeLock =
-            (activity.getSystemService(Context.POWER_SERVICE) as PowerManager).run {
-                newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MP::backup").apply {
-                    // Keep screen on for 10 minutes max.
-                    acquire(60_000 * 10)
-                }
-            }
-    }
-
-    private fun releaseWakeLockifPresent() {
-        if (wakeLock != null) {
-            wakeLock?.release()
-            wakeLock = null
-        }
-    }
 
     fun createCommonMenu(menu: Menu, activity: SpacedRepeaterActivity) {
         val inflater = activity.menuInflater
@@ -77,10 +53,11 @@ class ActivityHelper {
 
             item.isEnabled = false
             item.setIcon(R.drawable.greysave)
-
+            activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             createAndWriteZipBackToPreviousLocation(
                     activity, activity.contentResolver, true, true) { success ->
-                releaseWakeLockifPresent()
+                // This works while only one features needs a screen lock.
+                activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                 if (success) {
                     item.setIcon(android.R.drawable.ic_menu_save)
                 } else {
