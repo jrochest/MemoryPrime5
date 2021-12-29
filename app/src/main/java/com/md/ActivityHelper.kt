@@ -1,8 +1,11 @@
 package com.md
 
 import android.app.Activity
+import android.content.Context
+import android.os.PowerManager
 import android.view.Menu
 import android.view.MenuItem
+import androidx.core.content.ContextCompat.getSystemService
 import com.md.modesetters.*
 import com.md.utils.ToastSingleton
 import com.md.workers.BackupToUsbManager
@@ -10,8 +13,14 @@ import com.md.workers.IncrementalBackupManager.createAndWriteZipBackToPreviousLo
 import java.io.File
 
 class ActivityHelper {
+    private var activity: Activity? = null
+
     var timerManager = TimerManager()
     fun commonActivitySetup(activity: Activity?) {
+
+        this.activity = activity
+
+
         val theFile = File(DbContants.getDatabasePath())
         val parentFile = File(theFile.parent)
         if (!parentFile.exists()) {
@@ -22,6 +31,27 @@ class ActivityHelper {
 
         // Init the db with this:
         DbNoteEditor.instance!!.first
+    }
+
+    var wakeLock: PowerManager.WakeLock? = null
+
+    fun acquireWakeLock() {
+        releaseWakeLockifPresent()
+        val activity = activity ?: return
+        wakeLock =
+            (activity.getSystemService(Context.POWER_SERVICE) as PowerManager).run {
+                newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MP::backup").apply {
+                    // Keep screen on for 10 minutes max.
+                    acquire(60_000 * 10)
+                }
+            }
+    }
+
+    private fun releaseWakeLockifPresent() {
+        if (wakeLock != null) {
+            wakeLock?.release()
+            wakeLock = null
+        }
     }
 
     fun createCommonMenu(menu: Menu, activity: SpacedRepeaterActivity) {
@@ -42,7 +72,6 @@ class ActivityHelper {
             true
         }
         menu.findItem(R.id.slow_incremental_backup).setOnMenuItemClickListener { item: MenuItem? ->
-
             val item = item ?: return@setOnMenuItemClickListener true
             if (!item.isEnabled) return@setOnMenuItemClickListener true
 
@@ -51,6 +80,7 @@ class ActivityHelper {
 
             createAndWriteZipBackToPreviousLocation(
                     activity, activity.contentResolver, true, true) { success ->
+                releaseWakeLockifPresent()
                 if (success) {
                     item.setIcon(android.R.drawable.ic_menu_save)
                 } else {
