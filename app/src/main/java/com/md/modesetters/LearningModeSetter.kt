@@ -185,13 +185,15 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
     }
 
     /** Moves this note to the end of the queue.  */
-    override fun postponeNote() {
+    override fun postponeNote(shouldRequeue: Boolean) {
         if (currentNote == null) {
             return
         }
 
-        // Place at end of queue.
-        currentDeckReviewQueue!!.updateNote(currentNote!!, false)
+        if (shouldRequeue) {
+            // Place at end of queue.
+            currentDeckReviewQueue!!.updateNote(currentNote!!, false)
+        }
         // Prepare the next note in the queue.
         setupQuestionMode(mActivity!!, shouldAutoPlay = true)
     }

@@ -93,5 +93,5 @@ abstract class ModeSetter {
         return ""
     }
 
-    open fun postponeNote() {}
+    open fun postponeNote(shouldQueue: Boolean = true) {}
 }

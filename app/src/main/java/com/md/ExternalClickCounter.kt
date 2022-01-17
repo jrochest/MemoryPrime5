@@ -64,9 +64,13 @@ class ExternalClickCounter {
                     message = "undo"
                     modeSetter.undo()
                 }
-                5, 6 -> {
+                5 -> {
                     modeSetter.postponeNote()
-                    message = "postpone"
+                    message = "${mPressGroupCount} postpone"
+                }
+                6  -> {
+                    modeSetter.postponeNote(shouldQueue = false)
+                    message = "${mPressGroupCount} postpone without requeue"
                 }
                 9, 10 -> {
                     AudioPlayer.instance.pause()
