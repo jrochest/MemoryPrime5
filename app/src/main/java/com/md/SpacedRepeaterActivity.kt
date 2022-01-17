@@ -10,9 +10,7 @@ import android.os.Bundle
 import android.view.KeyEvent
 import android.view.Menu
 import androidx.core.view.InputDeviceCompat.SOURCE_KEYBOARD
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LifecycleRegistry
 import com.md.AudioPlayer.Companion.instance
 import com.md.modesetters.*
 import com.md.workers.BackupPreferences
@@ -82,7 +80,7 @@ class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneMan
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        TtsSpeaker.speak("Config change", rate = 3f)
+        TtsSpeaker.speak("Config change")
     }
 
     var modeHand = ModeHandler(this)

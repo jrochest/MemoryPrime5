@@ -19,11 +19,11 @@ class TimerManager {
             override fun onTick(millisUntilFinished: Long) {
                 if (roundCounter == 0) return
                 roundCounter--
-                speak("$roundCounter, $roundCounter, $roundCounter", rate=3.5f, pitch = .01f)
+                speak("$roundCounter, $roundCounter, $roundCounter")
             }
 
             override fun onFinish() {
-                speak("Finished", rate=2.0f, pitch = .5f)
+                speak("Finished")
                 timer = null
             }
         }.start()

@@ -6,9 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.core.app.ActivityCompat.startActivityForResult
-import androidx.work.*
-import androidx.work.PeriodicWorkRequest.MIN_PERIODIC_FLEX_MILLIS
-import androidx.work.PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS
 import com.md.AudioPlayer
 import com.md.MemPrimeManager
 import com.md.SpacedRepeaterActivity
@@ -21,7 +18,6 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.PrintWriter
-import java.util.concurrent.TimeUnit
 
 
 object BackupToUsbManager {

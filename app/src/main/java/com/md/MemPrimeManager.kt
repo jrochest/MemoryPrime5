@@ -2,13 +2,11 @@ package com.md
 
 import android.util.Log
 import com.md.modesetters.TtsSpeaker
-import com.md.utils.ToastSingleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.io.*
 import java.util.zip.ZipEntry
-import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
 object MemPrimeManager {
