@@ -65,6 +65,10 @@ class RevisionQueue {
         notesToReview.removeIf { it.id == id }
     }
 
+    fun hardPostpone(note: Note) {
+        removeNote(note.id)
+    }
+
     companion object {
         @JvmStatic
 		var currentDeckReviewQueue: RevisionQueue? = null
