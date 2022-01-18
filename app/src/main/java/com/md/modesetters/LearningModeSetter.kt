@@ -185,10 +185,10 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
     }
 
     /** Moves this note to the end of the queue.  */
-    override fun postponeNote(shouldRequeue: Boolean) {
+    override fun postponeNote(shouldQueue: Boolean) {
         val currentNote = currentNote ?: return
 
-        if (shouldRequeue) {
+        if (shouldQueue) {
             // Place at end of queue.
             currentDeckReviewQueue!!.updateNote(currentNote, false)
         } else {
