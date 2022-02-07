@@ -27,7 +27,10 @@ class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneMan
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+
         AudioPlayer.instance.setLifeCycleOwner(this)
+
+       MemPrimeNotificationManager.createChannel(this)
 
         DbContants.setup(this)
         volumeControlStream = AudioManager.STREAM_MUSIC
@@ -47,6 +50,12 @@ class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneMan
         TtsSpeaker.setup(this.applicationContext)
     }
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        if (intent?.getBooleanExtra(Extras.Keys.IS_TIMER_REQUEST.name, false) == true) {
+            MemPrimeNotificationManager.startTimer(this.baseContext)
+        }
+    }
 
     override fun onResume() {
         super.onResume()

@@ -5,6 +5,7 @@
       <map>
         <entry key="../../../../../Android/Sdk/platforms/android-30/data/res/layout/simple_list_item_1.xml" value="0.18297101449275363" />
         <entry key="app/src/main/res/layout/deck_item_for_list.xml" value="0.25" />
+        <entry key="app/src/main/res/layout/notification.xml" value="0.18177083333333333" />
       </map>
     </option>
   </component>

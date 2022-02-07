@@ -27,9 +27,15 @@ object TtsSpeaker : TextToSpeech.OnInitListener {
 
     @JvmStatic
     @JvmOverloads
-    fun speak(message: String) {
+    fun speak(message: String, lowVolume: Boolean = false) {
         if (statusResult != TextToSpeech.SUCCESS) return
-        tts?.speak(message, QUEUE_ADD, Bundle(), "")
+
+        val params = Bundle()
+        if (lowVolume) {
+            params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 0.3f)
+        }
+
+        tts?.speak(message, QUEUE_ADD, params, "")
     }
 
     override fun onInit(status: Int) {
