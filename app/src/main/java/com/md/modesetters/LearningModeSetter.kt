@@ -60,7 +60,12 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
             )
         }
         middleTappableButton?.setOnLongClickListener { _ ->
-            AudioPlayer.instance.pause()
+            if (AudioPlayer.instance.wantsToPlay) {
+                AudioPlayer.instance.pause()
+            } else {
+                AudioPlayer.instance.playWhenReady()
+            }
+
             true
         }
         val reviewNumber = memoryDroid
