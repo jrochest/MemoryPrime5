@@ -116,9 +116,9 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
     override fun onCompletion(mp: MediaPlayer) {
         lifecycleOwner?.lifecycleScope?.launch {
                 repeatsRemaining?.let {
-                    if ((it == 0 && wantsToPlay)) {
+                    if ((it <= 0 && wantsToPlay)) {
                         pause()
-                    } else {
+                    } else if (wantsToPlay) {
                         // This was added to avoid playing when not resumed.
                         if (lifecycleOwner.isAtLeastResumed()) {
                             mp.seekTo(0)
@@ -170,7 +170,7 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
     fun pause() {
         wantsToPlay = false
         val mp = mp ?: return
-        if (isPrepared) {
+        if (isPrepared || mp.isPlaying) {
             mp.pause()
         }
     }

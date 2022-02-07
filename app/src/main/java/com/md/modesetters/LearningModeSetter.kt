@@ -46,18 +46,20 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         setupQuestionMode(context, shouldAutoPlay = true)
     }
 
+    var middleTappableButton: View? = null
+
     private fun commonLayoutSetup() {
         val memoryDroid = memoryDroid!!
-        val gestures = memoryDroid
+        middleTappableButton = memoryDroid
             .findViewById<ViewGroup>(R.id.gestures)
-        gestures.setOnClickListener { view: View? ->
+        middleTappableButton?.setOnClickListener { _ ->
             mActivity!!.handleRhythmUiTaps(
                 this@LearningModeSetter,
                 SystemClock.uptimeMillis(),
                 SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN
             )
         }
-        gestures.setOnLongClickListener { v: View? ->
+        middleTappableButton?.setOnLongClickListener { _ ->
             AudioPlayer.instance.pause()
             true
         }
@@ -237,17 +239,24 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
                     val lifeCycleOwner = mActivity ?: return@playFile
 
                     MoveManager.addJob(lifeCycleOwner.lifecycleScope.launch(Dispatchers.Main) {
-                        delay(20_000)
+                        suspend fun longDelayPlusExtraDelayIfLongPressed() {
+                            delay(20_000)
+                            while (middleTappableButton?.isPressed == true) {
+                                delay(500)
+                            }
+                        }
+
+                        longDelayPlusExtraDelayIfLongPressed()
                         if (!mActivity.isAtLeastResumed()) {
                             return@launch;
                         }
                         speak("breathe")
-                        delay(20_000)
+                        longDelayPlusExtraDelayIfLongPressed()
                         if (!mActivity.isAtLeastResumed()) {
                             return@launch;
                         }
                         speak("mindfulness")
-                        delay(20_000)
+                        longDelayPlusExtraDelayIfLongPressed()
                         if (!mActivity.isAtLeastResumed()) {
                             return@launch;
                         }
