@@ -4,7 +4,6 @@ apply plugin: 'kotlin-android'
 
 android {
     compileSdkVersion 31
-    buildToolsVersion "30.0.2"
     defaultConfig {
         applicationId "com.jrochest.mp"
         minSdkVersion 28
@@ -37,6 +36,7 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+    namespace 'com.md'
 }
 
 dependencies {
