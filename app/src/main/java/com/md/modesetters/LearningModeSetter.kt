@@ -236,43 +236,33 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         memoryDroid!!.setContentView(R.layout.learnquestion)
         applyDim(mIsDimmed)
         questionMode = true
-        if (currentNote != null) {
-            AudioPlayer.instance.playFile(
-                currentNote!!.question,
-                firedOnceCompletionListener = {
 
-                    val lifeCycleOwner = mActivity ?: return@playFile
-
-                    MoveManager.addJob(lifeCycleOwner.lifecycleScope.launch(Dispatchers.Main) {
-
-                        delay(20_000)
-                        while (middleTappableButton?.isPressed == true) {
-                            delay(500)
-                        }
-                        if (!mActivity.isAtLeastResumed()) {
-                            return@launch;
-                        }
-                        speak("breathe")
-                        delay(20_000)
-                        while (middleTappableButton?.isPressed == true) {
-                            delay(500)
-                        }
-                        if (!mActivity.isAtLeastResumed()) {
-                            return@launch;
-                        }
-                        speak("mindfulness")
-                        delay(20_000)
-                        while (middleTappableButton?.isPressed == true) {
-                            delay(500)
-                        }
-                        if (!mActivity.isAtLeastResumed()) {
-                            return@launch;
-                        }
-                        postponeNote()
-                    })
-                } ,
-                shouldRepeat = true,
-                autoPlay = shouldAutoPlay)
+        val lifeCycleOwner = mActivity
+        val currentNote = currentNote
+        if (currentNote != null && lifeCycleOwner != null) {
+            val question = currentNote.question
+            var shouldPlayTwiceInARow = true
+            MoveManager.addJob(lifeCycleOwner.lifecycleScope.launch(Dispatchers.Main) {
+                while (true) {
+                    if (question != currentNote.question) {
+                        // TODOJ maybe turn into precondition.
+                        return@launch
+                    }
+                    while (middleTappableButton?.isPressed == true) {
+                        delay(500)
+                    }
+                    if (!mActivity.isAtLeastResumed()) {
+                        return@launch;
+                    }
+                    AudioPlayer.instance.playFile(
+                        question,
+                        firedOnceCompletionListener = {},
+                        shouldRepeat = shouldPlayTwiceInARow,
+                        autoPlay = shouldAutoPlay)
+                    shouldPlayTwiceInARow = false
+                    delay(10_000)
+                }
+            })
         } else {
             if (mActivity != null) {
                 // Release audio focus since the dialog prevents keyboards from controlling memprime.
