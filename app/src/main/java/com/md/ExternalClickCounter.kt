@@ -1,12 +1,13 @@
 package com.md
 
 import android.os.SystemClock
+import androidx.lifecycle.lifecycleScope
 import com.md.modesetters.MoveManager
 import com.md.modesetters.ModeSetter
 import com.md.modesetters.TtsSpeaker
 import kotlinx.coroutines.*
 
-class ExternalClickCounter {
+class ExternalClickCounter(private val activity: SpacedRepeaterActivity) {
     var mPressGroupLastPressMs: Long = 0
     var mPressGroupLastPressEventMs: Long = 0
     var mPressGroupCount: Int = 0
@@ -38,7 +39,7 @@ class ExternalClickCounter {
 
         MoveManager.cancelJobs()
 
-        currentJob = GlobalScope.launch(Dispatchers.Main) {
+        currentJob =  activity.lifecycleScope.launch(Dispatchers.Main) {
             if (mPressGroupCount == 1) {
                 modeSetter.proceed()
                 pendingGreedyTap = true
@@ -66,11 +67,11 @@ class ExternalClickCounter {
                 }
                 5 -> {
                     modeSetter.postponeNote()
-                    message = "${mPressGroupCount} postpone"
+                    message = "$mPressGroupCount postpone"
                 }
                 6  -> {
                     modeSetter.postponeNote(shouldQueue = false)
-                    message = "${mPressGroupCount} postpone without requeue"
+                    message = "$mPressGroupCount postpone without requeue"
                 }
                 9, 10 -> {
                     AudioPlayer.instance.pause()

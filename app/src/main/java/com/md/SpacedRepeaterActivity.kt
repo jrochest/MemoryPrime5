@@ -21,7 +21,7 @@ import com.md.workers.IncrementalBackupPreferences
 
 class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneManager by ToneManagerImpl() {
 
-    private val externalClickCounter = ExternalClickCounter()
+    private val externalClickCounter = ExternalClickCounter(this)
 
     /** Called when the activity is first created.  */
     public override fun onCreate(savedInstanceState: Bundle?) {
