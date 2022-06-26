@@ -414,7 +414,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
     }
 
     private fun undoThisQuestion(context: Activity) {
-        setupQuestionMode(context, false, shouldAutoPlay = false)
+        setupQuestionMode(context, false, shouldAutoPlay = true)
     }
 
     override fun adjustScreenLock() {
