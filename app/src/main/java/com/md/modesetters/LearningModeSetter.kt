@@ -244,24 +244,27 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
                     val lifeCycleOwner = mActivity ?: return@playFile
 
                     MoveManager.addJob(lifeCycleOwner.lifecycleScope.launch(Dispatchers.Main) {
-                        suspend fun longDelayPlusExtraDelayIfLongPressed() {
-                            delay(20_000)
-                            while (middleTappableButton?.isPressed == true) {
-                                delay(500)
-                            }
-                        }
 
-                        longDelayPlusExtraDelayIfLongPressed()
+                        delay(20_000)
+                        while (middleTappableButton?.isPressed == true) {
+                            delay(500)
+                        }
                         if (!mActivity.isAtLeastResumed()) {
                             return@launch;
                         }
                         speak("breathe")
-                        longDelayPlusExtraDelayIfLongPressed()
+                        delay(20_000)
+                        while (middleTappableButton?.isPressed == true) {
+                            delay(500)
+                        }
                         if (!mActivity.isAtLeastResumed()) {
                             return@launch;
                         }
                         speak("mindfulness")
-                        longDelayPlusExtraDelayIfLongPressed()
+                        delay(20_000)
+                        while (middleTappableButton?.isPressed == true) {
+                            delay(500)
+                        }
                         if (!mActivity.isAtLeastResumed()) {
                             return@launch;
                         }
