@@ -32,7 +32,7 @@ object TtsSpeaker : TextToSpeech.OnInitListener {
 
         val params = Bundle()
         if (lowVolume) {
-            params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 0.3f)
+            params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 0.1f)
         }
 
         tts?.speak(message, QUEUE_ADD, params, "")

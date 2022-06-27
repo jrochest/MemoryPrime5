@@ -253,6 +253,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
                     if (!mActivity.isAtLeastResumed()) {
                         return@launch;
                     }
+
                     AudioPlayer.instance.playFile(
                         question,
                         firedOnceCompletionListener = {},
@@ -260,6 +261,10 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
                         autoPlay = true)
                     shouldPlayTwiceInARow = false
                     delay(10_000)
+                    // This TTS is mostly helpful to avoid the bluetooth speakers being off during
+                    // replay.
+                    speak("replay", lowVolume = true)
+                    delay(500)
                 }
             })
         } else {
