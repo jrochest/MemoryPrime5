@@ -10,6 +10,7 @@ import com.md.provider.AbstractDeck
 import com.md.provider.AbstractNote
 import com.md.provider.Deck
 import com.md.provider.Note
+import com.md.provider.Note.DEFAULT_PRIORITY
 import com.md.utils.ToastSingleton
 import java.util.*
 
@@ -319,7 +320,7 @@ class DbNoteEditor protected constructor() {
         note!!.last_rep = last_rep
         val priorityColumnIndex = query.getColumnIndex(Note.PRIORITY)
         if (priorityColumnIndex == -1) {
-            note!!.priority = 100
+            note!!.priority = DEFAULT_PRIORITY
         } else {
             note!!.priority = query.getInt(priorityColumnIndex)
         }

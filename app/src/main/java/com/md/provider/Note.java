@@ -317,7 +317,10 @@ public final class Note extends AbstractNote implements BaseColumns, Cloneable {
 
         unseen = true;
         marked = false;
+        priority = DEFAULT_PRIORITY;
     }
+
+    public static final int DEFAULT_PRIORITY = 100;
 
     public int getInterval() {
         return getNext_rep() - getLast_rep();

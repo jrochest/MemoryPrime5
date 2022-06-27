@@ -28,7 +28,8 @@ class RevisionQueue {
             }
         }
 
-        notesToReview.sortBy { note: Note -> note.interval }
+        // Sort mostly by interval and use priority to break ties.
+        notesToReview.sortBy { note: Note -> (note.interval * 10000 + -note.priority) }
     }
 
     fun add(newVal: Note) {
@@ -67,6 +68,7 @@ class RevisionQueue {
 
     fun hardPostpone(note: Note) {
         removeNote(note.id)
+
     }
 
     companion object {
