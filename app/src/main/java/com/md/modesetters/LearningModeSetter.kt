@@ -304,7 +304,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
             AudioPlayer.instance.playFile(currentNote!!.answer,
                     {
                         MoveManager.addJob(GlobalScope.launch(Dispatchers.Main) {
-                            delay(3_000)
+                            delay(10_000)
                             proceed()
                         })
                     }
