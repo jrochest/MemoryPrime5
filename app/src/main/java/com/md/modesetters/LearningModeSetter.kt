@@ -242,13 +242,14 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
             val question = currentNote.question
             var shouldPlayTwiceInARow = true
             MoveManager.addJob(lifeCycleOwner.lifecycleScope.launch(Dispatchers.Main) {
-                while (true) {
+                while (isActive) {
                     if (question != currentNote.question) {
                         // TODOJ maybe turn into precondition.
                         return@launch
                     }
                     while (middleTappableButton?.isPressed == true) {
                         delay(500)
+                        continue
                     }
                     if (!mActivity.isAtLeastResumed()) {
                         return@launch;
@@ -259,8 +260,10 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
                         firedOnceCompletionListener = {},
                         shouldRepeat = shouldPlayTwiceInARow,
                         autoPlay = true)
+                    // TODO(jrochest) Start the delay below after done playing. Utilize the
+                    // firedOnceCompletionListener
                     shouldPlayTwiceInARow = false
-                    delay(10_000)
+                    delay(20_000)
                     // This TTS is mostly helpful to avoid the bluetooth speakers being off during
                     // replay.
                     speak("replay", lowVolume = true)
@@ -305,7 +308,9 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
                     {
                         MoveManager.addJob(GlobalScope.launch(Dispatchers.Main) {
                             delay(10_000)
-                            proceed()
+                            if (isActive) {
+                                proceed()
+                            }
                         })
                     }
                     , true)
