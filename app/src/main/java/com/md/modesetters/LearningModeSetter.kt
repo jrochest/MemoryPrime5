@@ -43,7 +43,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         commonSetup(context, R.layout.learnquestion)
 
         // Let's just load up the learn question also to get it ready.
-        setupQuestionMode(context, shouldAutoPlay = true)
+        setupQuestionMode(context)
     }
 
     var middleTappableButton: View? = null
@@ -202,7 +202,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
             currentDeckReviewQueue!!.hardPostpone(currentNote)
         }
         // Prepare the next note in the queue.
-        setupQuestionMode(mActivity!!, shouldAutoPlay = true)
+        setupQuestionMode(mActivity!!)
     }
 
     override fun proceed() {
@@ -226,8 +226,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
 
     private fun setupQuestionMode(
         context: Activity,
-        shouldUpdateQuestion: Boolean = true,
-        shouldAutoPlay: Boolean
+        shouldUpdateQuestion: Boolean = true
     ) {
         MoveManager.recordQuestionProceed()
         if (shouldUpdateQuestion) {
@@ -258,7 +257,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
                         question,
                         firedOnceCompletionListener = {},
                         shouldRepeat = shouldPlayTwiceInARow,
-                        autoPlay = shouldAutoPlay)
+                        autoPlay = true)
                     shouldPlayTwiceInARow = false
                     delay(10_000)
                 }
@@ -332,7 +331,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
             applyGradeStatic(context, newGrade, currentNote!!)
             ToastSingleton.getInstance()
                 .msg("Easiness: " + currentNote!!.easiness + " Interval " + currentNote!!.interval)
-            setupQuestionMode(context, shouldAutoPlay = true)
+            setupQuestionMode(context)
         }
     }
 
@@ -370,7 +369,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
             noteEditor!!.deleteCurrent(mActivity!!, note)
             currentDeckReviewQueue!!.removeNote(note.id)
         }
-        setupQuestionMode(mActivity!!, shouldAutoPlay = true)
+        setupQuestionMode(mActivity!!)
     }
 
     private fun replayA() {
@@ -414,7 +413,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
     }
 
     private fun undoThisQuestion(context: Activity) {
-        setupQuestionMode(context, false, shouldAutoPlay = true)
+        setupQuestionMode(context, false)
     }
 
     override fun adjustScreenLock() {
