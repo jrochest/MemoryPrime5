@@ -263,7 +263,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
                     // TODO(jrochest) Start the delay below after done playing. Utilize the
                     // firedOnceCompletionListener
                     shouldPlayTwiceInARow = false
-                    delay(20_000)
+                    delay(30_000)
                     // This TTS is mostly helpful to avoid the bluetooth speakers being off during
                     // replay.
                     speak("replay", lowVolume = true)
