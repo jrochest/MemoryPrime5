@@ -1,5 +1,7 @@
 package com.md;
 
+import static com.md.provider.AbstractNote.PRIORITY;
+
 import java.util.HashMap;
 
 import android.content.ContentProvider;
@@ -29,7 +31,7 @@ public class NotesProvider extends ContentProvider {
 
 	private static final String TAG = "DbInteraction";
 
-	private static final int DATABASE_VERSION = 25;
+	private static final int DATABASE_VERSION = 26;
 	public static final String NOTES_TABLE_NAME = "notes";
 	public static final String DECKS_TABLE_NAME = "decks";
 	public static final String REPS_TABLE_NAME = "reps";
@@ -72,7 +74,8 @@ public class NotesProvider extends ContentProvider {
 						+ AbstractNote.ACQ_REPS_SINCE_LAPSE + " INTEGER, "
 						+ AbstractNote.RET_REPS_SINCE_LAPSE + " INTEGER, "
 						+ AbstractNote.NEXT_REP + " INTEGER, "
-						+ AbstractNote.LAST_REP + " INTEGER "
+						+ AbstractNote.LAST_REP + " INTEGER, "
+						+ PRIORITY + " INTEGER DEFAULT 100 "
 						+ ");");
 			} catch (Exception e) {
 				String message = e.getMessage();
@@ -135,6 +138,19 @@ public class NotesProvider extends ContentProvider {
 							+ AbstractRep.TIME_STAMP_MS + " INTEGER "
 							+ " );");
 
+				} catch (Exception e) {
+					String message = e.getMessage();
+					System.out.println(message);
+				}
+			}
+
+			if (oldVersion == 25) {
+
+
+				oldVersion++;
+				try {
+					// TODOJ change tablet and field of this.
+					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN "  + PRIORITY +  " INTEGER DEFAULT 100");
 				} catch (Exception e) {
 					String message = e.getMessage();
 					System.out.println(message);
@@ -370,6 +386,7 @@ public class NotesProvider extends ContentProvider {
 		sMDProjectionMap.put(AbstractNote.LAPSES, AbstractNote.LAPSES);
 		sMDProjectionMap.put(AbstractNote.LAST_REP, AbstractNote.LAST_REP);
 		sMDProjectionMap.put(AbstractNote.NEXT_REP, AbstractNote.NEXT_REP);
+		sMDProjectionMap.put(PRIORITY, AbstractNote.PRIORITY);
 
 		// Support for Live Folders.
 		sLiveFolderProjectionMap = new HashMap<String, String>();

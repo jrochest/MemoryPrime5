@@ -42,6 +42,7 @@ public class AbstractNote {
 	public static final String RET_REPS_SINCE_LAPSE = "ret_reps_since_lapse";
 	public static final String LAST_REP = "last_rep";
 	public static final String NEXT_REP = "next_rep";
+	public static final String PRIORITY = "priority";
 	public static final String MARKED = "marked";
 	protected int grade;
 	
@@ -193,6 +194,8 @@ public class AbstractNote {
 	protected int ret_reps_since_lapse;
 	protected int last_rep;
 	protected int next_rep;
+	// This is mostly used for tasks. Starts at 100 and can be decreased via 6 presses.
+	public int priority;
 
 	public AbstractNote() {
 		super();

@@ -5,6 +5,7 @@ import java.util.Stack;
 import android.app.Activity;
 
 import com.md.modesetters.ModeSetter;
+import com.md.modesetters.MoveManager;
 
 public class ModeHandler {
 
@@ -37,6 +38,7 @@ public class ModeHandler {
 	}
 
 	public void add(ModeSetter modeSetter) {
+		MoveManager.INSTANCE.cancelJobs();
 		// Don't put your self on!
 		if(modeStack.empty() || modeStack.peek() != modeSetter)
 		{

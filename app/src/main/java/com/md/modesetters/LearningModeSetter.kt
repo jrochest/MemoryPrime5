@@ -199,6 +199,15 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
             // Place at end of queue.
             currentDeckReviewQueue!!.updateNote(currentNote, false)
         } else {
+            val editor = DbNoteEditor.instance
+            val context = mActivity
+            if (context != null && editor != null) {
+                currentNote.decreasePriority()
+                editor.update(context, currentNote)
+            } else {
+                speak("Error decreasing priority")
+            }
+
             currentDeckReviewQueue!!.hardPostpone(currentNote)
         }
         // Prepare the next note in the queue.

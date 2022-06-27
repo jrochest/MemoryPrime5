@@ -1,5 +1,7 @@
 package com.md.provider;
 
+import static com.md.modesetters.TtsSpeaker.speak;
+
 import android.provider.BaseColumns;
 import android.util.Log;
 
@@ -321,4 +323,8 @@ public final class Note extends AbstractNote implements BaseColumns, Cloneable {
         return getNext_rep() - getLast_rep();
     }
 
+    public void decreasePriority() {
+        priority--;
+        speak("decreasing priority to " + priority);
+    }
 }

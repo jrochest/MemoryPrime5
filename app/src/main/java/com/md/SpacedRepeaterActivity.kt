@@ -94,7 +94,7 @@ class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneMan
 
     var modeHand = ModeHandler(this)
     override fun onBackPressed() {
-
+        MoveManager.cancelJobs()
         if (modeHand.goBack()) {
             return
         }

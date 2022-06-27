@@ -90,6 +90,7 @@ class DbNoteEditor protected constructor() {
         values.put(AbstractNote.NEXT_REP, note.next_rep)
         values.put(AbstractNote.UNSEEN, note.isUnseen)
         values.put(AbstractNote.MARKED, note.isMarked)
+        values.put(AbstractNote.PRIORITY, note.priority)
     }
 
     val first: Note?
@@ -316,6 +317,12 @@ class DbNoteEditor protected constructor() {
         note!!.next_rep = next_rep
         val last_rep = query.getInt(query.getColumnIndex(Note.LAST_REP))
         note!!.last_rep = last_rep
+        val priorityColumnIndex = query.getColumnIndex(Note.PRIORITY)
+        if (priorityColumnIndex == -1) {
+            note!!.priority = 100
+        } else {
+            note!!.priority = query.getInt(priorityColumnIndex)
+        }
         return note!!
     }
 
