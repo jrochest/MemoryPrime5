@@ -240,22 +240,20 @@ object IncrementalBackupManager {
                     continue
                 }
 
-                val fileDescriptor =
-                        contentResolver.openFileDescriptor(databaseZip.uri, "w")
-                val descriptor = fileDescriptor?.fileDescriptor
-                if (descriptor == null) {
-                    TtsSpeaker.error("Database zipping failed for missing file " + uri.key)
-                    continue
+                contentResolver.openFileDescriptor(databaseZip.uri, "w")!!.use {
+                    val descriptor = it.fileDescriptor
+                    if (descriptor == null) {
+                        TtsSpeaker.error("Database zipping failed for missing file " + uri.key)
+                    } else {
+                        val output = FileOutputStream(descriptor)
+                        println("zipping database $databaseFilesToZip")
+                        if (MemPrimeManager.zip(databaseFilesToZip, dirsToZip, output)) {
+                            println("Backed up database successful")
+                        } else {
+                            TtsSpeaker.error("Database zipping failed for " + uri.key)
+                        }
+                    }
                 }
-                val output = FileOutputStream(descriptor)
-                println("zipping database $databaseFilesToZip")
-                if (MemPrimeManager.zip(databaseFilesToZip, dirsToZip, output)) {
-                    println("Backed up database successful")
-                } else {
-                    TtsSpeaker.error("Database zipping failed for " + uri.key)
-                    continue
-                }
-                fileDescriptor.close()
 
                 // Now delete
                 if (oldDatabaseFile?.exists() == true) {
@@ -265,6 +263,8 @@ object IncrementalBackupManager {
                 val taskList = mutableListOf<Deferred<Boolean>>()
                 audioDirectoryToAudioFiles.forEach { (dirName, fileList) ->
                     taskList.add(GlobalScope.async(Dispatchers.IO) {
+                        // This block returns early if it determines a new audio file zip is not
+                        // needed for the directory.
                         val previousBackup = backupRoot.findFile("$dirName.zip")
                         if (previousBackup != null && previousBackup.exists()) {
                             if (previousBackup.length() == 0L) {
@@ -273,7 +273,6 @@ object IncrementalBackupManager {
                                 previousBackup.delete()
                             } else if (runExtraValidation && !isValidZip(previousBackup, contentResolver, fileList)) {
                                 // If there is an empty backup zip. Write the file again.
-                                TtsSpeaker.speak("Extra validation $dirName")
                                 previousBackup.delete()
                             } else {
                                 val lastDirMod = audioDirectoryToModificationTime[dirName]
@@ -284,21 +283,22 @@ object IncrementalBackupManager {
                                     }
                                 } else {
                                     if (lastDirMod < previousBackup.lastModified()) {
-                                        println("Done No Search needed for $dirName")
+                                        println("$dirName phone audio dir modification time before zip for audio dir")
                                         return@async false
                                     }
                                 }
                             } // else out of date. Recreate backup.
-
                             previousBackup.delete()
                         }
 
+                        // Create the specific audio directory's zip.
                         val dirZip =
                                 backupRoot.createFile("application/zip", "$dirName.zip")
                         if (dirZip == null) {
                             TtsSpeaker.error("Couldn't create audio backup file $dirName")
                         } else {
-                            contentResolver.openFileDescriptor(dirZip.uri, "w")?.use {
+                            val descriptor = contentResolver.openFileDescriptor(dirZip.uri, "w")
+                            descriptor?.use {
                                 val output = FileOutputStream(it.fileDescriptor)
                                 if (MemPrimeManager.zip(fileList, dirsToZip, output)) {
                                     GlobalScope.launch(Dispatchers.Main) {
@@ -311,7 +311,11 @@ object IncrementalBackupManager {
                                         TtsSpeaker.error("zip write failed audio backup file $dirName")
                                     }
                                 }
+                                // This prevents a "A resource failed to call end"
+                                // it.close()
+                                output.close()
                             }
+                            descriptor?.close()
                         }
                         return@async false
                     })
@@ -339,37 +343,45 @@ object IncrementalBackupManager {
         contentResolver: ContentResolver,
         expectedFileList: List<File>
     ): Boolean {
-        var zis: ZipInputStream? = null
         val expectedCount = expectedFileList.size
         var count = 0
         val openFileDescriptor = contentResolver.openFileDescriptor(zipToValidate.uri, "r") ?: return false
-        return try {
-            zis = ZipInputStream(FileInputStream(openFileDescriptor.fileDescriptor))
-            var ze: ZipEntry? = zis.nextEntry
-            while (ze != null) {
-                count++
-                // if it throws an exception fetching any of the following then we know the file is corrupted.
-                ze.crc
-                ze.compressedSize
-                ze.name
-                ze = zis.nextEntry
-            }
-            println("expectedCount $expectedCount actualCount $count")
-            // Validate that current number of files in the directory matches the number in the zip.
-            expectedCount == count
-        } catch (e: ZipException) {
-            println("extra validation error " + e)
-            false
-        } catch (e: IOException) {
-            println("expectedCount $expectedCount actualCount $count")
-            println("extra IO exception validation error " + e)
-            false
-        } finally {
-            try {
-                zis?.close()
+        // The use of ".use" prevents a "A resource failed to call close."
+        openFileDescriptor.use {
+            var zis: ZipInputStream? = null
+            var fis: InputStream? = null
+            return try {
+                fis = FileInputStream(it.fileDescriptor)
+                zis = ZipInputStream(fis)
+                var ze: ZipEntry? = zis.nextEntry
+                while (ze != null) {
+                    count++
+                    // if it throws an exception fetching any of the following then we know the file is corrupted.
+                    ze.crc
+                    ze.compressedSize
+                    ze.name
+                    ze = zis.nextEntry
+                }
+
+                // Validate that current number of files in the directory matches the number in the zip.
+                if (expectedCount == count) {
+                    true
+                } else {
+                    TtsSpeaker.speak("zip expectedCount $expectedCount actualCount $count ")
+                    false
+                }
+            } catch (e: ZipException) {
+                println("extra validation error " + e)
+                false
             } catch (e: IOException) {
-                println("extra close validation error " + e)
-                return false
+                println("expectedCount $expectedCount actualCount $count")
+                println("extra IO exception validation error " + e)
+                false
+            }
+            finally {
+                // fis?.close() does not seem to be needed, but the follow prevents a
+                // "A resource failed to call end."
+                zis?.close()
             }
         }
     }
