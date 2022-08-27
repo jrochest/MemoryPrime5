@@ -183,10 +183,10 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
     }
 
     override fun secondaryAction(): String {
+        proceedFailure()
         return if (questionMode) {
             "question mode"
         } else {
-            proceedFailure()
             "bad bad"
         }
     }
@@ -248,11 +248,11 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         val lifeCycleOwner = mActivity
         val currentNote = currentNote
         if (currentNote != null && lifeCycleOwner != null) {
-            val question = currentNote.question
+            val questionAudioFilePath = currentNote.question
             var shouldPlayTwiceInARow = true
             MoveManager.addJob(lifeCycleOwner.lifecycleScope.launch(Dispatchers.Main) {
                 while (isActive) {
-                    if (question != currentNote.question) {
+                    if (questionAudioFilePath != currentNote.question) {
                         // TODOJ maybe turn into precondition.
                         return@launch
                     }
@@ -265,12 +265,13 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
                     }
 
                     AudioPlayer.instance.playFile(
-                        question,
+                        questionAudioFilePath,
                         firedOnceCompletionListener = {},
                         shouldRepeat = shouldPlayTwiceInARow,
                         autoPlay = true)
                     // TODO(jrochest) Start the delay below after done playing. Utilize the
                     // firedOnceCompletionListener
+                    // Note this works fine if it replays before the note is done.
                     shouldPlayTwiceInARow = false
                     delay(30_000)
                     // This TTS is mostly helpful to avoid the bluetooth speakers being off during

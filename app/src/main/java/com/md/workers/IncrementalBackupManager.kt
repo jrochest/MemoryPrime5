@@ -271,7 +271,7 @@ object IncrementalBackupManager {
                                 // If there is an empty backup zip. Write the file again.
                                 TtsSpeaker.speak("Empty $dirName")
                                 previousBackup.delete()
-                            } else if (runExtraValidation && !isValidZip(previousBackup, contentResolver, fileList)) {
+                            } else if (runExtraValidation && !isZipValidAndHasExpectedAudioFiles(previousBackup, contentResolver, fileList)) {
                                 // If there is an empty backup zip. Write the file again.
                                 previousBackup.delete()
                             } else {
@@ -338,7 +338,7 @@ object IncrementalBackupManager {
         return success
     }
 
-    private fun isValidZip(
+    private fun isZipValidAndHasExpectedAudioFiles(
         zipToValidate: DocumentFile,
         contentResolver: ContentResolver,
         expectedFileList: List<File>
@@ -371,10 +371,12 @@ object IncrementalBackupManager {
                     false
                 }
             } catch (e: ZipException) {
+                TtsSpeaker.speak("zip exception")
+
                 println("extra validation error " + e)
                 false
             } catch (e: IOException) {
-                println("expectedCount $expectedCount actualCount $count")
+                TtsSpeaker.speak("IO exception")
                 println("extra IO exception validation error " + e)
                 false
             }

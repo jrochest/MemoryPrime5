@@ -18,6 +18,7 @@ class ExternalClickCounter(private val activity: SpacedRepeaterActivity) {
 
     fun handleRhythmUiTaps(modeSetter: ModeSetter, eventTimeMs: Long, pressGroupMaxGapMs: Long, tapCount: Int): Boolean {
         currentJob?.cancel()
+        currentJob = null
         val currentTimeMs = SystemClock.uptimeMillis()
         if (mPressGroupLastPressMs == 0L) {
             mPressGroupCount = tapCount
@@ -39,7 +40,7 @@ class ExternalClickCounter(private val activity: SpacedRepeaterActivity) {
 
         MoveManager.cancelJobs()
 
-        currentJob =  activity.lifecycleScope.launch(Dispatchers.Main) {
+        currentJob = activity.lifecycleScope.launch(Dispatchers.Main) {
             if (mPressGroupCount == 1) {
                 modeSetter.proceed()
                 pendingGreedyTap = true
@@ -50,11 +51,14 @@ class ExternalClickCounter(private val activity: SpacedRepeaterActivity) {
                 pendingGreedyTap = false
             }
             delay(pressGroupMaxGapMs)
+            if (!isActive) {
+                return@launch
+            }
 
             val message: String?
             when (mPressGroupCount) {
                 1 -> {
-                    message = null
+                    message = "1 tap"
                     modeSetter.proceed()
                 }
                 // This takes a different action based on whether it is a question or answer.

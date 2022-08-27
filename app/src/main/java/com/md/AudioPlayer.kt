@@ -49,18 +49,24 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
                 return@launch;
             }
 
+            // Verify the new file exists prior to switching to it.
+            val path = sanitizePath(originalFile)
+            val audioFile = File(path)
+            if (!audioFile.exists()) {
+                // This seem like it might be using a branch newly recorded file when it
+                // messes up. The missing file it found was:
+                // com.jrochest.mp.debug/files/com.md.MemoryPrime/AudioMemo/46/1661565629946.m4a
+                // which did not exist.
+                System.err.println("$path does not exist. original $originalFile")
+                return@launch
+            }
+
             lastFile = originalFile
 
             mp?.let { cleanUp(it) }
             mp = null
             // Note: noise supressor seem to fail and say not enough memory. NoiseSuppressor.
             mFiredOnceCompletionListener = firedOnceCompletionListener
-            val path = sanitizePath(originalFile)
-            val audioFile = File(path)
-            if (!audioFile.exists()) {
-                ToastSingleton.getInstance().error("$path does not exist.")
-                return@launch
-            }
 
             val mediaPlayer = MediaPlayer()
             mp = mediaPlayer
@@ -156,7 +162,7 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
     override fun onError(mediaPlayer: MediaPlayer, what: Int, extra: Int): Boolean {
         println("TODOJ error during playback what=$what extra $extra $lastFile")
         if (MEDIA_ERROR_UNKNOWN == what) {
-            TtsSpeaker.speak("play error. speed")
+            TtsSpeaker.speak("play MEDIA_ERROR_UNKNOWN. Trying normal speed")
             cleanUp(mediaPlayer)
             playFile(playbackSpeed = 1f, shouldRepeat = true)
         } else {
