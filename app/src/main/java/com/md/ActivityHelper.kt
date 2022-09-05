@@ -92,7 +92,7 @@ class ActivityHelper {
             timerManager.cancelTimer()
             true
         }
-        addMenu(menu, R.id.creationModeMenuItem, CreateModeSetter.getInstance(), activity)
+        addMenu(menu, R.id.creationModeMenuItem, CreateModeSetter, activity)
         addMenu(menu, R.id.browseDeckModeMenuItem, BrowsingModeSetter.getInstance(), activity)
         addMenu(menu, R.id.learningModeMenuItem, LearningModeSetter.instance, activity)
         addMenu(menu, R.id.selectDeckModeMenuItem, DeckChooseModeSetter, activity)

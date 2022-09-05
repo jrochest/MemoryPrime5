@@ -37,7 +37,7 @@ class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneMan
         val activityHelper = ActivityHelper()
         activityHelper.commonActivitySetup(this)
         // Normal mode.
-        CreateModeSetter.getInstance().setUp(this, modeHand)
+        CreateModeSetter.setUp(this, modeHand)
         BrowsingModeSetter.getInstance().setup(this, modeHand)
         DeckChooseModeSetter.getInstance()?.setUp(this, modeHand)
         LearningModeSetter.instance.setUp(this, modeHand)

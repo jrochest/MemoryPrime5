@@ -6,6 +6,7 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import com.md.RevisionQueue.Companion.currentDeckReviewQueue
+import com.md.modesetters.TtsSpeaker
 import com.md.provider.AbstractDeck
 import com.md.provider.AbstractNote
 import com.md.provider.Deck

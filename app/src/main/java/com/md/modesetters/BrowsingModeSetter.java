@@ -148,12 +148,8 @@ public class BrowsingModeSetter extends ModeSetter implements
 							.setAudioFile(note.getQuestion(),
 									CreateModeSetter.QUESTION_INDEX);
 
-					CreateModeSetter createModeSetter = CreateModeSetter
-							.getInstance();
-
-					createModeSetter.setNote(note);
-
-					createModeSetter.switchMode(memoryDroid);
+					CreateModeSetter.INSTANCE.setNote(note);
+					CreateModeSetter.INSTANCE.switchMode(memoryDroid);
 
 				}
 			}

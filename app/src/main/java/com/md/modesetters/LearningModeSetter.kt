@@ -100,7 +100,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         memoryDroid!!.findViewById<View>(R.id.new_note_button)
             .setOnClickListener(object : MultiClickListener() {
                 override fun onMultiClick(v: View?) {
-                    CreateModeSetter.getInstance().switchMode(memoryDroid!!)
+                    CreateModeSetter.switchMode(memoryDroid!!)
                 }
             })
         memoryDroid!!.findViewById<View>(R.id.dim_screen_button)

@@ -97,7 +97,7 @@ object DeckChooseModeSetter : ModeSetter() {
             view.findViewById<View>(R.id.new_note_button).setOnClickListener {
                 val info = deckIdToInfo[deck.id] ?: return@setOnClickListener
                 loadDeck(info)
-                CreateModeSetter.getInstance().switchMode(memoryDroid!!)
+                CreateModeSetter.switchMode(memoryDroid!!)
             }
 
                 view.findViewById<Button>(R.id.learn_button).setOnClickListener {
