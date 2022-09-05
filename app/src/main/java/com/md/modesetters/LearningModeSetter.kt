@@ -183,12 +183,13 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
     }
 
     override fun secondaryAction(): String {
-        proceedFailure()
-        return if (questionMode) {
-            "question mode"
+        val messageToSpeak = if (questionMode) {
+            "secondary action. proceed"
         } else {
             "bad bad"
         }
+        proceedFailure()
+        return messageToSpeak
     }
 
     /** Moves this note to the end of the queue.  */
