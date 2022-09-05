@@ -115,6 +115,7 @@ object IncrementalBackupManager {
         val validBackupUris = backupUris.filter { uri ->
             try {
                 if (DocumentFile.fromTreeUri(context, uri.value)?.isDirectory == true) {
+                    TtsSpeaker.speak("Backup needed for" + (uri.value.lastPathSegment))
                     return@filter true
                 }
             } catch (e: FileNotFoundException) {
@@ -270,10 +271,10 @@ object IncrementalBackupManager {
                             if (previousBackup.length() == 0L) {
                                 // If there is an empty backup zip. Write the file again.
                                 TtsSpeaker.speak("Empty $dirName")
-                                previousBackup.delete()
+                                // fall through to the delete below
                             } else if (runExtraValidation && !isZipValidAndHasExpectedAudioFiles(previousBackup, contentResolver, fileList)) {
                                 // If there is an empty backup zip. Write the file again.
-                                previousBackup.delete()
+                                // fall through to the delete below
                             } else {
                                 val lastDirMod = audioDirectoryToModificationTime[dirName]
                                 if (lastDirMod == null) {
@@ -322,7 +323,7 @@ object IncrementalBackupManager {
                 }
                 taskList.forEach { it.await() }
                 if (shouldSpeak) {
-                    TtsSpeaker.speak("Backup finished for" + uri.key)
+                    TtsSpeaker.speak("Backup finished for" + (uri.value.lastPathSegment))
                 }
                 // consider it a success if one backup finishes without issue.
                 success = true
@@ -376,7 +377,7 @@ object IncrementalBackupManager {
                 println("extra validation error " + e)
                 false
             } catch (e: IOException) {
-                TtsSpeaker.speak("IO exception")
+                TtsSpeaker.speak("IO exception " + e.message)
                 println("extra IO exception validation error " + e)
                 false
             }
