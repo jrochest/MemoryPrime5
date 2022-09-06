@@ -9,7 +9,7 @@ import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import com.md.*
 import com.md.RevisionQueue.Companion.currentDeckReviewQueue
-import com.md.modesetters.TtsSpeaker.speak
+import com.md.modesetters.TtsSpeaker
 import com.md.provider.AbstractRep
 import com.md.provider.Note
 import com.md.utils.ScreenDimmer
@@ -97,19 +97,19 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         val deleteButton = memoryDroid
             .findViewById<Button>(R.id.deleteButton)
         deleteButton.setOnClickListener(DeleterOnClickListener(noteEditor, mActivity, this))
-        memoryDroid!!.findViewById<View>(R.id.new_note_button)
+        memoryDroid.findViewById<View>(R.id.new_note_button)
             .setOnClickListener(object : MultiClickListener() {
                 override fun onMultiClick(v: View?) {
                     CreateModeSetter.switchMode(memoryDroid!!)
                 }
             })
-        memoryDroid!!.findViewById<View>(R.id.dim_screen_button)
+        memoryDroid.findViewById<View>(R.id.dim_screen_button)
             .setOnClickListener(object : MultiClickListener() {
                 override fun onMultiClick(v: View?) {
                     toggleDim()
                 }
             })
-        memoryDroid!!.findViewById<View>(R.id.back_button)
+        memoryDroid.findViewById<View>(R.id.back_button)
             .setOnClickListener(object : MultiClickListener() {
                 override fun onMultiClick(v: View?) {
                     mActivity!!.onBackPressed()
@@ -206,7 +206,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
                 currentNote.decreasePriority()
                 editor.update(context, currentNote)
             } else {
-                speak("Error decreasing priority")
+                TtsSpeaker.speak("Error decreasing priority")
             }
 
             currentDeckReviewQueue!!.hardPostpone(currentNote)
@@ -262,7 +262,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
                         continue
                     }
                     if (!mActivity.isAtLeastResumed()) {
-                        return@launch;
+                        return@launch
                     }
 
                     AudioPlayer.instance.playFile(
@@ -277,7 +277,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
                     delay(30_000)
                     // This TTS is mostly helpful to avoid the bluetooth speakers being off during
                     // replay.
-                    speak("replay", lowVolume = true)
+                    TtsSpeaker.speak("replay", lowVolume = true)
                     delay(500)
                 }
             })
@@ -286,15 +286,15 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
                 // Release audio focus since the dialog prevents keyboards from controlling memprime.
                 mActivity!!.maybeChangeAudioFocus(false)
             }
-            speak("Great job! Deck done.")
+            TtsSpeaker.speak("Great job! Deck done.")
             val deckChooser = DeckChooseModeSetter.getInstance()
             val nextDeckWithItems = deckChooser.nextDeckWithItems
             if (nextDeckWithItems != null) {
                 deckChooser.loadDeck(nextDeckWithItems)
                 instance.switchMode(mActivity!!)
-                speak("Loading " + nextDeckWithItems.name)
+                TtsSpeaker.speak("Loading " + nextDeckWithItems.name)
             } else {
-                speak("All decks done..")
+                TtsSpeaker.speak("All decks done..")
             }
         }
         commonLayoutSetup()
@@ -308,7 +308,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
     }
 
     private val lastOrNull: Note?
-        private get() = if (!lastNoteList.isEmpty()) lastNoteList.last else null
+        get() = if (!lastNoteList.isEmpty()) lastNoteList.last else null
 
     private fun setupAnswerMode(context: Activity) {
         questionMode = false
@@ -425,7 +425,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
             currentDeckReviewQueue!!.addToFront(currentNote)
             setupAnswerMode(context)
         } else {
-            speak("Nothing to undo")
+            TtsSpeaker.speak("Nothing to undo")
         }
     }
 
