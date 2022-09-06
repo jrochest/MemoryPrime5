@@ -16,7 +16,8 @@ object MoveManager {
 
     private val currentJobs = mutableListOf<Job>()
 
-    fun addJob(job: Job) {
+    fun replaceMoveJobWith(job: Job) {
+        cancelJobs()
         currentJobs.add(job)
     }
 

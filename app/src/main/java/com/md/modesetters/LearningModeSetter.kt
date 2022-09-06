@@ -251,7 +251,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         if (currentNote != null && lifeCycleOwner != null) {
             val questionAudioFilePath = currentNote.question
             var shouldPlayTwiceInARow = true
-            MoveManager.addJob(lifeCycleOwner.lifecycleScope.launch(Dispatchers.Main) {
+            MoveManager.replaceMoveJobWith(lifeCycleOwner.lifecycleScope.launch(Dispatchers.Main) {
                 while (isActive) {
                     if (questionAudioFilePath != currentNote.question) {
                         // TODOJ maybe turn into precondition.
@@ -314,17 +314,17 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         questionMode = false
         memoryDroid!!.setContentView(R.layout.learnquestion)
         applyDim(mIsDimmed)
-        if (currentNote != null) {
-            AudioPlayer.instance.playFile(currentNote!!.answer,
-                    {
-                        MoveManager.addJob(GlobalScope.launch(Dispatchers.Main) {
-                            delay(10_000)
-                            if (isActive) {
-                                proceed()
-                            }
-                        })
-                    }
-                    , true)
+        val currentNote = currentNote
+        val lifeCycleOwner = mActivity
+        if (currentNote != null && lifeCycleOwner != null) {
+            MoveManager.replaceMoveJobWith(lifeCycleOwner.lifecycleScope.launch(Dispatchers.Main) {
+                AudioPlayer.instance.playFile(currentNote.answer)
+                delay(20_000)
+                if (isActive) {
+                    TtsSpeaker.speak("Auto-proceed from answer.")
+                    proceed()
+                }
+            })
         }
         commonLayoutSetup()
         memoryDroid!!.findViewById<View>(R.id.rerecord)
@@ -356,7 +356,7 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         }
     }
 
-    fun applyGradeStatic(
+    private fun applyGradeStatic(
         context: Activity?, newGrade: Int,
         currentNote: Note
     ) {
