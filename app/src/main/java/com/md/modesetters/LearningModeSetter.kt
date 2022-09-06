@@ -9,13 +9,15 @@ import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import com.md.*
 import com.md.RevisionQueue.Companion.currentDeckReviewQueue
-import com.md.modesetters.TtsSpeaker
 import com.md.provider.AbstractRep
 import com.md.provider.Note
 import com.md.utils.ScreenDimmer
 import com.md.utils.ToastSingleton
 import com.md.workers.BackupPreferences.markAllStale
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -318,8 +320,8 @@ class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHand
         val lifeCycleOwner = mActivity
         if (currentNote != null && lifeCycleOwner != null) {
             MoveManager.replaceMoveJobWith(lifeCycleOwner.lifecycleScope.launch(Dispatchers.Main) {
-                AudioPlayer.instance.playFile(currentNote.answer)
-                delay(20_000)
+                AudioPlayer.instance.playFile(currentNote.answer, shouldRepeat = true)
+                delay(30_000)
                 if (isActive) {
                     TtsSpeaker.speak("Auto-proceed from answer.")
                     proceed()
