@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-class LearningModeSetter protected constructor() : ModeSetter(), ItemDeletedHandler {
+class LearningModeSetter private constructor() : ModeSetter(), ItemDeletedHandler {
     /**
      * @param memoryDroid
      * @param modeHand
