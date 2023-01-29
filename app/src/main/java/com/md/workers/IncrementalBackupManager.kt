@@ -272,24 +272,30 @@ object IncrementalBackupManager {
                                 // If there is an empty backup zip. Write the file again.
                                 TtsSpeaker.speak("Empty $dirName")
                                 // fall through to the delete below
+                                previousBackup.delete()
                             } else if (runExtraValidation && !isZipValidAndHasExpectedAudioFiles(previousBackup, contentResolver, fileList)) {
                                 // If there is an empty backup zip. Write the file again.
                                 // fall through to the delete below
+                                // Recreate backup.
+                                previousBackup.delete()
                             } else {
                                 val lastDirMod = audioDirectoryToModificationTime[dirName]
                                 if (lastDirMod == null) {
                                     if (fileList.indexOfFirst { it.lastModified() >= previousBackup.lastModified() } == -1) {
                                         println("Done Search times stamps for $dirName none")
                                         return@async false
+                                    } else {
+                                        // Recreate backup.
+                                        previousBackup.delete()
                                     }
+                                } else if (lastDirMod < previousBackup.lastModified()) {
+                                    println("$dirName phone audio dir modification time before zip for audio dir")
+                                    return@async false
                                 } else {
-                                    if (lastDirMod < previousBackup.lastModified()) {
-                                        println("$dirName phone audio dir modification time before zip for audio dir")
-                                        return@async false
-                                    }
+                                    // Recreate backup.
+                                    previousBackup.delete()
                                 }
-                            } // else out of date. Recreate backup.
-                            previousBackup.delete()
+                            }
                         }
 
                         // Create the specific audio directory's zip.
@@ -368,12 +374,11 @@ object IncrementalBackupManager {
                 if (expectedCount == count) {
                     true
                 } else {
-                    TtsSpeaker.speak("zip expectedCount $expectedCount actualCount $count ")
+                    println("zip expectedCount $expectedCount actualCount $count ")
                     false
                 }
             } catch (e: ZipException) {
                 TtsSpeaker.speak("zip exception")
-
                 println("extra validation error " + e)
                 false
             } catch (e: IOException) {
