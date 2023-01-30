@@ -60,9 +60,6 @@ class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneMan
     override fun onResume() {
         super.onResume()
 
-        // This is also needed to keep audio focus.
-        keepHeadphoneAlive()
-
         playbackServiceOnResume()
 
         val modeSetter = modeHand.whoseOnTop() ?: return

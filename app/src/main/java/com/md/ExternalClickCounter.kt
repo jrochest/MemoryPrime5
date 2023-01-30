@@ -42,7 +42,7 @@ class ExternalClickCounter(private val activity: SpacedRepeaterActivity) {
 
             async {
                 @Suppress("DeferredResultUnused")
-                TtsSpeaker.speak("$mPressGroupCount", lowVolume = true)
+                activity.clickTone()
             }
 
             delay(pressGroupMaxGapMs)

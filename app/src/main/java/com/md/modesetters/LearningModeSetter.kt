@@ -166,7 +166,6 @@ class LearningModeSetter private constructor() : ModeSetter(), ItemDeletedHandle
     }
 
     override fun handleReplay() {
-        mActivity!!.keepHeadphoneAlive()
         if (questionMode) {
             replay()
         } else {
@@ -181,7 +180,6 @@ class LearningModeSetter private constructor() : ModeSetter(), ItemDeletedHandle
         } else {
             updateScoreAndMoveToNext(mActivity!!, 1)
         }
-        mActivity!!.keepHeadphoneAlive()
     }
 
     override fun secondaryAction(): String {
@@ -233,7 +231,6 @@ class LearningModeSetter private constructor() : ModeSetter(), ItemDeletedHandle
             updateScoreAndMoveToNext(mActivity!!, 4)
         }
         hideSystemUi()
-        mActivity!!.keepHeadphoneAlive()
     }
 
     private fun setupQuestionMode(
