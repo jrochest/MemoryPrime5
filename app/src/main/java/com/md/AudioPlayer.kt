@@ -75,7 +75,7 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
             wantsToPlay = autoPlay
             isPrepared = false
             mediaPlayer.isLooping = false
-            repeatsRemaining = if (shouldRepeat) 1 else 0
+            repeatsRemaining = if (shouldRepeat) 3 else 0
             try {
                 mediaPlayer.setDataSource(path)
                 loudnessEnhancer = LoudnessEnhancer(mediaPlayer.audioSessionId)

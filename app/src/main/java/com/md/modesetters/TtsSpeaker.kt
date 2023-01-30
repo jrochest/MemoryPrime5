@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.TextToSpeech.QUEUE_ADD
+import android.speech.tts.TextToSpeech.QUEUE_FLUSH
 
 
 object TtsSpeaker : TextToSpeech.OnInitListener {
@@ -35,7 +36,7 @@ object TtsSpeaker : TextToSpeech.OnInitListener {
             params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 0.1f)
         }
 
-        tts?.speak(message, QUEUE_ADD, params, "")
+        tts?.speak(message, QUEUE_FLUSH, params, "")
     }
 
     override fun onInit(status: Int) {

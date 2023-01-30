@@ -14,7 +14,6 @@ class ExternalClickCounter(private val activity: SpacedRepeaterActivity) {
     var mPressSequenceNumber: Int = 0
 
     var currentJob: Job? = null
-    var pendingGreedyTap = false
 
     fun handleRhythmUiTaps(modeSetter: ModeSetter, eventTimeMs: Long, pressGroupMaxGapMs: Long, tapCount: Int): Boolean {
         currentJob?.cancel()
@@ -22,12 +21,10 @@ class ExternalClickCounter(private val activity: SpacedRepeaterActivity) {
         val currentTimeMs = SystemClock.uptimeMillis()
         if (mPressGroupLastPressMs == 0L) {
             mPressGroupCount = tapCount
-            pendingGreedyTap = false
             println("New Press group.")
         } else if (mPressGroupLastPressEventMs + pressGroupMaxGapMs < eventTimeMs) {
             // Large gap. Reset count.
             mPressGroupCount = tapCount
-            pendingGreedyTap = false
             println("New Press group. Expiring old one.")
         } else {
             println("Time diff: " + (currentTimeMs - mPressGroupLastPressMs))
@@ -41,16 +38,15 @@ class ExternalClickCounter(private val activity: SpacedRepeaterActivity) {
         MoveManager.cancelJobs()
 
         currentJob = activity.lifecycleScope.launch(Dispatchers.Main) {
-            if (mPressGroupCount == 1) {
-                modeSetter.proceed()
-                pendingGreedyTap = true
-                return@launch
-            } else if (pendingGreedyTap) {
-                // If count taps by 1 undo the greedy proceed.
-                modeSetter.undo()
-                pendingGreedyTap = false
+
+
+            async {
+                @Suppress("DeferredResultUnused")
+                TtsSpeaker.speak("$mPressGroupCount", lowVolume = true)
             }
+
             delay(pressGroupMaxGapMs)
+
             if (!isActive) {
                 return@launch
             }
@@ -58,7 +54,7 @@ class ExternalClickCounter(private val activity: SpacedRepeaterActivity) {
             val message: String?
             when (mPressGroupCount) {
                 1 -> {
-                    message = "1 tap"
+                    message = null
                     modeSetter.proceed()
                 }
                 // This takes a different action based on whether it is a question or answer.
