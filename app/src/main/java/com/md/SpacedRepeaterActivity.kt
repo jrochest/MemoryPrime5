@@ -125,16 +125,35 @@ class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneMan
             return false
         }
 
-        if (event.source == SOURCE_KEYBOARD) {
-            // After update to After updated to Android 11 on Note 20 Ultra
-            // for the Mpow name equals "Virtual". Both the phone volume button and shutter use that
-            // name. But only the phone buttons use SOURCE_KEYBOARD. The shutter uses 0x301.
-            return false
 
+        // On Pixel 7 Pro in 2022 Android T
+
+        // Real volume Up button Volume Button:
+        // KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_VOLUME_UP, scanCode=115, metaState=0, flags=0x8, repeatCount=0, eventTime=1532328658000, downTime=1532328658000, deviceId=2, source=0x101, displayId=-1 }
+        // KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_VOLUME_UP, scanCode=115, metaState=0, flags=0x8, repeatCount=0, eventTime=1532328658000, downTime=1532328658000, deviceId=2, source=0x101, displayId=-1 }
+        // Phone's Real volume down button:
+        // KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_VOLUME_DOWN, scanCode=114, metaState=0, flags=0x8, repeatCount=0, eventTime=3061704102000, downTime=3061704102000, deviceId=2, source=0x101, displayId=-1 }
+
+        // Bluetooth 5 AB shutter:
+        // KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_VOLUME_UP, scanCode=115, metaState=0, flags=0x8, repeatCount=0, eventTime=1459039036000, downTime=1459039036000, deviceId=10, source=0x101, displayId=-1 }
+        // Bluetooth 5 AB shutter same device after reconnect (deviceId=11,):
+        // KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_VOLUME_UP, scanCode=115, metaState=0, flags=0x8, repeatCount=0, eventTime=3119110978000, downTime=3119110978000, deviceId=11, source=0x101, displayId=-1 }
+        // MPow
+        // KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_VOLUME_UP, scanCode=115, metaState=0, flags=0x8, repeatCount=0, eventTime=3304164273000, downTime=3304164273000, deviceId=12, source=0x301, displayId=-1 }
+        // After reboot
+        // Pixel 7 Pro volume button (deviceId = 2): KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_VOLUME_UP, scanCode=115, metaState=0, flags=0x8, repeatCount=0, eventTime=96892264000, downTime=96892264000, deviceId=2, source=0x101, displayId=-1 }
+        // Mpow
+        // KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_VOLUME_UP, scanCode=115, metaState=0, flags=0x8, repeatCount=0, eventTime=166876092000, downTime=166876092000, deviceId=5, source=0x301, displayId=-1 }
+        // ab shutter:
+        // KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_VOLUME_UP, scanCode=115, metaState=0, flags=0x8, repeatCount=0, eventTime=226887697000, downTime=226887697000, deviceId=6, source=0x101, displayId=-1 }
+        // So Heuristic:
+        if (event.deviceId >= 5) {
+            return true
         }
 
         val device = event.device ?: return false
 
+        // Perhaps delete all of this?
         // On Android 12 the Mpow device is:
         // Mpow isnap X2 Mouse
         val name = device.name
