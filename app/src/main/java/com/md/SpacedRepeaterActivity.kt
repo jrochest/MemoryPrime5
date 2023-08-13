@@ -27,7 +27,6 @@ class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneMan
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-
         AudioPlayer.instance.setLifeCycleOwner(this)
 
        MemPrimeNotificationManager.createChannel(this)
@@ -89,7 +88,7 @@ class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneMan
         TtsSpeaker.speak("Config change")
     }
 
-    var modeHand = ModeHandler(this)
+    private var modeHand = ModeHandler(this)
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         MoveManager.cancelJobs()
