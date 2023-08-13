@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
+import androidx.lifecycle.lifecycleScope
 import com.md.*
 import com.md.RevisionQueue.Companion.currentDeckReviewQueue
 import com.md.modesetters.DeckItemPopulator.populate
@@ -15,6 +16,9 @@ import com.md.modesetters.deckchoose.DeckNameUpdater
 import com.md.modesetters.deckchoose.InsertNewHandler
 import com.md.provider.Deck
 import com.md.utils.ToastSingleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.*
 
 @SuppressLint("StaticFieldLeak")
@@ -39,6 +43,9 @@ object DeckChooseModeSetter : ModeSetter() {
     private var loadComplete = false
     private var progressBar: ProgressBar? = null
     fun setupCreateMode() {
+
+        val activity = checkNotNull(mActivity)
+
         loadComplete = false
         val insertButton = memoryDroid!!.findViewById<View>(R.id.addNew) as Button
         insertButton.setOnClickListener(InsertNewHandler(memoryDroid, this))
@@ -57,8 +64,41 @@ object DeckChooseModeSetter : ModeSetter() {
         // list.
         listView!!.adapter = DeckAdapter(deckList, mActivity!!)
 
-        val deckPopulator = DeckPopulator(this)
-        deckPopulator.execute(this)
+        //val deckPopulator = DeckPopulator(this)
+        //deckPopulator.execute(this)
+        val modeChooser = this
+
+        activity.lifecycleScope.launch(Dispatchers.IO) {
+            mTotalNotes = 0
+            val childCount = deckList.size
+            for (idx in 0 until childCount) {
+                // Stop if we aren't loaded anymore.
+                if (modeHand!!.whoseOnTop() != modeChooser) {
+                    break
+                }
+                val deck = deckList.elementAt(idx)
+                val revisionQueue = RevisionQueue()
+                revisionQueue.populate(DbNoteEditor.instance!!, deck.id)
+
+                // Stop if we aren't loaded anymore. We want this before
+                // and after the query
+                if (modeHand!!.whoseOnTop() != modeChooser) {
+                    break
+                }
+
+                val deckCount = DbNoteEditor.instance!!.getDeckCount(deck.id)
+                val deckInfo = DeckInfo(deck, revisionQueue, deckCount)
+                withContext(Dispatchers.Main) {
+                    applyDeckInfoToExistingUiElement(deckInfo)
+                }
+            }
+
+            withContext(Dispatchers.Main) {
+                if (modeHand!!.whoseOnTop() === modeChooser) {
+                    modeChooser.onComplete()
+                }
+            }
+        }
     }
 
     private class DeckAdapter(private val decks: List<Deck>, private val context: Activity) : BaseAdapter() {
@@ -110,66 +150,14 @@ object DeckChooseModeSetter : ModeSetter() {
         }
     }
 
-    class DeckPopulator(private val dcChooseModeSetter: DeckChooseModeSetter) : AsyncTask<DeckChooseModeSetter?, DeckInfo?, DeckInfo?>() {
-        @Deprecated("Deprecated in Java")
-        override fun onPostExecute(result: DeckInfo?) {
-            if (modeHand!!.whoseOnTop() === dcChooseModeSetter) {
-                dcChooseModeSetter.onComplete()
-            }
-        }
-
-        fun publishProgessVisible(state: DeckInfo?) {
-            // Only do stuff if I'm still in control.
-            if (modeHand!!.whoseOnTop() === dcChooseModeSetter) {
-                publishProgress(state)
-            }
-        }
-
-        @Deprecated("Deprecated in Java")
-        override fun onProgressUpdate(vararg state: DeckInfo?) {
-            val stateFirst = state[0] ?: return
-
-            dcChooseModeSetter.setState(stateFirst)
-        }
-
-        @Deprecated("Deprecated in Java")
-        override fun doInBackground(vararg params: DeckChooseModeSetter?): DeckInfo? {
-            mTotalNotes = 0
-            val childCount = deckList.size
-            for (idx in 0 until childCount) {
-                // Stop if we aren't loaded anymore.
-                if (modeHand!!.whoseOnTop() !== dcChooseModeSetter) {
-                    break
-                }
-                val deck = deckList.elementAt(idx)
-                val revisionQueue = RevisionQueue()
-                revisionQueue.populate(DbNoteEditor.instance!!, deck.id)
-
-                // Stop if we aren't loaded anymore. We want this before
-                // and after the query
-                if (modeHand!!.whoseOnTop() !== dcChooseModeSetter) {
-                    break
-                }
-
-                val deckCount = DbNoteEditor.instance!!.getDeckCount(deck.id)
-                val deckInfo = DeckInfo(deck, revisionQueue, deckCount)
-                publishProgessVisible(deckInfo)
-            }
-            return null
-        }
-
-    }
-
     fun onComplete() {
         val loadingOrSelect = memoryDroid?.findViewById<View>(R.id.loadingOrSelect) as TextView
-        if (loadingOrSelect != null) {
-            loadingOrSelect.text = "Press or Long Press a Deck"
-        }
+        loadingOrSelect.text = "Press or Long Press a Deck"
         loadComplete = true
         ToastSingleton.getInstance().msgCommon("$mTotalNotes notes!", 0f)
     }
 
-    fun setState(state: DeckInfo) {
+    fun applyDeckInfoToExistingUiElement(state: DeckInfo) {
         progressBar!!.progress = progressBar!!.progress + 1
         for (idx in deckList.indices) {
             val elementAt = deckList.elementAt(idx)
