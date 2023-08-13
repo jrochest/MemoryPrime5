@@ -90,6 +90,7 @@ class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneMan
     }
 
     var modeHand = ModeHandler(this)
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         MoveManager.cancelJobs()
         if (modeHand.goBack()) {
@@ -263,6 +264,7 @@ class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneMan
         const val PRESS_GROUP_MAX_GAP_MS_SCREEN = 400L
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 

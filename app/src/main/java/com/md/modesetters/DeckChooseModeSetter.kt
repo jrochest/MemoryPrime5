@@ -111,6 +111,7 @@ object DeckChooseModeSetter : ModeSetter() {
     }
 
     class DeckPopulator(private val dcChooseModeSetter: DeckChooseModeSetter) : AsyncTask<DeckChooseModeSetter?, DeckInfo?, DeckInfo?>() {
+        @Deprecated("Deprecated in Java")
         override fun onPostExecute(result: DeckInfo?) {
             if (modeHand!!.whoseOnTop() === dcChooseModeSetter) {
                 dcChooseModeSetter.onComplete()
@@ -124,12 +125,14 @@ object DeckChooseModeSetter : ModeSetter() {
             }
         }
 
+        @Deprecated("Deprecated in Java")
         override fun onProgressUpdate(vararg state: DeckInfo?) {
             val stateFirst = state[0] ?: return
 
             dcChooseModeSetter.setState(stateFirst)
         }
 
+        @Deprecated("Deprecated in Java")
         override fun doInBackground(vararg params: DeckChooseModeSetter?): DeckInfo? {
             mTotalNotes = 0
             val childCount = deckList.size
