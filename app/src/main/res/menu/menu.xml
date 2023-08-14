@@ -35,6 +35,9 @@
 		android:id="@+id/settings"
 		android:title="Settings" />
 	<item
+		android:id="@+id/working_memory"
+		android:title="Working Memory" />
+	<item
 		android:id="@+id/clean_up_files"
 		android:title="Clean Up" />
 	<item

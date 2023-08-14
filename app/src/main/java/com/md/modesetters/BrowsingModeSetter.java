@@ -15,6 +15,7 @@ import com.md.R;
 import com.md.provider.Note;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class BrowsingModeSetter extends ModeSetter implements
 		ItemDeletedHandler {

@@ -28,6 +28,7 @@ import com.md.provider.MemoreasyType;
 import com.md.utils.ToastSingleton;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ImportModeSetter extends ModeSetter implements
 		android.os.Handler.Callback {

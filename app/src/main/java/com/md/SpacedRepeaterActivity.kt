@@ -9,7 +9,6 @@ import android.media.AudioManager
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.Menu
-import androidx.core.view.InputDeviceCompat.SOURCE_KEYBOARD
 import androidx.lifecycle.LifecycleOwner
 import com.md.AudioPlayer.Companion.instance
 import com.md.modesetters.*
@@ -43,6 +42,7 @@ class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneMan
         DeckChooseModeSetter.getInstance().switchMode(this)
         SettingModeSetter.setup(this, modeHand)
         CleanUpAudioFilesModeSetter.getInstance().setup(this, modeHand)
+        WorkingMemoryModeSetter.getInstance().setup(this, modeHand)
 
         playbackServiceOnCreate()
 

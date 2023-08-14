@@ -14,7 +14,7 @@ abstract class ModeSetter {
     @JvmField
     protected var mActivity: SpacedRepeaterActivity? = null
     @JvmField
-    protected var modeHand: ModeHandler? = null
+    var modeHand: ModeHandler? = null
     fun switchMode(context: Activity) {
         if (this !is DeckChooseModeSetter &&
                 !CategorySingleton.getInstance().hasCategory()) {

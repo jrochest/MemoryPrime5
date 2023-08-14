@@ -97,6 +97,7 @@ class ActivityHelper {
         addMenu(menu, R.id.learningModeMenuItem, LearningModeSetter.instance, activity)
         addMenu(menu, R.id.selectDeckModeMenuItem, DeckChooseModeSetter, activity)
         addMenu(menu, R.id.settings, SettingModeSetter, activity)
+        addMenu(menu, R.id.working_memory, WorkingMemoryModeSetter.getInstance(), activity)
         addMenu(menu, R.id.clean_up_files, CleanUpAudioFilesModeSetter.getInstance(), activity)
     }
 
