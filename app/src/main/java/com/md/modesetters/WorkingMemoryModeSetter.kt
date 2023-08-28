@@ -44,26 +44,25 @@ class WorkingMemoryModeSetter : ModeSetter(), ItemDeletedHandler {
         modeHand!!.add(this)
         context.setContentView(ComposeView(context).apply {
             setContent {
-                HelloWorld()
+                WorkMemoryUi()
             }
         })
     }
 
 
     @Composable
-    fun HelloWorld() {
-        val memories = remember { mutableStateListOf<ShortTermNote>() }
-
+    fun WorkMemoryUi() {
+        val shortTermNotes = remember { mutableStateListOf<ShortTermNote>() }
         Surface(color = MaterialTheme.colorScheme.background) {
             Column(
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.Start
             ) {
 
-                AddMemoryButton(memories)
+                AddMemoryButton(shortTermNotes)
                 LazyColumn {
-                    itemsIndexed(memories) { index: Int, memory: ShortTermNote ->
-                        ExistingMemoryButton(memories = memories, index = index, memory)
+                    itemsIndexed(shortTermNotes) { index: Int, memory: ShortTermNote ->
+                        ExistingMemoryButton(memories = shortTermNotes, index = index, memory)
                     }
                 }
             }
