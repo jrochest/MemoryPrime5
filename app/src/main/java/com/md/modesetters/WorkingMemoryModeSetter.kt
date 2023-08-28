@@ -1,11 +1,13 @@
 package com.md.modesetters
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.os.SystemClock
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,10 +23,14 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.md.ModeHandler
 import com.md.SpacedRepeaterActivity
+import java.text.SimpleDateFormat
+import java.util.Date
 
 class WorkingMemoryModeSetter : ModeSetter(), ItemDeletedHandler {
 
@@ -46,7 +52,7 @@ class WorkingMemoryModeSetter : ModeSetter(), ItemDeletedHandler {
 
     @Composable
     fun HelloWorld() {
-        val memories = remember { mutableStateListOf<Memory>() }
+        val memories = remember { mutableStateListOf<ShortTermNote>() }
 
         Surface(color = MaterialTheme.colorScheme.background) {
             Column(
@@ -56,7 +62,7 @@ class WorkingMemoryModeSetter : ModeSetter(), ItemDeletedHandler {
 
                 AddMemoryButton(memories)
                 LazyColumn {
-                    itemsIndexed(memories) { index: Int, memory: Memory ->
+                    itemsIndexed(memories) { index: Int, memory: ShortTermNote ->
                         ExistingMemoryButton(memories = memories, index = index, memory)
                     }
                 }
@@ -64,54 +70,60 @@ class WorkingMemoryModeSetter : ModeSetter(), ItemDeletedHandler {
         }
     }
 
+
     @Composable
-    private fun AddMemoryButton(memories: SnapshotStateList<Memory>) {
-        Button(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            onClick = {
-                memories.add(0, Memory((100*Math.random()).toInt().toString()))
-            },
-        ) {
-            Text(text = "Record", fontSize = MAX_FONT_SIZE.sp, modifier = Modifier.padding(MAX_FONT_SIZE.dp))
-        }
+    private fun AddMemoryButton(notes: SnapshotStateList<ShortTermNote>) {
+        WorkingMemoryButton(onClick = {
+            notes.add(0, ShortTermNote())
+        }, label = "Tap tap hold to record", MAX_FONT_SIZE)
     }
 
     @Composable
     private fun ExistingMemoryButton(
-        memories: SnapshotStateList<Memory>,
+        memories: SnapshotStateList<ShortTermNote>,
         index: Int,
-        memory: Memory
+        note: ShortTermNote
     ) {
-        val fontSize = (MAX_FONT_SIZE - (index * 5)).coerceAtLeast(10)
-        Spacer(modifier = Modifier.width(10.dp))
+        val fontSize = (MAX_FONT_SIZE - (index * 2)).coerceAtLeast(10)
+        Spacer(modifier = Modifier.width(4.dp))
+        val onClick = {
+            note.onTap(memories, activity)
+        }
+        WorkingMemoryButton(onClick, note.name, fontSize)
+    }
+
+    @Composable
+    private fun WorkingMemoryButton(
+        onClick: () -> Unit,
+        label: String,
+        fontSize: Int
+    ) {
         Button(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp),
-             onClick = {
-                memory.onTap(memories, index, activity)
-            },
+                .heightIn(min = 48.dp)
+                .padding(4.dp),
+            onClick = onClick,
         ) {
-            Text(text = "Note ${memory.name}", fontSize = fontSize.sp, modifier = Modifier.padding(fontSize.dp))
+            Text(text = label, style = TextStyle(fontSize = fontSize.sp, textAlign = TextAlign.Center))
         }
     }
 
+    data class ShortTermNote(private val creationInstantMillis: Long = System.currentTimeMillis()) {
+        val name: String = "Note " + dateAndTime()
 
-    data class Memory(val name: String) {
+        @SuppressLint("SimpleDateFormat")
+        private fun dateAndTime(): String {
+            val format = SimpleDateFormat("MM.dd HH:mm:ss")
+            return format.format(Date(creationInstantMillis))
+        }
+
         private var recentPressCount: Int = 0
 
-           fun getRecentPressCount() : Int {
-                if (SystemClock.uptimeMillis() > (MAX_TAP_GAP_DURATION_TO_DELETE_MILLIS + lastPressInstant)) {
-                    recentPressCount = 0
-                }
-                return recentPressCount
-            }
-
-        var lastPressInstant: Long = 0
+        private var lastPressInstant: Long = 0
 
         fun onTap(
-            memories: SnapshotStateList<Memory>,
-            index: Int,
+            memories: SnapshotStateList<ShortTermNote>,
             activity: SpacedRepeaterActivity?
         ) {
             if (SystemClock.uptimeMillis() > (MAX_TAP_GAP_DURATION_TO_DELETE_MILLIS + lastPressInstant)) {
@@ -134,7 +146,7 @@ class WorkingMemoryModeSetter : ModeSetter(), ItemDeletedHandler {
     // TODOJ perhaps use mutableState to refresh.
     companion object {
 
-        private const val MAX_FONT_SIZE = 50
+        private const val MAX_FONT_SIZE = 36
         private const val MAX_TAP_GAP_DURATION_TO_DELETE_MILLIS = 300
 
         private var singleton: WorkingMemoryModeSetter? = null
