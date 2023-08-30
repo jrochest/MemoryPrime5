@@ -33,8 +33,6 @@ class SpacedRepeaterActivity @Inject constructor() : LifecycleOwner, PlaybackSer
 
         AudioPlayer.instance.setLifeCycleOwner(this)
 
-       MemPrimeNotificationManager.createChannel(this)
-
         DbContants.setup(this)
         volumeControlStream = AudioManager.STREAM_MUSIC
         val activityHelper = ActivityHelper()
@@ -54,13 +52,6 @@ class SpacedRepeaterActivity @Inject constructor() : LifecycleOwner, PlaybackSer
         TtsSpeaker.setup(this.applicationContext)
     }
 
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-        if (intent?.getBooleanExtra(Extras.Keys.IS_TIMER_REQUEST.name, false) == true) {
-            MemPrimeNotificationManager.startTimer(this.baseContext)
-        }
-    }
-
     override fun onResume() {
         super.onResume()
 
@@ -70,7 +61,6 @@ class SpacedRepeaterActivity @Inject constructor() : LifecycleOwner, PlaybackSer
         // Take back media session focus if we lost it.
         modeSetter.handleReplay()
     }
-
 
     override fun onPause() {
         super.onPause()
