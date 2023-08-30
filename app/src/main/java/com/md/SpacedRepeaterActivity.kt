@@ -16,13 +16,16 @@ import com.md.workers.BackupPreferences
 import com.md.workers.BackupToUsbManager.createAndWriteZipBackToNewLocation
 import com.md.workers.IncrementalBackupManager
 import com.md.workers.IncrementalBackupPreferences
+import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 
 @AndroidEntryPoint
-class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneManager by ToneManagerImpl() {
+class SpacedRepeaterActivity @Inject constructor() : LifecycleOwner, PlaybackServiceControl(), ToneManager by ToneManagerImpl() {
 
-    private val externalClickCounter = ExternalClickCounter(this)
+    @Inject
+    lateinit var externalClickCounter: Lazy<ExternalClickCounter>
 
     /** Called when the activity is first created.  */
     public override fun onCreate(savedInstanceState: Bundle?) {
@@ -225,7 +228,7 @@ class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneMan
             return true
         }
         val eventTimeMs = event.eventTime
-        return externalClickCounter.handleRhythmUiTaps(modeSetter, eventTimeMs, PRESS_GROUP_MAX_GAP_MS_BLUETOOTH, 1)
+        return externalClickCounter.get().handleRhythmUiTaps(modeSetter, eventTimeMs, PRESS_GROUP_MAX_GAP_MS_BLUETOOTH, 1)
     }
 
     fun maybeChangeAudioFocus(shouldHaveFocus: Boolean) {
@@ -303,7 +306,7 @@ class SpacedRepeaterActivity : LifecycleOwner, PlaybackServiceControl(), ToneMan
 
     @JvmOverloads
     fun handleRhythmUiTaps(learningModeSetter: LearningModeSetter, uptimeMillis: Long, pressGroupMaxGapMsScreen: Long, tapCount: Int = 1) {
-        externalClickCounter.handleRhythmUiTaps(learningModeSetter, uptimeMillis, pressGroupMaxGapMsScreen, tapCount)
+        externalClickCounter.get().handleRhythmUiTaps(learningModeSetter, uptimeMillis, pressGroupMaxGapMsScreen, tapCount)
     }
 }
 

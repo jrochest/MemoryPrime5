@@ -5,9 +5,19 @@ import androidx.lifecycle.lifecycleScope
 import com.md.modesetters.MoveManager
 import com.md.modesetters.ModeSetter
 import com.md.modesetters.TtsSpeaker
+import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.*
+import javax.inject.Inject
 
-class ExternalClickCounter(private val activity: SpacedRepeaterActivity) {
+
+@ActivityScoped
+class ExternalClickCounter
+
+    @Inject
+    constructor() {
+
+    @Inject lateinit var activity: SpacedRepeaterActivity
+
     var mPressGroupLastPressMs: Long = 0
     var mPressGroupLastPressEventMs: Long = 0
     var mPressGroupCount: Int = 0
