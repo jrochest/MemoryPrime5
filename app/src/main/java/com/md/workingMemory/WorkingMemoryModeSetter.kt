@@ -1,4 +1,4 @@
-package com.md.modesetters
+package com.md.workingMemory
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -30,7 +30,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.md.ModeHandler
 import com.md.SpacedRepeaterActivity
-import dagger.Lazy
+import com.md.modesetters.ItemDeletedHandler
+import com.md.modesetters.ModeSetter
 import dagger.hilt.android.scopes.ActivityScoped
 import java.text.SimpleDateFormat
 import java.util.Date
