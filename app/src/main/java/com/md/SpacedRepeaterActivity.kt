@@ -27,25 +27,34 @@ class SpacedRepeaterActivity @Inject constructor() : LifecycleOwner, PlaybackSer
     @Inject
     lateinit var externalClickCounter: Lazy<ExternalClickCounter>
 
+
+    @Inject
+    lateinit var workingModeSetter: Lazy<WorkingMemoryModeSetter>
+
+    @Inject
+    lateinit var modeHandler: Lazy<ModeHandler>
+
+    @Inject
+    lateinit var activityHelper: ActivityHelper
+
     /** Called when the activity is first created.  */
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         AudioPlayer.instance.setLifeCycleOwner(this)
+        val handler = modeHandler.get()
 
         DbContants.setup(this)
         volumeControlStream = AudioManager.STREAM_MUSIC
-        val activityHelper = ActivityHelper()
-        activityHelper.commonActivitySetup(this)
+        activityHelper.commonActivitySetup()
         // Normal mode.
-        CreateModeSetter.setUp(this, modeHand)
-        BrowsingModeSetter.getInstance().setup(this, modeHand)
-        DeckChooseModeSetter.getInstance()?.setUp(this, modeHand)
-        LearningModeSetter.instance.setUp(this, modeHand)
+        CreateModeSetter.setUp(this, handler)
+        BrowsingModeSetter.getInstance().setup(this, handler)
+        DeckChooseModeSetter.getInstance()?.setUp(this, handler)
+        LearningModeSetter.instance.setUp(this, handler)
         DeckChooseModeSetter.getInstance().switchMode(this)
-        SettingModeSetter.setup(this, modeHand)
-        CleanUpAudioFilesModeSetter.getInstance().setup(this, modeHand)
-        WorkingMemoryModeSetter.getInstance().setup(this, modeHand)
+        SettingModeSetter.setup(this, handler)
+        CleanUpAudioFilesModeSetter.getInstance().setup(this, handler)
 
         playbackServiceOnCreate()
 
@@ -56,8 +65,8 @@ class SpacedRepeaterActivity @Inject constructor() : LifecycleOwner, PlaybackSer
         super.onResume()
 
         playbackServiceOnResume()
-
-        val modeSetter = modeHand.whoseOnTop() ?: return
+        val modeBackStack = modeHandler.get()
+        val modeSetter = modeBackStack.whoseOnTop() ?: return
         // Take back media session focus if we lost it.
         modeSetter.handleReplay()
     }
@@ -83,11 +92,11 @@ class SpacedRepeaterActivity @Inject constructor() : LifecycleOwner, PlaybackSer
         TtsSpeaker.speak("Config change")
     }
 
-    private var modeHand = ModeHandler(this)
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         MoveManager.cancelJobs()
-        if (modeHand.goBack()) {
+        val modeBackStack = modeHandler.get()
+        if (modeBackStack.goBack()) {
             return
         }
 
@@ -107,7 +116,6 @@ class SpacedRepeaterActivity @Inject constructor() : LifecycleOwner, PlaybackSer
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        val activityHelper = ActivityHelper()
         activityHelper.createCommonMenu(menu, this)
         return true
     }
@@ -180,7 +188,8 @@ class SpacedRepeaterActivity @Inject constructor() : LifecycleOwner, PlaybackSer
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
         println("TODOJ key up event$event")
-        val modeSetter = modeHand.whoseOnTop()
+        val modeBackStack = modeHandler.get()
+        val modeSetter = modeBackStack.whoseOnTop()
         // BR301 sends an enter command, which we want to ignore.
         if (keyCode == KeyEvent.KEYCODE_ENTER) {
             return true
@@ -201,7 +210,8 @@ class SpacedRepeaterActivity @Inject constructor() : LifecycleOwner, PlaybackSer
      */
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         println("TODOJ key down event$event")
-        val modeSetter = modeHand.whoseOnTop()
+        val modeBackStack = modeHandler.get()
+        val modeSetter = modeBackStack.whoseOnTop()
         println("TODOJ event$event")
         // BR301 sends an enter command, which we want to ignore.
         if (keyCode == KeyEvent.KEYCODE_ENTER) {
@@ -247,7 +257,8 @@ class SpacedRepeaterActivity @Inject constructor() : LifecycleOwner, PlaybackSer
 
 
     fun maybeDim() {
-        val modeSetter = modeHand.whoseOnTop()
+        val modeBackStack = modeHandler.get()
+        val modeSetter = modeBackStack.whoseOnTop() ?: return
         modeSetter.toggleDim()
     }
 

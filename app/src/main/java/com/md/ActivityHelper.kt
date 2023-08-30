@@ -8,15 +8,19 @@ import com.md.modesetters.*
 import com.md.utils.ToastSingleton
 import com.md.workers.BackupToUsbManager
 import com.md.workers.IncrementalBackupManager.createAndWriteZipBackToPreviousLocation
+import dagger.Lazy
+import dagger.hilt.android.scopes.ActivityScoped
 import java.io.File
+import javax.inject.Inject
 
-class ActivityHelper {
-    private var activity: Activity? = null
+@ActivityScoped
+class ActivityHelper @Inject constructor(
+    val activity: Activity,
+    val workingMemoryModeSetter: Lazy<WorkingMemoryModeSetter>) {
 
+    // TODOJ delete all these.
     var timerManager = TimerManager()
-    fun commonActivitySetup(activity: SpacedRepeaterActivity?) {
-
-        this.activity = activity
+    fun commonActivitySetup() {
         val theFile = File(DbContants.getDatabasePath())
         val parentFile = File(theFile.parent)
         if (!parentFile.exists()) {
@@ -97,7 +101,7 @@ class ActivityHelper {
         addMenu(menu, R.id.learningModeMenuItem, LearningModeSetter.instance, activity)
         addMenu(menu, R.id.selectDeckModeMenuItem, DeckChooseModeSetter, activity)
         addMenu(menu, R.id.settings, SettingModeSetter, activity)
-        addMenu(menu, R.id.working_memory, WorkingMemoryModeSetter.getInstance(), activity)
+        addMenu(menu, R.id.working_memory, workingMemoryModeSetter.get(), activity)
         addMenu(menu, R.id.clean_up_files, CleanUpAudioFilesModeSetter.getInstance(), activity)
     }
 

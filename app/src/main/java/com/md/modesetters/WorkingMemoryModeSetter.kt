@@ -29,16 +29,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.md.ModeHandler
 import com.md.SpacedRepeaterActivity
+import dagger.Lazy
+import dagger.hilt.android.scopes.ActivityScoped
 import java.text.SimpleDateFormat
 import java.util.Date
+import javax.inject.Inject
 
-class WorkingMemoryModeSetter : ModeSetter(), ItemDeletedHandler {
+@ActivityScoped
+class WorkingMemoryModeSetter @Inject constructor(
+    val activity: SpacedRepeaterActivity,
+    val modeHandler: ModeHandler
+) : ModeSetter(), ItemDeletedHandler {
 
-    private var activity: SpacedRepeaterActivity? = null
-    fun setup(activity: SpacedRepeaterActivity, modeHand: ModeHandler?) {
+
+    init {
         parentSetup(activity, modeHand)
-        this.activity = activity
     }
+
 
     override fun switchModeImpl(context: Activity) {
         modeHand!!.add(this)
@@ -143,21 +150,8 @@ class WorkingMemoryModeSetter : ModeSetter(), ItemDeletedHandler {
 
     // TODOJ perhaps use mutableState to refresh.
     companion object {
-
         private const val MAX_FONT_SIZE = 36
         private const val MAX_TAP_GAP_DURATION_TO_DELETE_MILLIS = 300
-
-        private var singleton: WorkingMemoryModeSetter? = null
-
-        fun getInstance(): WorkingMemoryModeSetter {
-            val singletonLocal = singleton
-            if (singletonLocal == null) {
-                val instance = WorkingMemoryModeSetter()
-                singleton = instance
-                return instance
-            }
-            return singletonLocal
-        }
     }
 
 }

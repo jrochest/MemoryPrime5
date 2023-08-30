@@ -1,49 +1,41 @@
-package com.md;
+package com.md
 
-import java.util.Stack;
+import android.app.Activity
+import com.md.modesetters.ModeSetter
+import com.md.modesetters.MoveManager.cancelJobs
+import dagger.hilt.android.scopes.ActivityScoped
+import java.util.Stack
+import javax.inject.Inject
 
-import android.app.Activity;
+// TODOJ change to view model scoped.
+@ActivityScoped
+class ModeHandler @Inject constructor(val context: Activity) {
+    private val modeStack = Stack<ModeSetter>()
 
-import com.md.modesetters.ModeSetter;
-import com.md.modesetters.MoveManager;
+    fun whoseOnTop(): ModeSetter? {
+        // Must have two.
+        return if (!modeStack.empty()) {
+            modeStack.peek()
+        } else {
+            null
+        }
+    }
 
-public class ModeHandler {
+    fun goBack(): Boolean {
+        // Must have two.
+        if (modeStack.size > 1) {
+            val pop = modeStack.pop()
+            modeStack.peek().switchMode(context)
+            return true
+        }
+        return false
+    }
 
-	Stack<ModeSetter> modeStack = new Stack<ModeSetter>();
-	private final Activity context;
-
-	public ModeHandler(Activity context) {
-		this.context = context;
-
-	}
-
-	public ModeSetter whoseOnTop()
-	{
-		// Must have two.
-		if (!modeStack.empty()) {
-			return modeStack.peek();
-		} else {
-			return null;
-		}
-	}
-	
-	public boolean goBack() {
-		// Must have two.
-		if (modeStack.size() > 1) {
-			ModeSetter pop = modeStack.pop();
-			modeStack.peek().switchMode(context);
-			return true;
-		}
-		return false;
-	}
-
-	public void add(ModeSetter modeSetter) {
-		MoveManager.INSTANCE.cancelJobs();
-		// Don't put your self on!
-		if(modeStack.empty() || modeStack.peek() != modeSetter)
-		{
-		   modeStack.push(modeSetter);
-		}
-	}
-
+    fun add(modeSetter: ModeSetter) {
+        cancelJobs()
+        // Don't put your self on!
+        if (modeStack.empty() || modeStack.peek() !== modeSetter) {
+            modeStack.push(modeSetter)
+        }
+    }
 }
