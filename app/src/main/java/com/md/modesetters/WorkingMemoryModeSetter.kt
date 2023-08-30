@@ -49,7 +49,6 @@ class WorkingMemoryModeSetter : ModeSetter(), ItemDeletedHandler {
         })
     }
 
-
     @Composable
     fun WorkMemoryUi() {
         val shortTermNotes = remember { mutableStateListOf<ShortTermNote>() }
