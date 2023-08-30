@@ -16,10 +16,7 @@ import javax.inject.Inject
 @ActivityScoped
 class ActivityHelper @Inject constructor(
     val activity: Activity,
-    val workingMemoryModeSetter: Lazy<WorkingMemoryModeSetter>) {
-
-    // TODOJ delete all these.
-    var timerManager = TimerManager()
+    private val workingMemoryModeSetter: Lazy<WorkingMemoryModeSetter>) {
     fun commonActivitySetup() {
         val theFile = File(DbContants.getDatabasePath())
         val parentFile = File(theFile.parent)
@@ -78,22 +75,6 @@ class ActivityHelper @Inject constructor(
         }
         menu.findItem(R.id.incremental_restore).setOnMenuItemClickListener { item: MenuItem? ->
             RestoreFromIncrementalDirectoryManager.openZipFileDocument(activity)
-            true
-        }
-        menu.findItem(R.id.small_timer).setOnMenuItemClickListener {
-            timerManager.addTimer(7, 30)
-            true
-        }
-        menu.findItem(R.id.medium_timer).setOnMenuItemClickListener {
-            timerManager.addTimer(9, 30)
-            true
-        }
-        menu.findItem(R.id.large_timer).setOnMenuItemClickListener {
-            timerManager.addTimer(10, 120)
-            true
-        }
-        menu.findItem(R.id.cancel_timer).setOnMenuItemClickListener {
-            timerManager.cancelTimer()
             true
         }
         addMenu(menu, R.id.creationModeMenuItem, CreateModeSetter, activity)
