@@ -3,8 +3,9 @@ package com.md
 import android.content.Context
 import android.media.AudioManager
 import android.media.ToneGenerator
+import javax.inject.Inject
 
-class ToneManagerImpl : ToneManager {
+class ToneManagerImpl @Inject constructor() : ToneManager {
     private var keepAliveTone: ToneGenerator? = null
 
     override fun maybeStartTone(context: Context) {

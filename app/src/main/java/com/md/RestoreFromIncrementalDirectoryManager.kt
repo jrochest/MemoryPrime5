@@ -25,10 +25,10 @@ object RestoreFromIncrementalDirectoryManager {
     }
 
     fun restoreFromZip(
-            activity: SpacedRepeaterActivity,
-            data: Intent,
-            requestCode: Int,
-            contentResolver: ContentResolver
+        activity: SpacedRepeaterActivity,
+        data: Intent,
+        requestCode: Int,
+        contentResolver: ContentResolver
     ): Boolean {
         if (requestCode != REQUEST_CODE) return false
 

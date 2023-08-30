@@ -26,10 +26,11 @@ object RestoreFromZipManager {
     }
 
     fun restoreFromZip(
-            activity: SpacedRepeaterActivity,
-            data: Intent,
-            requestCode: Int,
-            contentResolver: ContentResolver
+        activity: SpacedRepeaterActivity,
+        data: Intent,
+        requestCode: Int,
+        contentResolver: ContentResolver,
+        toneManager: ToneManagerImpl
     ): Boolean {
         if (requestCode != REQUEST_CODE) return false
 
@@ -41,7 +42,7 @@ object RestoreFromZipManager {
         )
 
         GlobalScope.launch(Dispatchers.Main) {
-            activity.backupTone()
+            toneManager.backupTone()
 
             val deferred = async(Dispatchers.IO) {
                 restoreInBackground(contentResolver, sourceTreeUri, activity.filesDir)

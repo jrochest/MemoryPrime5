@@ -23,20 +23,21 @@ import javax.inject.Inject
 
 
 @AndroidEntryPoint
-class SpacedRepeaterActivity @Inject constructor() : LifecycleOwner, PlaybackServiceControl(), ToneManager by ToneManagerImpl() {
+class SpacedRepeaterActivity
+// Activity must have a zero argument constructor
+@Inject constructor()
+    : LifecycleOwner, PlaybackServiceControl(), ToneManager by ToneManagerImpl() {
 
     @Inject
     lateinit var externalClickCounter: Lazy<ExternalClickCounter>
-
-
     @Inject
     lateinit var workingModeSetter: Lazy<WorkingMemoryModeSetter>
-
     @Inject
     lateinit var modeHandler: Lazy<ModeHandler>
-
     @Inject
     lateinit var activityHelper: ActivityHelper
+
+    @Inject lateinit var toneManager: Lazy<ToneManagerImpl>
 
     /** Called when the activity is first created.  */
     public override fun onCreate(savedInstanceState: Bundle?) {
@@ -301,7 +302,7 @@ class SpacedRepeaterActivity @Inject constructor() : LifecycleOwner, PlaybackSer
             return
         }
 
-        if (requestCode == RestoreFromZipManager.REQUEST_CODE && RestoreFromZipManager.restoreFromZip(this, data, requestCode, contentResolver)) return
+        if (requestCode == RestoreFromZipManager.REQUEST_CODE && RestoreFromZipManager.restoreFromZip(this, data, requestCode, contentResolver, toneManager.get())) return
 
         if (requestCode == RestoreFromIncrementalDirectoryManager.REQUEST_CODE && RestoreFromIncrementalDirectoryManager.restoreFromZip(this, data, requestCode, contentResolver)) return
     }
