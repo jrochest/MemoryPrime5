@@ -5,8 +5,7 @@ import android.content.Context
 interface ToneManager {
     fun backupTone()
     fun errorTone()
-    fun clickTone()
-    fun keepHeadphoneAlive()
+    fun lowVolumeClickTone()
 
     fun maybeStartTone(context: Context)
     fun maybeStopTone()

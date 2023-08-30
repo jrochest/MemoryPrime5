@@ -52,7 +52,7 @@ class ExternalClickCounter
 
             async {
                 @Suppress("DeferredResultUnused")
-                activity.clickTone()
+                activity.lowVolumeClickTone()
             }
 
             delay(pressGroupMaxGapMs)
