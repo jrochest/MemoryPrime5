@@ -50,6 +50,8 @@ class SpacedRepeaterActivity
         volumeControlStream = AudioManager.STREAM_MUSIC
         activityHelper.commonActivitySetup()
         // Normal mode.
+
+        // TODO These can be made into activity scoped instances like workingModeSetter...
         CreateModeSetter.setUp(this, handler)
         BrowsingModeSetter.getInstance().setup(this, handler)
         DeckChooseModeSetter.getInstance()?.setUp(this, handler)
