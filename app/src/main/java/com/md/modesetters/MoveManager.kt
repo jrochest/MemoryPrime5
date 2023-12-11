@@ -5,14 +5,16 @@ import kotlinx.coroutines.Job
 
 object MoveManager {
 
-    private var lastProceedTime = 0L
+    private var lastQuestionProceedTime = 0L
 
     fun recordQuestionProceed() {
-        lastProceedTime = SystemClock.uptimeMillis()
+        lastQuestionProceedTime = SystemClock.uptimeMillis()
     }
 
-    // Wait enough time between the proceeds to avoid overlapping proceeds to new question.
-    fun safeToProceedToNewQuestion() = lastProceedTime + 1500 < SystemClock.uptimeMillis()
+    private const val MIN_TIME_ON_QUESTION = 5000
+
+    // Only proceed if MIN_TIME_ON_QUESTION has elapsed.
+    fun safeToProceedToNewQuestion() = SystemClock.uptimeMillis() > lastQuestionProceedTime + MIN_TIME_ON_QUESTION
 
     private val currentJobs = mutableListOf<Job>()
 

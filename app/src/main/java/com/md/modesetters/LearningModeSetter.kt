@@ -183,7 +183,15 @@ class LearningModeSetter private constructor() : ModeSetter(), ItemDeletedHandle
     }
 
     override fun secondaryAction(): String {
+
+
+
         val messageToSpeak = if (questionMode) {
+
+            if (!MoveManager.safeToProceedToNewQuestion()) {
+                return ""
+            }
+
             "secondary action. proceed"
         } else {
             "bad bad"
