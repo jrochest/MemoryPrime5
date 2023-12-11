@@ -46,7 +46,8 @@ class ActivityHelper @Inject constructor(
         }
         menu.findItem(R.id.incremental_backup).setOnMenuItemClickListener { item: MenuItem? ->
             createAndWriteZipBackToPreviousLocation(
-                    activity, activity.contentResolver, true, false)
+                    activity, activity.contentResolver, shouldSpeak = true, runExtraValidation = false
+            )
             true
         }
         menu.findItem(R.id.slow_incremental_backup).setOnMenuItemClickListener { item: MenuItem? ->

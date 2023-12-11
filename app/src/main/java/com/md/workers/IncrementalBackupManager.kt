@@ -37,7 +37,7 @@ object IncrementalBackupManager {
     }
 
     fun createAndWriteZipBackToPreviousLocation(
-            context: SpacedRepeaterActivity,
+            context: Context,
             contentResolver: ContentResolver,
             shouldSpeak: Boolean,
             runExtraValidation: Boolean = false,
