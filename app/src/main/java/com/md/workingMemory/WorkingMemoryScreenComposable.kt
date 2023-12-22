@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -28,6 +29,7 @@ import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,126 +57,159 @@ object WorkingMemoryScreen {
     const val MAX_TAP_GAP_DURATION_TO_DELETE_MILLIS = 300
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkingMemoryScreenComposable(
     notes: SnapshotStateList<ShortTermNote>,
     onNotePress: (note: ShortTermNote) -> Unit = { },
 ) {
-    MaterialTheme() {
-        val shortTermNotes = remember { notes }
+
+    MaterialTheme {
         Surface(color = MaterialTheme.colorScheme.onBackground) {
-            var showMenu by remember { mutableStateOf(false) }
 
             Column(
-                Modifier.fillMaxSize(),
+                Modifier.fillMaxHeight(fraction = .05f),
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.Start
             ) {
-                Row(modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly) {
-                    val activity = LocalContext.current as Activity
-                    Button(onClick = {
-                        CreateModeSetter.switchMode(activity)
-                    }) {
-                        Text(text = "New note", style = MaterialTheme.typography.labelLarge)
-                    }
-                    Button(onClick = {
-                        LearningModeSetter.instance.switchMode(activity)
-                    }) {
-                        Text(text = "Practice", style = MaterialTheme.typography.labelLarge)
-                    }
-                    Button(onClick = {
-                        DeckChooseModeSetter.getInstance().switchMode(activity)
-
-                    }) {
-                        Text(text = "Decks", style = MaterialTheme.typography.labelLarge)
-                    }
-                    Button(onClick = {
-                        IncrementalBackupManager.createAndWriteZipBackToPreviousLocation(
-                            activity,
-                            activity.contentResolver,
-                            shouldSpeak = true,
-                            runExtraValidation = false
+                TopLevelMenu()
+                Button(
+                    modifier = Modifier
+                        .fillMaxHeight(fraction = .85f)
+                        .heightIn(min = 48.dp)
+                        .padding(4.dp),
+                    onClick = { }
+                ) {
+                    Column {
+                        Text(
+                            text = "1 tap to proceed\n2 for forgot\n3 for go back ",
+                            style = MaterialTheme.typography.labelSmall
                         )
-
-                    }) {
-                        Text(text = "Backup", style = MaterialTheme.typography.labelLarge)
-                    }
-                    IconButton(onClick = { showMenu = !showMenu }) {
-                        Icon(imageVector = Icons.Default.MoreVert, contentDescription = "More", tint = MaterialTheme.colorScheme.onPrimary)
-                        DropdownMenu(
-                            expanded = showMenu,
-                            onDismissRequest = { showMenu = false }
-                        ) {
-                            DropdownMenuItem({Text("Settings")}, onClick = {
-                                SettingModeSetter.switchMode(activity)
-                            })
-                        }
-
                     }
                 }
-                AddMemoryButton(shortTermNotes)
+                Row {
+                    RecordAgainButton()
+                    Button(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(fraction = .10f)
+                            .heightIn(min = 48.dp)
+                            .padding(4.dp),
+                        onClick = { }
+                    ) {
+                        Column {
+                            Text(
+                                text = "Delete",
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                            Text(
+                                text = "Triple tap quickly",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    }
+                }
             }
 
         }
     }
-}
 
 
-@Preview
-@Composable
-fun WorkMemoryUiPreview() {
-    val notes = SnapshotStateList<ShortTermNote>().apply {
-        add(
-            ShortTermNote(Instant.parse("2023-12-03T10:15:29.00Z").toEpochMilli())
-        )
+    @Preview
+    @Composable
+    fun WorkMemoryUiPreview() {
+        val notes = SnapshotStateList<ShortTermNote>().apply {
+            add(
+                ShortTermNote(Instant.parse("2023-12-03T10:15:29.00Z").toEpochMilli())
+            )
+        }
+        WorkingMemoryScreenComposable(notes, onNotePress = {
+
+        })
     }
-    WorkingMemoryScreenComposable(notes, onNotePress = {
-
-    })
 }
 
 
-@Composable
-private fun AddMemoryButton(notes: SnapshotStateList<ShortTermNote>) {
-    WorkingMemoryButton(label = "Tap tap hold to record", WorkingMemoryScreen.MAX_FONT_SIZE
+    @Composable
+    fun TopLevelMenu() {
+
+        var showMenu by remember { mutableStateOf(false) }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            val activity = LocalContext.current as Activity
+            Button(onClick = {
+                CreateModeSetter.switchMode(activity)
+            }) {
+                Text(text = "New note", style = MaterialTheme.typography.labelLarge)
+            }
+            Button(onClick = {
+                LearningModeSetter.instance.switchMode(activity)
+            }) {
+                Text(text = "Practice", style = MaterialTheme.typography.labelLarge)
+            }
+            Button(onClick = {
+                DeckChooseModeSetter.getInstance().switchMode(activity)
+
+            }) {
+                Text(text = "Decks", style = MaterialTheme.typography.labelLarge)
+            }
+            Button(onClick = {
+                IncrementalBackupManager.createAndWriteZipBackToPreviousLocation(
+                    activity,
+                    activity.contentResolver,
+                    shouldSpeak = true,
+                    runExtraValidation = false
+                )
+
+            }) {
+                Text(text = "Backup", style = MaterialTheme.typography.labelLarge)
+            }
+            IconButton(onClick = { showMenu = !showMenu }) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "More",
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false }
+                ) {
+                    DropdownMenuItem({ Text("Settings") }, onClick = {
+                        SettingModeSetter.switchMode(activity)
+                    })
+                }
+
+            }
+        }
+    }
+
+
+    @Composable
+    private fun RecordAgainButton(
+
     ) {
-        notes.add(0, ShortTermNote())
+        Button(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .padding(4.dp),
+            onClick = { }
+        ) {
+            Column {
+                Text(
+                    text = "Record again",
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Text(
+                    text = "Tap and hold to record",
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
     }
-}
 
-@Composable
-private fun ExistingMemoryButton(
-    index: Int,
-    note: ShortTermNote,
-    onNotePress: (note: ShortTermNote) -> Unit = { }
-) {
-    val fontSize = (WorkingMemoryScreen.MAX_FONT_SIZE - (index * 2)).coerceAtLeast(10)
-    Spacer(modifier = Modifier.width(4.dp))
 
-    WorkingMemoryButton(note.name, fontSize) {
-        onNotePress(note)
-    }
-}
-
-@Composable
-private fun WorkingMemoryButton(
-    label: String,
-    fontSize: Int,
-    onClick: () -> Unit
-) {
-    Button(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .padding(4.dp),
-        onClick = onClick,
-    ) {
-        Text(
-            text = label,
-            style = TextStyle(fontSize = fontSize.sp, textAlign = TextAlign.Center)
-        )
-    }
-}
 
