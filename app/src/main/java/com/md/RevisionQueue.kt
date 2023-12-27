@@ -71,6 +71,13 @@ class RevisionQueue {
 
     }
 
+
+    fun preload() {
+        val preloadAble = notesToReview.getOrNull(1) ?: return
+        AudioPlayer.instance.preload(preloadAble.question)
+        AudioPlayer.instance.preload(preloadAble.answer)
+    }
+
     companion object {
         @JvmStatic
 		var currentDeckReviewQueue: RevisionQueue? = null

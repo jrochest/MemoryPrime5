@@ -2,6 +2,7 @@ package com.md.modesetters
 
 import android.app.Activity
 import android.os.SystemClock
+import android.provider.MediaStore.Audio
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -155,7 +156,6 @@ class LearningModeSetter private constructor() : ModeSetter(), ItemDeletedHandle
     override fun undo() {
         if (questionMode) {
             if (!AudioPlayer.instance.wantsToPlay) {
-
                 AudioPlayer.instance.playWhenReady()
             } else {
                 undoLastQuestion(mActivity!!)
@@ -183,12 +183,8 @@ class LearningModeSetter private constructor() : ModeSetter(), ItemDeletedHandle
     }
 
     override fun secondaryAction(): String {
-
-
-
         val messageToSpeak = if (questionMode) {
-
-            if (!MoveManager.safeToProceedToNewQuestion()) {
+            if (AudioPlayer.instance.hasPlayedCurrentFile()) {
                 return ""
             }
 
@@ -225,16 +221,11 @@ class LearningModeSetter private constructor() : ModeSetter(), ItemDeletedHandle
 
     override fun proceed() {
         ScreenDimmer.getInstance().keepScreenOn(mActivity)
+        if (!AudioPlayer.instance.hasPlayedCurrentFile()) {
+          return
+        }
         if (questionMode) {
-            if (AudioPlayer.instance.wantsToPlay) {
-                // Avoid a double move.
-                if (!MoveManager.safeToProceedToNewQuestion()) {
-                    return
-                }
-                AudioPlayer.instance.pause()
-            } else {
-                proceed(mActivity!!)
-            }
+            proceed(mActivity!!)
         } else {
             updateScoreAndMoveToNext(mActivity!!, 4)
         }
@@ -277,6 +268,17 @@ class LearningModeSetter private constructor() : ModeSetter(), ItemDeletedHandle
                         firedOnceCompletionListener = {},
                         shouldRepeat = shouldPlayTwiceInARow,
                         autoPlay = true)
+
+                    // While playing queue up some future files
+                    delay(1000)
+                    // TODOJ NOW
+                    try {
+                        currentDeckReviewQueue!!.preload()
+                    } catch (e: IllegalStateException) {
+                        TtsSpeaker.speak("preload failed", lowVolume = true)
+                        e.printStackTrace()
+                    }
+
                     // TODO(jrochest) Start the delay below after done playing. Utilize the
                     // firedOnceCompletionListener
                     // Note this works fine if it replays before the note is done.
@@ -286,6 +288,9 @@ class LearningModeSetter private constructor() : ModeSetter(), ItemDeletedHandle
                     // replay.
                     TtsSpeaker.speak("replay", lowVolume = true)
                     delay(500)
+
+
+
                 }
             })
         } else {

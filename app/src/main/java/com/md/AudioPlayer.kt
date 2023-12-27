@@ -1,9 +1,11 @@
 package com.md
 
+import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.MediaPlayer.MEDIA_ERROR_UNKNOWN
 import android.media.MediaPlayer.OnCompletionListener
 import android.media.audiofx.LoudnessEnhancer
+import android.util.LruCache
 import androidx.lifecycle.LifecycleOwner
 import com.md.modesetters.TtsSpeaker
 import com.md.utils.ToastSingleton
@@ -15,16 +17,93 @@ import java.io.IOException
 class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
     private var lifecycleOwner: LifecycleOwner? = null
     private var isPrepared: Boolean = false
-    private var mp: MediaPlayer? = null
+    private var focusedPlayer: MediaPlayerForASingleFile? = null
+    private var playbackSpeedBaseOnErrorRates = 1.5f
+
     private var repeatsRemaining: Int? = null
     private var mFiredOnceCompletionListener: OnCompletionListener? = null
-    private var loudnessEnhancer: LoudnessEnhancer? = null
     private var lastFile: String? = null
     var wantsToPlay = false
         get() = field
         set(value) {
             field = value
         }
+
+    data class ValidatedAudioFileName(val originalMediaFile: String)
+
+    /**
+     * Preloads the file and returns true if successful. False if successful
+     */
+    fun preload(originalMediaFile: String): MediaPlayerForASingleFile? {
+        // Verify the new file exists prior to switching to it.
+        val path = sanitizePath(originalMediaFile)
+        val audioFile = File(path)
+        if (!audioFile.exists()) {
+            TtsSpeaker.speak("Missing audio file")
+            // This seem like it might be using a branch newly recorded file when it
+            // messes up. The missing file it found was:
+            // com.jrochest.mp.debug/files/com.md.MemoryPrime/AudioMemo/46/1661565629946.m4a
+            // which did not exist.
+            System.err.println("$path does not exist. original $originalMediaFile")
+            return null
+        }
+
+        val validatedFile = ValidatedAudioFileName(path)
+        val oldPlayer = fileToMediaPlayerCache.get(validatedFile)
+        if (oldPlayer != null) {
+            return oldPlayer
+        }
+
+        val newPlayer = MediaPlayerForASingleFile(validatedFile)
+        fileToMediaPlayerCache.put(validatedFile, newPlayer)
+        return newPlayer
+    }
+
+    private val fileToMediaPlayerCache =
+        object : LruCache<ValidatedAudioFileName, MediaPlayerForASingleFile>(20) {
+            override fun entryRemoved(
+                evicted: Boolean,
+                key: ValidatedAudioFileName,
+                oldValue: MediaPlayerForASingleFile,
+                newValue: MediaPlayerForASingleFile?
+            ) {
+                super.entryRemoved(evicted, key, oldValue, newValue)
+                oldValue.cleanup()
+            }
+        }
+
+
+    /** A wrapper for a combination of a file and media player. */
+    inner class MediaPlayerForASingleFile(audioFileName: ValidatedAudioFileName) {
+        var hasCompletedPlaybackSinceBecomingPrimary: Boolean = false
+        val mediaPlayer = MediaPlayer()
+        private val loudnessEnhancer: LoudnessEnhancer =
+            LoudnessEnhancer(mediaPlayer.audioSessionId)
+
+        init {
+            with(mediaPlayer) {
+                val loudnessEnhancer = LoudnessEnhancer(mediaPlayer.audioSessionId)
+                loudnessEnhancer.setTargetGain(700)
+                loudnessEnhancer.enabled = true
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .build()
+                )
+                setDataSource(audioFileName.originalMediaFile)
+                prepare()
+                playbackParams = playbackParams.setSpeed(playbackSpeedBaseOnErrorRates)
+                isLooping = false
+                pause()
+            }
+        }
+
+        fun cleanup() {
+            mediaPlayer.release()
+            loudnessEnhancer.release()
+        }
+    }
 
     /**
      * @param originalFile name of the file, without the save path
@@ -35,7 +114,6 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
         originalFile: String? = lastFile,
         firedOnceCompletionListener: OnCompletionListener? = null,
         shouldRepeat: Boolean = false,
-        playbackSpeed: Float = 1.5f,
         autoPlay: Boolean = true
     ) {
         lifecycleOwner?.lifecycleScope?.launch {
@@ -48,46 +126,41 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
             if (!lifecycleOwner.isAtLeastResumed()) {
                 return@launch;
             }
+            mFiredOnceCompletionListener = firedOnceCompletionListener
+            lastFile = originalFile
 
-            // Verify the new file exists prior to switching to it.
-            val path = sanitizePath(originalFile)
-            val audioFile = File(path)
-            if (!audioFile.exists()) {
-                // This seem like it might be using a branch newly recorded file when it
-                // messes up. The missing file it found was:
-                // com.jrochest.mp.debug/files/com.md.MemoryPrime/AudioMemo/46/1661565629946.m4a
-                // which did not exist.
-                System.err.println("$path does not exist. original $originalFile")
+
+            var localCurrentPlayer: MediaPlayerForASingleFile? = null
+            try {
+                localCurrentPlayer = preload(originalFile)
+            } catch (e: IOException) {
+              TtsSpeaker.speak("Error loading audio file. Delete or record again")
+              e.printStackTrace()
+            } catch (e: IllegalStateException) {
+                TtsSpeaker.speak("Error loading audio file. Delete or record again")
+                e.printStackTrace()
+            }
+            if (localCurrentPlayer == null)  {
                 return@launch
             }
 
-            lastFile = originalFile
+            focusedPlayer?.mediaPlayer?.pause()
+            focusedPlayer = localCurrentPlayer
+            localCurrentPlayer.hasCompletedPlaybackSinceBecomingPrimary = false
+            localCurrentPlayer.mediaPlayer.seekTo(0)
+            if (autoPlay) {
+                localCurrentPlayer.mediaPlayer.start()
+            }
 
-            mp?.let { cleanUp(it) }
-            mp = null
             // Note: noise supressor seem to fail and say not enough memory. NoiseSuppressor.
-            mFiredOnceCompletionListener = firedOnceCompletionListener
 
-            val mediaPlayer = MediaPlayer()
-            mp = mediaPlayer
-            println("TEMPJ playFile set wants to play autoPlay= $autoPlay")
-
+            // TODOJ delete
+            val mediaPlayer = localCurrentPlayer.mediaPlayer
             wantsToPlay = autoPlay
-            isPrepared = false
-            mediaPlayer.isLooping = false
             repeatsRemaining = if (shouldRepeat) 3 else 0
             try {
-                mediaPlayer.setDataSource(path)
-                loudnessEnhancer = LoudnessEnhancer(mediaPlayer.audioSessionId)
-                loudnessEnhancer!!.setTargetGain(700)
-                loudnessEnhancer!!.enabled = true
-
                 mediaPlayer.setOnErrorListener(instance)
                 mediaPlayer.setOnCompletionListener(instance)
-                mediaPlayer.setOnPreparedListener {
-                    onPrepared(it, playbackSpeed)
-                }
-                mediaPlayer.prepareAsync()
             } catch (e: IllegalArgumentException) {
                 e.printStackTrace()
             } catch (e: IllegalStateException) {
@@ -98,64 +171,40 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
         }
     }
 
-    private fun onPrepared(mediaPlayer: MediaPlayer, playbackSpeed: Float) {
-        if (mp != mediaPlayer) {
-            cleanUp(mediaPlayer)
+    override fun onCompletion(mp: MediaPlayer) {
+        val localFocusedPlayer = focusedPlayer
+        if (localFocusedPlayer == null || mp != localFocusedPlayer.mediaPlayer) {
             return
         }
 
-        isPrepared = true
-        setSpeed(mediaPlayer, playbackSpeed)
-        println("TEMP onPrepared wantsToPlay = $wantsToPlay")
-        if (wantsToPlay) {
-            mediaPlayer.start()
-        } else {
-            // It seems like the looping = true auto plays.
-            mediaPlayer.pause()
-        }
-    }
+        localFocusedPlayer.hasCompletedPlaybackSinceBecomingPrimary = true
 
-    private fun setSpeed(mediaPlayer: MediaPlayer, playbackSpeed: Float) {
-        mediaPlayer.playbackParams = mediaPlayer.playbackParams.setSpeed(playbackSpeed)
-    }
-
-    override fun onCompletion(mp: MediaPlayer) {
         lifecycleOwner?.lifecycleScope?.launch {
-                repeatsRemaining?.let {
-                    if ((it <= 0 && wantsToPlay)) {
-                        pause()
-                    } else if (wantsToPlay) {
-                        // This was added to avoid playing when not resumed.
-                        if (lifecycleOwner.isAtLeastResumed()) {
-                            mp.seekTo(0)
-                            mp.start()
-                            repeatsRemaining = it - 1
-                            // This avoid firing the completion listener
-                            return@launch
+            if (localFocusedPlayer == null || mp != localFocusedPlayer.mediaPlayer) {
+                return@launch
+            }
+            repeatsRemaining?.let { repeats ->
+                if ((repeats <= 0 && wantsToPlay)) {
+                    //pause()
+                    localFocusedPlayer.mediaPlayer.pause()
+                } else if (wantsToPlay) {
+                    // This was added to avoid playing when not resumed.
+                    if (lifecycleOwner.isAtLeastResumed()) {
+                        localFocusedPlayer.mediaPlayer.seekTo(0)
+                        localFocusedPlayer.mediaPlayer.start()
+                        if (repeats <= 1) {
+                            wantsToPlay = false
                         }
+                        repeatsRemaining = repeats - 1
+                        // This avoid firing the completion listener
+                        return@launch
+                    }
                 }
                 if (mFiredOnceCompletionListener != null) {
                     mFiredOnceCompletionListener!!.onCompletion(mp)
                     mFiredOnceCompletionListener = null
                 }
-                if (!CategorySingleton.getInstance().shouldRepeat()) {
-                    cleanUp(mp)
-                }
             }
-        }
-    }
-
-    @JvmOverloads
-    fun cleanUp(mediaPlayer: MediaPlayer? = mp) {
-        if (mediaPlayer == null) return
-
-        mediaPlayer.stop()
-        // Once the MP is released it can't be used again.
-        mediaPlayer.release()
-
-        if (loudnessEnhancer != null) {
-            loudnessEnhancer!!.release()
-            loudnessEnhancer = null
         }
     }
 
@@ -163,11 +212,10 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
         println("TODOJ error during playback what=$what extra $extra $lastFile")
         if (MEDIA_ERROR_UNKNOWN == what) {
             TtsSpeaker.speak("play MEDIA_ERROR_UNKNOWN. Trying normal speed")
-            cleanUp(mediaPlayer)
-            playFile(playbackSpeed = 1f, shouldRepeat = true)
+            playbackSpeedBaseOnErrorRates = 1f
         } else {
             TtsSpeaker.speak("play error. code $what")
-            cleanUp(mediaPlayer)
+            //cleanUp(mediaPlayer)
         }
 
         return true
@@ -175,22 +223,28 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
 
     fun pause() {
         wantsToPlay = false
-        val mp = mp ?: return
-        if (isPrepared || mp.isPlaying) {
-            mp.pause()
+        val player = focusedPlayer ?: return
+        if (player.mediaPlayer.isPlaying) {
+            player.mediaPlayer.pause()
         }
     }
 
     fun playWhenReady() {
         wantsToPlay = true
-        val mp = mp ?: return
-        if (isPrepared) {
-            mp.start()
-        }
+        val player = focusedPlayer ?: return
+        player.mediaPlayer.start()
     }
 
     fun setLifeCycleOwner(lifecycleOwner: LifecycleOwner) {
         this.lifecycleOwner = lifecycleOwner
+    }
+
+    /**
+     * Returns true if the current file has played or there is no current file.
+     */
+    fun hasPlayedCurrentFile(): Boolean {
+        val player = focusedPlayer ?: return true
+        return player.hasCompletedPlaybackSinceBecomingPrimary
     }
 
     companion object {

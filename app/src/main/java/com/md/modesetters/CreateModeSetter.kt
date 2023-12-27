@@ -246,12 +246,6 @@ object CreateModeSetter : ModeSetter() {
         if (questionState == CreateModeData.State.PLAYING
             || callbackMakeStateRecording
         ) {
-
-            // If this was not because of a callback then we need to clean up
-            // the media player.
-            if (!callbackMakeStateRecording) {
-                AudioPlayer.instance.cleanUp()
-            }
             createMode.setQuestionState(CreateModeData.State.RECORDED, qaIndex)
         } else if (questionState == CreateModeData.State.RECORDED) {
             createMode.setQuestionState(CreateModeData.State.PLAYING, qaIndex)
