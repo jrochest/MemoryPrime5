@@ -346,6 +346,7 @@ class LearningModeSetter private constructor() : ModeSetter(), ItemDeletedHandle
 
     }
 
+
     private fun updateVal() {
         currentNote = currentDeckReviewQueue!!.peekQueue()
         if (currentNote != null) {
@@ -374,6 +375,7 @@ class LearningModeSetter private constructor() : ModeSetter(), ItemDeletedHandle
             val repEditor = DbRepEditor.getInstance()
             repEditor.insert(lastNoteRep)
         }
+        // It seems unwise to create a clone, which not just update the current one.
         lastNoteList.addLast(currentNote.clone())
         // Create the rep info before updating the note with the new internal.
         lastNoteRep = AbstractRep(

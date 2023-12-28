@@ -13,7 +13,8 @@ import javax.inject.Inject
 @ActivityScoped
 class WorkingMemoryModeSetter @Inject constructor(
     val activity: SpacedRepeaterActivity,
-    private val modeHandler: ModeHandler
+    private val modeHandler: ModeHandler,
+    private val recordButtonController: RecordButtonController
 ) : ModeSetter(), ItemDeletedHandler {
     init {
         parentSetup(activity, modeHandler)
@@ -24,9 +25,10 @@ class WorkingMemoryModeSetter @Inject constructor(
         context.setContentView(ComposeView(context).apply {
             setContent {
                 val notes = SnapshotStateList<ShortTermNote>()
-                WorkingMemoryScreenComposable(notes) {
-                        note -> note.onTap(notes)
-                }
+                WorkingMemoryScreenComposable(
+                    notes,
+                    onAudioRecorderTripleTap = { recordButtonController.onTripleTap() },
+                    onNotePress = { note -> note.onTap(notes) })
             }
         })
     }

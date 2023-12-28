@@ -1,9 +1,11 @@
 package com.md.workingMemory
 
 import android.app.Activity
+import android.os.SystemClock
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -68,6 +70,7 @@ Remove note from storage. Must be done twice.
 fun WorkingMemoryScreenComposable(
     notes: SnapshotStateList<ShortTermNote>,
     onNotePress: (note: ShortTermNote) -> Unit = { },
+    onAudioRecorderTripleTap: () -> Unit = { },
 ) {
     AppTheme {
         Surface {
@@ -96,7 +99,7 @@ fun WorkingMemoryScreenComposable(
                     .heightIn(min = bottomButtonHeight)
                     .padding(4.dp)
                 Row (Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    RecordAgainButton(modifier = bottomButtonModifier.fillMaxWidth(fraction = .5f))
+                    RecordAgainButton(modifier = bottomButtonModifier.fillMaxWidth(fraction = .5f), onAudioRecorderTripleTap)
                     Button(
                         modifier = bottomButtonModifier.fillMaxWidth(fraction = 1f),
                         onClick = { }
@@ -189,24 +192,35 @@ fun WorkingMemoryScreenComposable(
     }
 
 
-    @Composable
-    private fun RecordAgainButton(modifier: Modifier) {
-        Button(
-            modifier = modifier,
-            onClick = { }
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "Record again",
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Text(
-                    text = "Triple Tap and then tap hold to record",
-                    style = MaterialTheme.typography.labelSmall
-                )
+
+@Composable
+fun TripleTapButton(
+    onTripleTap: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable RowScope.() -> Unit
+) {
+    var tapCount = 0
+    var previousTapTimeMillis = 0L
+    val maxTimeBetweenTapsMillis = 500
+    Button(modifier = modifier, onClick = {
+        val currentTime = SystemClock.uptimeMillis()
+        if (currentTime - previousTapTimeMillis <= maxTimeBetweenTapsMillis) {
+            if (tapCount > 2) {
+                onTripleTap()
+                tapCount = 0
+            } else {
+                tapCount++
             }
+        } else {
+            tapCount = 1
         }
-    }
+        previousTapTimeMillis = currentTime
+
+    }, content = content)
+}
+
+
+
 
 
 
