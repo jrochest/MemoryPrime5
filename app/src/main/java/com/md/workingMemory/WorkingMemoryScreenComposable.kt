@@ -46,22 +46,16 @@ object WorkingMemoryScreen {
 Tap counts
 1: Remembered
 (User remembered note / proceed)
-
 2: Forgot
 (User forgot note / proceed)
-
 3: Back
 (Back, to previous question or previous answer. )
-
 5: Short Postpone
 Postpone note to later in the queue.
-
 6: Long Postpone
 (Postpone note to next time app is opened)
-
 7: Archive.
 Remove note from review queue. must be done twice.
-
 8: Delete.
 Remove note from storage. Must be done twice.
 
@@ -97,7 +91,7 @@ fun WorkingMemoryScreenComposable(
                         )
                     }
                 }
-                val bottomButtonHeight = 140.dp
+                val bottomButtonHeight = 180.dp
                 val bottomButtonModifier = Modifier
                     .heightIn(min = bottomButtonHeight)
                     .padding(4.dp)
@@ -143,7 +137,6 @@ fun WorkingMemoryScreenComposable(
 
     @Composable
     fun TopLevelMenu() {
-
         var showMenu by remember { mutableStateOf(false) }
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -162,7 +155,6 @@ fun WorkingMemoryScreenComposable(
             }
             Button(onClick = {
                 DeckChooseModeSetter.getInstance().switchMode(activity)
-
             }) {
                 Text(text = "Decks", style = MaterialTheme.typography.labelLarge)
             }
@@ -209,7 +201,7 @@ fun WorkingMemoryScreenComposable(
                     style = MaterialTheme.typography.titleLarge
                 )
                 Text(
-                    text = "Tap and hold to record",
+                    text = "Triple Tap and then tap hold to record",
                     style = MaterialTheme.typography.labelSmall
                 )
             }
