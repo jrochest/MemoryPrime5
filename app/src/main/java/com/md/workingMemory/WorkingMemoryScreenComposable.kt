@@ -34,6 +34,7 @@ import com.md.modesetters.CreateModeSetter
 import com.md.modesetters.DeckChooseModeSetter
 import com.md.modesetters.LearningModeSetter
 import com.md.modesetters.SettingModeSetter
+import com.md.uiTheme.AppTheme
 import java.time.Instant
 import com.md.workers.IncrementalBackupManager
 import com.md.workingMemory.WorkingMemoryScreen.LARGE_TAP_AREA_LABEL
@@ -74,8 +75,8 @@ fun WorkingMemoryScreenComposable(
     notes: SnapshotStateList<ShortTermNote>,
     onNotePress: (note: ShortTermNote) -> Unit = { },
 ) {
-    MaterialTheme {
-        Surface(color = MaterialTheme.colorScheme.onBackground) {
+    AppTheme {
+        Surface {
             Column(
                 Modifier.fillMaxHeight(fraction = .05f),
                 verticalArrangement = Arrangement.Top,
