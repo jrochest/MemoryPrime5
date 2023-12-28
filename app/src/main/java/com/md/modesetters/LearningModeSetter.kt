@@ -269,9 +269,9 @@ class LearningModeSetter private constructor() : ModeSetter(), ItemDeletedHandle
                         shouldRepeat = shouldPlayTwiceInARow,
                         autoPlay = true)
 
-                    // While playing queue up some future files
-                    delay(1000)
-                    // TODOJ NOW
+                    // Delay for 1 second to avoid interfering with the main file that is playing...
+                    delay(1_000)
+                    // ... then preload a file that is likely to be used soon.
                     try {
                         currentDeckReviewQueue!!.preload()
                     } catch (e: IllegalStateException) {
@@ -288,9 +288,6 @@ class LearningModeSetter private constructor() : ModeSetter(), ItemDeletedHandle
                     // replay.
                     TtsSpeaker.speak("replay", lowVolume = true)
                     delay(500)
-
-
-
                 }
             })
         } else {
