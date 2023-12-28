@@ -36,10 +36,35 @@ import com.md.modesetters.LearningModeSetter
 import com.md.modesetters.SettingModeSetter
 import java.time.Instant
 import com.md.workers.IncrementalBackupManager
+import com.md.workingMemory.WorkingMemoryScreen.LARGE_TAP_AREA_LABEL
 
 object WorkingMemoryScreen {
     const val MAX_FONT_SIZE = 36
     const val MAX_TAP_GAP_DURATION_TO_DELETE_MILLIS = 300
+    val LARGE_TAP_AREA_LABEL = """
+Tap counts
+1: Remembered
+(User remembered note / proceed)
+
+2: Forgot
+(User forgot note / proceed)
+
+3: Back
+(Back, to previous question or previous answer. )
+
+5: Short Postpone
+Postpone note to later in the queue.
+
+6: Long Postpone
+(Postpone note to next time app is opened)
+
+7: Archive.
+Remove note from review queue. must be done twice.
+
+8: Delete.
+Remove note from storage. Must be done twice.
+
+""".trimMargin()
 }
 
 
@@ -64,26 +89,24 @@ fun WorkingMemoryScreenComposable(
                         .padding(4.dp),
                     onClick = { }
                 ) {
-                    Column(Modifier.fillMaxWidth()) {
+                    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "1 tap to proceed\n2 for forgot\n3 for go back ",
+                            text = LARGE_TAP_AREA_LABEL,
                             style = MaterialTheme.typography.labelMedium
                         )
                     }
                 }
-
                 val bottomButtonHeight = 140.dp
                 val bottomButtonModifier = Modifier
                     .heightIn(min = bottomButtonHeight)
                     .padding(4.dp)
-
                 Row (Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                     RecordAgainButton(modifier = bottomButtonModifier.fillMaxWidth(fraction = .5f))
                     Button(
                         modifier = bottomButtonModifier.fillMaxWidth(fraction = 1f),
                         onClick = { }
                     ) {
-                        Column {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
                                 text = "Delete",
                                 style = MaterialTheme.typography.titleLarge
@@ -179,7 +202,7 @@ fun WorkingMemoryScreenComposable(
             modifier = modifier,
             onClick = { }
         ) {
-            Column {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = "Record again",
                     style = MaterialTheme.typography.titleLarge
