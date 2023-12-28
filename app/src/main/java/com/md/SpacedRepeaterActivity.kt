@@ -56,9 +56,14 @@ class SpacedRepeaterActivity
         BrowsingModeSetter.getInstance().setup(this, handler)
         DeckChooseModeSetter.getInstance()?.setUp(this, handler)
         LearningModeSetter.instance.setUp(this, handler)
-        DeckChooseModeSetter.getInstance().switchMode(this)
         SettingModeSetter.setup(this, handler)
         CleanUpAudioFilesModeSetter.getInstance().setup(this, handler)
+
+
+        // DEFAULT MODE TEMP
+        // DeckChooseModeSetter.getInstance().switchMode(this)
+        workingModeSetter.get().switchMode(this)
+
 
         playbackServiceOnCreate()
 
