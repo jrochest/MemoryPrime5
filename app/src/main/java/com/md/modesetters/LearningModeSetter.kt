@@ -42,7 +42,7 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
     var repCounter = 0
     private var missCounter = 0
     private var questionMode = true
-    override fun switchModeImpl(context: Activity) {
+    override fun onSwitchToMode(context: Activity) {
         originalSize = currentDeckReviewQueue!!.getSize()
         lastNoteList.clear()
         commonSetup(context, R.layout.learnquestion)

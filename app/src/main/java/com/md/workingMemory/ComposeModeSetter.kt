@@ -1,6 +1,7 @@
 package com.md.workingMemory
 
 import android.app.Activity
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,11 +32,13 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
 import com.md.CategorySingleton
 import com.md.ModeHandler
+import com.md.RevisionQueueStateModel
 import com.md.SpacedRepeaterActivity
 import com.md.modesetters.DeckLoadManager
 import com.md.modesetters.ItemDeletedHandler
 import com.md.modesetters.ModeSetter
 import com.md.uiTheme.AppTheme
+import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.flow.MutableStateFlow
 import javax.inject.Inject
@@ -55,21 +58,25 @@ class ModeViewModel @Inject constructor() {
 
 @ActivityScoped
 class ComposeModeSetter @Inject constructor(
-    val activity: SpacedRepeaterActivity,
+    @ActivityContext val context: Context,
     private val modeHandler: ModeHandler,
     private val modeViewModel: ModeViewModel,
     private val deckLoadManager: DeckLoadManager,
     private val addNoteComposeManager: AddNoteComposeManager,
-    private val practiceModeComposerManager: PracticeModeComposerManager
+    private val practiceModeComposerManager: PracticeModeComposerManager,
+    private val revisionQueueStateModel: RevisionQueueStateModel,
 ) : ModeSetter(), ItemDeletedHandler {
+    val activity: SpacedRepeaterActivity by lazy {
+        context as SpacedRepeaterActivity
+    }
     init {
         parentSetup(activity, modeHandler)
     }
 
     var hasAddedContentView = false
 
-    override fun switchModeImpl(context: Activity) {
-        modeHandler.add(this)
+    override fun onSwitchToMode(context: Activity) {
+        //modeHandler.add(this)
         if (!hasAddedContentView) {
             hasAddedContentView = true
             context.setContentView(ComposeView(context).apply {
@@ -130,6 +137,7 @@ class ComposeModeSetter @Inject constructor(
                             )
                             VerticalDivider()
                             TextButton(onClick = {
+                                revisionQueueStateModel.queue.value = it.revisionQueue
                                 CategorySingleton.getInstance().setDeckInfo(it)
                                 modeViewModel.modeModel.value = Mode.Practice
                             }) {
@@ -137,6 +145,7 @@ class ComposeModeSetter @Inject constructor(
                             }
                             VerticalDivider()
                             TextButton(onClick = {
+                                revisionQueueStateModel.queue.value = it.revisionQueue
                                 CategorySingleton.getInstance().setDeckInfo(it)
                                 modeViewModel.modeModel.value = Mode.NewNote
                             }) {

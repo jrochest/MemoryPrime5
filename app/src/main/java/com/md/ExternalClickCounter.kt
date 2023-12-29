@@ -1,11 +1,13 @@
 package com.md
 
+import android.content.Context
 import android.os.SystemClock
 import androidx.lifecycle.lifecycleScope
 import com.md.modesetters.MoveManager
 import com.md.modesetters.ModeSetter
 import com.md.modesetters.PracticeModeStateModel
 import com.md.modesetters.TtsSpeaker
+import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.*
 import javax.inject.Inject
@@ -17,7 +19,10 @@ class ExternalClickCounter
     @Inject
     constructor() {
 
-    @Inject lateinit var activity: SpacedRepeaterActivity
+    @ActivityContext @Inject lateinit var context: Context
+    val activity: SpacedRepeaterActivity by lazy {
+        context as SpacedRepeaterActivity
+    }
 
     var mPressGroupLastPressMs: Long = 0
     var mPressGroupLastPressEventMs: Long = 0
@@ -152,7 +157,7 @@ class ExternalClickCounter
                     modeSetter.undo()
                 }
                 5 -> {
-                    modeSetter.postponeNote()
+                    modeSetter.postponeNote(true)
                     message = "$mPressGroupCount postpone"
                 }
                 6  -> {

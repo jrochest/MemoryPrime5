@@ -19,10 +19,12 @@ import com.md.workers.IncrementalBackupPreferences
 import com.md.workingMemory.ComposeModeSetter
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.scopes.ActivityScoped
 import javax.inject.Inject
 
 
 @AndroidEntryPoint
+@ActivityScoped
 class SpacedRepeaterActivity
 // Activity must have a zero argument constructor
 @Inject constructor()

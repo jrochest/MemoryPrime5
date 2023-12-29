@@ -2,6 +2,10 @@ package com.md
 
 import android.util.Log
 import com.md.provider.Note
+import dagger.hilt.android.scopes.ActivityScoped
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import javax.inject.Inject
 
 class RevisionQueue {
     private var notesToReview = mutableListOf<Note>()
@@ -82,4 +86,10 @@ class RevisionQueue {
         @JvmStatic
 		var currentDeckReviewQueue: RevisionQueue? = null
     }
+}
+
+@ActivityScoped
+class RevisionQueueStateModel
+    @Inject constructor() {
+        val queue: MutableStateFlow<RevisionQueue?> = MutableStateFlow(null)
 }

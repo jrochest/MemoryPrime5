@@ -2,6 +2,7 @@ package com.md.modesetters
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Context
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
@@ -15,6 +16,7 @@ import com.md.modesetters.deckchoose.DeckNameUpdater
 import com.md.modesetters.deckchoose.InsertNewHandler
 import com.md.provider.Deck
 import com.md.utils.ToastSingleton
+import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,8 +28,13 @@ import javax.inject.Inject
 
 
 @ActivityScoped
-class DeckLoadManager @Inject constructor(val activity: SpacedRepeaterActivity) {
+class DeckLoadManager @Inject constructor(@ActivityContext val context: Context,
+                                          private val revisionQueueStateModel: RevisionQueueStateModel,) {
     val decks = MutableStateFlow<List<DeckInfo>?>(null)
+
+    val activity: SpacedRepeaterActivity by lazy {
+        context as SpacedRepeaterActivity
+    }
 
     init {
         activity.lifecycleScope.launch(Dispatchers.IO) {
@@ -47,6 +54,7 @@ class DeckLoadManager @Inject constructor(val activity: SpacedRepeaterActivity) 
                 resultingDeckList.add(deckInfo)
                 // Use the first deck that is active.
                 if (currentDeckReviewQueue == null && deckInfo.isActive) {
+                    revisionQueueStateModel.queue.value = deckInfo.revisionQueue
                     CategorySingleton.getInstance().setDeckInfo(deckInfo)
                 }
             }
@@ -72,7 +80,7 @@ object DeckChooseModeSetter : ModeSetter() {
         this.memoryDroid = memoryDroid
     }
 
-    override fun switchModeImpl(context: Activity) {
+    override fun onSwitchToMode(context: Activity) {
         commonSetup(context, R.layout.deckchoosetemp)
         setupCreateMode()
     }

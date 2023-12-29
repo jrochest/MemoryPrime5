@@ -23,7 +23,7 @@ object SettingModeSetter : ModeSetter(), ItemDeletedHandler {
         parentSetup(memoryDroid, modeHand)
     }
 
-    override fun switchModeImpl(context: Activity) {
+    override fun onSwitchToMode(context: Activity) {
         commonSetup(context, R.layout.settings)
         refreshSettings(context)
     }

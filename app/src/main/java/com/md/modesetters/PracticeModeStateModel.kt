@@ -1,6 +1,7 @@
 package com.md.modesetters
 
 import android.app.Activity
+import android.content.Context
 import android.os.SystemClock
 import androidx.lifecycle.lifecycleScope
 import com.md.*
@@ -11,6 +12,7 @@ import com.md.utils.ScreenDimmer
 import com.md.utils.ToastSingleton
 import com.md.workers.BackupPreferences.markAllStale
 import com.md.workingMemory.CurrentNotePartManager
+import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -22,16 +24,11 @@ import javax.inject.Inject
 @ActivityScoped
 class PracticeModeStateModel @Inject constructor(
     val currentNotePartManager: CurrentNotePartManager,
-    val memoryDroid: SpacedRepeaterActivity
+    @ActivityContext val context: Context,
+    private val revisionQueueStateModel: RevisionQueueStateModel,
     // TODOJNOW remove the mode setter
-) : ModeSetter(), ItemDeletedHandler {
-    /**
-     * @param activity
-     * @param modeHand
-     */
-    fun setUp(activity: SpacedRepeaterActivity?, modeHand: ModeHandler?) {
-        parentSetup(activity, modeHand)
-    }
+) : ItemDeletedHandler {
+    val activity: SpacedRepeaterActivity = context as SpacedRepeaterActivity
 
     private val lastNoteList: Deque<Note> = ArrayDeque()
     private var lastNoteRep: AbstractRep? = null
@@ -42,13 +39,16 @@ class PracticeModeStateModel @Inject constructor(
     private var missCounter = 0
     // TODOJNOW delete this
     private var questionMode = true
-    override fun switchModeImpl(context: Activity) {
-        originalSize = currentDeckReviewQueue!!.getSize()
-        lastNoteList.clear()
-        commonSetup(context, R.layout.learnquestion)
-
-        // Let's just load up the learn question also to get it ready.
-        setupQuestionMode(context)
+    fun onSwitchToMode() {
+        activity.lifecycleScope.launch {
+            revisionQueueStateModel.queue.collect {
+                val revisionQueue = it ?: return@collect
+                originalSize = revisionQueue.getSize()
+                lastNoteList.clear()
+                // Let's just load up the learn question also to get it ready.
+                setupQuestionMode()
+            }
+        }
     }
 
     /**
@@ -61,7 +61,7 @@ class PracticeModeStateModel @Inject constructor(
      */
 
     fun handleTapCount(count: Int) {
-        memoryDroid!!.handleRhythmUiTaps(
+        activity!!.handleRhythmUiTaps(
             this,
             SystemClock.uptimeMillis(),
             SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_INSTANT,
@@ -69,7 +69,7 @@ class PracticeModeStateModel @Inject constructor(
         )
     }
 
-    override fun undo() {
+     fun undo() {
         if (questionMode) {
             if (!AudioPlayer.instance.wantsToPlay) {
                 AudioPlayer.instance.playWhenReady()
@@ -77,20 +77,20 @@ class PracticeModeStateModel @Inject constructor(
                 undoFromQuestionToAnswerMode()
             }
         } else {
-            undoThisQuestion(memoryDroid!!)
+            undoThisQuestion(activity!!)
         }
     }
 
-    override fun handleReplay() {
+     fun handleReplay() {
         if (questionMode) {
             replay()
         } else {
             replayA()
         }
-        hideSystemUi()
+
     }
 
-    override fun proceedFailure() {
+    fun proceedFailure() {
         if (questionMode) {
             proceedCommon()
         } else {
@@ -98,7 +98,7 @@ class PracticeModeStateModel @Inject constructor(
         }
     }
 
-    override fun secondaryAction(): String {
+    fun secondaryAction(): String {
         val messageToSpeak = if (questionMode) {
             if (AudioPlayer.instance.hasPlayedCurrentFile()) {
                 return ""
@@ -113,7 +113,7 @@ class PracticeModeStateModel @Inject constructor(
     }
 
     /** Moves this note to the end of the queue.  */
-    override fun postponeNote(shouldQueue: Boolean) {
+     fun postponeNote(shouldQueue: Boolean) {
         val currentNote = currentNote ?: return
 
         if (shouldQueue) {
@@ -121,7 +121,7 @@ class PracticeModeStateModel @Inject constructor(
             currentDeckReviewQueue!!.updateNote(currentNote, false)
         } else {
             val editor = DbNoteEditor.instance
-            val context = memoryDroid
+            val context = activity
             if (context != null && editor != null) {
                 currentNote.decreasePriority()
                 editor.update(currentNote)
@@ -132,11 +132,11 @@ class PracticeModeStateModel @Inject constructor(
             currentDeckReviewQueue!!.hardPostpone(currentNote)
         }
         // Prepare the next note in the queue.
-        setupQuestionMode(memoryDroid!!)
+        setupQuestionMode()
     }
 
-    override fun proceed() {
-        ScreenDimmer.getInstance().keepScreenOn(memoryDroid)
+     fun proceed() {
+        //ScreenDimmer.getInstance().keepScreenOn(memoryDroid)
         if (!AudioPlayer.instance.hasPlayedCurrentFile()) {
           return
         }
@@ -145,11 +145,9 @@ class PracticeModeStateModel @Inject constructor(
         } else {
             updateScoreAndMoveToNext(4)
         }
-        hideSystemUi()
     }
 
     private fun setupQuestionMode(
-        context: Activity,
         shouldUpdateQuestion: Boolean = true
     ) {
         MoveManager.recordQuestionProceed()
@@ -157,9 +155,10 @@ class PracticeModeStateModel @Inject constructor(
             updateStartingInQuestionMode()
         }
         questionMode = true
-        val lifeCycleOwner = memoryDroid
+        val lifeCycleOwner = activity
         val currentNote = currentNote
-        currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = true)
+
+        currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = false)
         if (currentNote != null) {
             val questionAudioFilePath = currentNote.question
             var shouldPlayTwiceInARow = true
@@ -169,8 +168,9 @@ class PracticeModeStateModel @Inject constructor(
                         // TODOJ maybe turn into precondition.
                         return@launch
                     }
-                    if (!memoryDroid.isAtLeastResumed()) {
-                        return@launch
+                    if (!activity.isAtLeastResumed()) {
+                        delay(100)
+                        continue
                     }
 
                     AudioPlayer.instance.playFile(
@@ -202,13 +202,12 @@ class PracticeModeStateModel @Inject constructor(
             })
         } else {
             // Release audio focus since the dialog prevents keyboards from controlling memprime.
-            memoryDroid.maybeChangeAudioFocus(false)
+            activity.maybeChangeAudioFocus(false)
             TtsSpeaker.speak("Great job! Deck done.")
             val deckChooser = DeckChooseModeSetter.getInstance()
             val nextDeckWithItems = deckChooser.nextDeckWithItems
             if (nextDeckWithItems != null) {
                 deckChooser.loadDeck(nextDeckWithItems)
-                this.switchMode(memoryDroid)
                 TtsSpeaker.speak("Loading " + nextDeckWithItems.name)
             } else {
                 TtsSpeaker.speak("All decks done..")
@@ -222,8 +221,8 @@ class PracticeModeStateModel @Inject constructor(
     private fun setupAnswerMode() {
         questionMode = false
         val currentNote = currentNote
-        currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = false)
-        val lifeCycleOwner = memoryDroid
+        currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = true)
+        val lifeCycleOwner = activity
         if (currentNote != null && lifeCycleOwner != null) {
             MoveManager.replaceMoveJobWith(lifeCycleOwner.lifecycleScope.launch(Dispatchers.Main) {
                 AudioPlayer.instance.playFile(currentNote.answer, shouldRepeat = true)
@@ -243,7 +242,7 @@ class PracticeModeStateModel @Inject constructor(
         if (currentNote != null) {
             repCounter++
             if (repCounter % 10 == 9) {
-                markAllStale(memoryDroid!!)
+                markAllStale(activity!!)
             }
         }
     }
@@ -253,7 +252,7 @@ class PracticeModeStateModel @Inject constructor(
             applyGradeStatic(newGrade, currentNote!!)
             ToastSingleton.getInstance()
                 .msg("Easiness: " + currentNote!!.easiness + " Interval " + currentNote!!.interval)
-            setupQuestionMode(memoryDroid)
+            setupQuestionMode()
         }
     }
 
@@ -288,21 +287,21 @@ class PracticeModeStateModel @Inject constructor(
         val noteEditor = DbNoteEditor.instance
         val note = currentNote
         if (note != null) {
-            noteEditor!!.deleteCurrent(memoryDroid!!, note)
+            noteEditor!!.deleteCurrent(activity!!, note)
             currentDeckReviewQueue!!.removeNote(note.id)
         }
-        setupQuestionMode(memoryDroid!!)
+        setupQuestionMode()
     }
 
     private fun replayA() {
-        ScreenDimmer.getInstance().keepScreenOn(memoryDroid)
+        ScreenDimmer.getInstance().keepScreenOn(activity)
         if (currentNote != null) {
             AudioPlayer.instance.playFile(currentNote!!.answer, null, true)
         }
     }
 
     private fun replay() {
-        ScreenDimmer.getInstance().keepScreenOn(memoryDroid)
+        ScreenDimmer.getInstance().keepScreenOn(activity)
         if (currentNote != null) {
             AudioPlayer.instance.playFile(currentNote!!.question, null, true)
         }
@@ -332,20 +331,16 @@ class PracticeModeStateModel @Inject constructor(
         }
     }
 
-    override fun resetActivity() {
-        switchMode(memoryDroid!!)
-    }
-
     private fun undoThisQuestion(context: Activity) {
-        setupQuestionMode(context, false)
+        setupQuestionMode(false)
     }
 
-    override fun adjustScreenLock() {
-        ScreenDimmer.getInstance().keepScreenOn(memoryDroid)
-        hideSystemUi()
+     fun adjustScreenLock() {
+        ScreenDimmer.getInstance().keepScreenOn(activity)
+       // hideSystemUi()
     }
 
-    override fun mark() {
+     fun mark() {
         if (currentNote != null) {
             currentNote!!.isMarked = true
             val noteEditor = DbNoteEditor.instance

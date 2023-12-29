@@ -1,5 +1,6 @@
 package com.md.workingMemory
 
+import android.content.Context
 import android.os.SystemClock
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,12 +15,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
+import com.md.SpacedRepeaterActivity
 import com.md.modesetters.PracticeModeStateModel
 import com.md.workingMemory.WorkingMemoryScreen.LARGE_TAP_AREA_LABEL
+import dagger.hilt.android.qualifiers.ActivityContext
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 object WorkingMemoryScreen {
@@ -45,8 +51,25 @@ Remove note from storage. Must be done twice.
 """.trimMargin()
 }
 
-class PracticeModeComposerManager @Inject constructor(val stateModel: PracticeModeStateModel,
-                                                      private val recordButtonController: RecordButtonController,) {
+class PracticeModeComposerManager @Inject constructor(
+    @ActivityContext val context: Context,
+    val stateModel: PracticeModeStateModel,
+    val model: ModeViewModel,
+    val currentNotePartManager: CurrentNotePartManager,
+    private val recordButtonController: RecordButtonController,) {
+
+    val activity: SpacedRepeaterActivity by lazy {
+        context as SpacedRepeaterActivity
+    }
+    init {
+        activity.lifecycleScope.launch {
+            model.modeModel.collect { mode ->
+                if (mode == Mode.Practice) {
+                    stateModel.onSwitchToMode()
+                }
+            }
+        }
+    }
 
     val viewState = ViewState()
     class ViewState(val recordUnlocked: MutableState<Boolean> = mutableStateOf(false))
@@ -56,7 +79,8 @@ class PracticeModeComposerManager @Inject constructor(val stateModel: PracticeMo
             viewState = viewState,
             onAudioRecorderTripleTap = {
                 viewState.recordUnlocked.value = true
-            }
+            },
+            currentNotePartManager = currentNotePartManager
         )
     }
 }
@@ -67,6 +91,7 @@ fun PracticeModeComposable(
     onDeleteTap: () -> Unit = {},
     onMiddleButtonTap: () -> Unit = {},
     viewState: PracticeModeComposerManager.ViewState,
+    currentNotePartManager: CurrentNotePartManager
 ) {
     Column(
         verticalArrangement = Arrangement.Top,
@@ -94,24 +119,28 @@ fun PracticeModeComposable(
             RecordAgainButton(
                 viewState = viewState,
                 modifier = bottomButtonModifier.fillMaxWidth(fraction = .5f),
-                onTripleTapToUnlock = onAudioRecorderTripleTap
+                onTripleTapToUnlock = onAudioRecorderTripleTap,
+                currentNotePartManager = currentNotePartManager
             )
-            Button(
-                modifier = bottomButtonModifier.fillMaxWidth(fraction = 1f),
-                onClick = { onDeleteTap() }
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "Delete",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    Text(
-                        text = "Triple tap quickly",
-                        style = MaterialTheme.typography.labelSmall
-                    )
+            // Why hide the delete button while recording a note.
+            val hasNote = currentNotePartManager.hasNote.collectAsState()
+            if (!viewState.recordUnlocked.value) {
+                Button(
+                    modifier = bottomButtonModifier.fillMaxWidth(fraction = 1f),
+                    onClick = { onDeleteTap() }
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "Delete",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                        Text(
+                            text = "Triple tap quickly",
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
                 }
             }
-
         }
     }
 }

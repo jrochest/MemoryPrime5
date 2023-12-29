@@ -29,7 +29,7 @@ object CreateModeSetter : ModeSetter() {
         parentSetup(memoryDroid, modeHand)
     }
 
-    override fun switchModeImpl(context: Activity) {
+    override fun onSwitchToMode(context: Activity) {
         commonSetup(context, R.layout.creation)
         setupCreateMode(context)
     }

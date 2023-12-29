@@ -27,10 +27,10 @@ abstract class ModeSetter {
         }
         // Switching away from learning mode should stop playback.
         AudioPlayer.instance.pause()
-        switchModeImpl(context)
+        onSwitchToMode(context)
     }
 
-    abstract fun switchModeImpl(context: Activity)
+    abstract fun onSwitchToMode(context: Activity)
 
     fun parentSetup(context: Activity?, modeHand: ModeHandler?) {
         mActivity = context as SpacedRepeaterActivity?

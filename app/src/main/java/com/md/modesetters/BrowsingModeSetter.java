@@ -43,7 +43,7 @@ public class BrowsingModeSetter extends ModeSetter implements
 
 	}
 
-	public void switchModeImpl(@NotNull final Activity context) {
+	public void onSwitchToMode(@NotNull final Activity context) {
 
 		commonSetup(context, R.layout.browsing);
 		setupBrowsing(context);
