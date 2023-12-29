@@ -40,6 +40,8 @@ class SpacedRepeaterActivity
     @Inject
     lateinit var learningModeSetter: Lazy<LearningModeSetter>
 
+    @Inject
+    lateinit var deckLoadManager: Lazy<DeckLoadManager>
 
     @Inject lateinit var toneManager: Lazy<ToneManagerImpl>
 
@@ -72,6 +74,8 @@ class SpacedRepeaterActivity
         playbackServiceOnCreate()
 
         TtsSpeaker.setup(this.applicationContext)
+
+        deckLoadManager.get()
     }
 
     override fun onResume() {
@@ -325,6 +329,12 @@ class SpacedRepeaterActivity
 
     fun switchToLearningMode() {
         learningModeSetter.get().switchMode(this)
+    }
+
+    fun deckLoadManager(): DeckLoadManager? {
+
+        return deckLoadManager.get()
+
     }
 }
 

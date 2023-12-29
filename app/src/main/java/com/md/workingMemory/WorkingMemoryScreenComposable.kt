@@ -18,24 +18,18 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.md.modesetters.CreateModeSetter
-import com.md.modesetters.DeckChooseModeSetter
 import com.md.modesetters.SettingModeSetter
-import com.md.uiTheme.AppTheme
-import java.time.Instant
 import com.md.workers.IncrementalBackupManager
 import com.md.workingMemory.WorkingMemoryScreen.LARGE_TAP_AREA_LABEL
 
@@ -65,55 +59,48 @@ Remove note from storage. Must be done twice.
 
 @Composable
 fun WorkingMemoryScreenComposable(
-    notes: SnapshotStateList<ShortTermNote>,
-    onNotePress: (note: ShortTermNote) -> Unit = { },
     onAudioRecorderTripleTap: () -> Unit = { },
-    onLearningMode: () -> Unit = { },
 ) {
-    AppTheme {
-        Surface {
-            Column(
-                Modifier.fillMaxHeight(fraction = .05f),
-                verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.Start
+    Column(
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.Start
+    ) {
+        Button(
+            modifier = Modifier
+                .fillMaxHeight(fraction = .85f)
+                .heightIn(min = 48.dp)
+                .padding(4.dp),
+            onClick = { }
+        ) {
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = LARGE_TAP_AREA_LABEL,
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
+        }
+        val bottomButtonHeight = 180.dp
+        val bottomButtonModifier = Modifier
+            .heightIn(min = bottomButtonHeight)
+            .padding(4.dp)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+            RecordAgainButton(
+                modifier = bottomButtonModifier.fillMaxWidth(fraction = .5f),
+                onAudioRecorderTripleTap
+            )
+            Button(
+                modifier = bottomButtonModifier.fillMaxWidth(fraction = 1f),
+                onClick = { }
             ) {
-                TopLevelMenu(onLearningMode)
-                Button(
-                    modifier = Modifier
-                        .fillMaxHeight(fraction = .85f)
-                        .heightIn(min = 48.dp)
-                        .padding(4.dp),
-                    onClick = { }
-                ) {
-                    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = LARGE_TAP_AREA_LABEL,
-                            style = MaterialTheme.typography.labelMedium
-                        )
-                    }
-                }
-                val bottomButtonHeight = 180.dp
-                val bottomButtonModifier = Modifier
-                    .heightIn(min = bottomButtonHeight)
-                    .padding(4.dp)
-                Row (Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    RecordAgainButton(modifier = bottomButtonModifier.fillMaxWidth(fraction = .5f), onAudioRecorderTripleTap)
-                    Button(
-                        modifier = bottomButtonModifier.fillMaxWidth(fraction = 1f),
-                        onClick = { }
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = "Delete",
-                                style = MaterialTheme.typography.titleLarge
-                            )
-                            Text(
-                                text = "Triple tap quickly",
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        }
-                    }
-
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Delete",
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    Text(
+                        text = "Triple tap quickly",
+                        style = MaterialTheme.typography.labelSmall
+                    )
                 }
             }
 
@@ -121,59 +108,61 @@ fun WorkingMemoryScreenComposable(
     }
 }
 
-    @Composable
-    fun TopLevelMenu(onLearningMode: () -> Unit) {
-        var showMenu by remember { mutableStateOf(false) }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            val activity = LocalContext.current as Activity
-            Button(onClick = {
-                CreateModeSetter.switchMode(activity)
-            }) {
-                Text(text = "New note", style = MaterialTheme.typography.labelLarge)
-            }
-            Button(onClick = {
-                onLearningMode()
-            }) {
-                Text(text = "Practice", style = MaterialTheme.typography.labelLarge)
-            }
-            Button(onClick = {
-                DeckChooseModeSetter.getInstance().switchMode(activity)
-            }) {
-                Text(text = "Decks", style = MaterialTheme.typography.labelLarge)
-            }
-            Button(onClick = {
-                IncrementalBackupManager.createAndWriteZipBackToPreviousLocation(
-                    activity,
-                    activity.contentResolver,
-                    shouldSpeak = true,
-                    runExtraValidation = false
-                )
+@Composable
+fun TopLevelMenu(
+    onLearningMode: () -> Unit,
+    onDeckChooseMode: () -> Unit,
+    modeViewModel: ModeViewModel
+) {
+    var showMenu by remember { mutableStateOf(false) }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        val activity = LocalContext.current as Activity
+        Button(onClick = {
+            modeViewModel.modeModel.value = Mode.NewNote
+        }) {
+            Text(text = "Add note", style = MaterialTheme.typography.labelLarge)
+        }
+        Button(onClick = {
+            onLearningMode()
+        }) {
+            Text(text = "Practice", style = MaterialTheme.typography.labelLarge)
+        }
+        Button(onClick = {
+            onDeckChooseMode()
+        }) {
+            Text(text = "Decks", style = MaterialTheme.typography.labelLarge)
+        }
+        Button(onClick = {
+            IncrementalBackupManager.createAndWriteZipBackToPreviousLocation(
+                activity,
+                activity.contentResolver,
+                shouldSpeak = true,
+                runExtraValidation = false
+            )
 
-            }) {
-                Text(text = "Backup", style = MaterialTheme.typography.labelLarge)
-            }
-            IconButton(onClick = { showMenu = !showMenu }) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "More",
-                    tint = MaterialTheme.colorScheme.onPrimary
-                )
-                DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
-                ) {
-                    DropdownMenuItem({ Text("Settings") }, onClick = {
-                        SettingModeSetter.switchMode(activity)
-                    })
-                }
-
+        }) {
+            Text(text = "Backup", style = MaterialTheme.typography.labelLarge)
+        }
+        IconButton(onClick = { showMenu = !showMenu }) {
+            Icon(
+                imageVector = Icons.Default.MoreVert,
+                contentDescription = "More",
+                tint = MaterialTheme.colorScheme.onPrimary
+            )
+            DropdownMenu(
+                expanded = showMenu,
+                onDismissRequest = { showMenu = false }
+            ) {
+                DropdownMenuItem({ Text("Settings") }, onClick = {
+                    SettingModeSetter.switchMode(activity)
+                })
             }
         }
     }
-
+}
 
 
 @Composable

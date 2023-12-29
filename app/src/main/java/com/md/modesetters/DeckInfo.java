@@ -39,4 +39,8 @@ public class DeckInfo {
 	public RevisionQueue getRevisionQueue() {
 		return revisionQueue;
 	}
+
+	public boolean isActive()  {
+		return !deck.getName().contains("inactive");
+	}
 }

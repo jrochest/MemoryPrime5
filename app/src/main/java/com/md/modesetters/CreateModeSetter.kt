@@ -1,5 +1,6 @@
 package com.md.modesetters
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.graphics.drawable.Drawable
 import android.util.Log
@@ -12,6 +13,7 @@ import com.md.RevisionQueue.Companion.currentDeckReviewQueue
 import com.md.provider.Note
 import java.io.IOException
 
+@SuppressLint("StaticFieldLeak")
 object CreateModeSetter : ModeSetter() {
     private var question: AudioRecorder? = null
     private var answer: AudioRecorder? = null

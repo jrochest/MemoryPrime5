@@ -15,10 +15,51 @@ import com.md.modesetters.deckchoose.DeckNameUpdater
 import com.md.modesetters.deckchoose.InsertNewHandler
 import com.md.provider.Deck
 import com.md.utils.ToastSingleton
+import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
+import javax.inject.Inject
+
+
+@ActivityScoped
+class DeckLoadManager @Inject constructor(val activity: SpacedRepeaterActivity) {
+    val decks = MutableStateFlow<List<DeckInfo>?>(null)
+
+    init {
+        activity.lifecycleScope.launch(Dispatchers.IO) {
+            val resultingDeckList = mutableListOf<DeckInfo>()
+            val deckList = mutableListOf<Deck>()
+            val queryDeck = DbNoteEditor.instance!!.queryDeck()
+            for (deck in queryDeck) {
+                deckList.add(Deck(deck.id, deck.name))
+            }
+            val totalNotes = 0
+            val decksCount = deckList.size
+            for (deck in deckList) {
+                val revisionQueue = RevisionQueue()
+                revisionQueue.populate(DbNoteEditor.instance!!, deck.id)
+                val deckCount = DbNoteEditor.instance!!.getDeckCount(deck.id)
+                val deckInfo = DeckInfo(deck, revisionQueue, deckCount)
+                resultingDeckList.add(deckInfo)
+                // Use the first deck that is active.
+                if (currentDeckReviewQueue == null && deckInfo.isActive) {
+                    CategorySingleton.getInstance().setDeckInfo(deckInfo)
+                }
+            }
+            decks.value = resultingDeckList
+
+            withContext(Dispatchers.Main) {
+                if (DeckChooseModeSetter.modeHand!!.whoseOnTop() === DeckChooseModeSetter.getInstance()) {
+                    DeckChooseModeSetter.onComplete()
+                }
+            }
+        }
+    }
+}
 
 @SuppressLint("StaticFieldLeak")
 object DeckChooseModeSetter : ModeSetter() {
@@ -42,17 +83,13 @@ object DeckChooseModeSetter : ModeSetter() {
     private var loadComplete = false
     private var progressBar: ProgressBar? = null
     fun setupCreateMode() {
-
         val activity = checkNotNull(mActivity)
 
         loadComplete = false
         val insertButton = memoryDroid!!.findViewById<View>(R.id.addNew) as Button
         insertButton.setOnClickListener(InsertNewHandler(memoryDroid, this))
         deckList.clear()
-        val queryDeck = DbNoteEditor.instance!!.queryDeck()
-        for (deck in queryDeck) {
-            deckList.add(Deck(deck.id, deck.name))
-        }
+
         listView = memoryDroid!!.findViewById<View>(R.id.ListView01) as ListView
         progressBar = memoryDroid!!.findViewById<View>(R.id.progressBar) as ProgressBar
         progressBar!!.max = deckList.size
@@ -66,38 +103,6 @@ object DeckChooseModeSetter : ModeSetter() {
         //val deckPopulator = DeckPopulator(this)
         //deckPopulator.execute(this)
         val modeChooser = this
-
-        activity.lifecycleScope.launch(Dispatchers.IO) {
-            mTotalNotes = 0
-            val childCount = deckList.size
-            for (idx in 0 until childCount) {
-                // Stop if we aren't loaded anymore.
-                if (modeHand!!.whoseOnTop() != modeChooser) {
-                    break
-                }
-                val deck = deckList.elementAt(idx)
-                val revisionQueue = RevisionQueue()
-                revisionQueue.populate(DbNoteEditor.instance!!, deck.id)
-
-                // Stop if we aren't loaded anymore. We want this before
-                // and after the query
-                if (modeHand!!.whoseOnTop() != modeChooser) {
-                    break
-                }
-
-                val deckCount = DbNoteEditor.instance!!.getDeckCount(deck.id)
-                val deckInfo = DeckInfo(deck, revisionQueue, deckCount)
-                withContext(Dispatchers.Main) {
-                    applyDeckInfoToExistingUiElement(deckInfo)
-                }
-            }
-
-            withContext(Dispatchers.Main) {
-                if (modeHand!!.whoseOnTop() === modeChooser) {
-                    modeChooser.onComplete()
-                }
-            }
-        }
     }
 
     private class DeckAdapter(
@@ -153,6 +158,14 @@ object DeckChooseModeSetter : ModeSetter() {
     }
 
     fun onComplete() {
+        val activity = checkNotNull(memoryDroid)
+        val deckLoadManager = activity.deckLoadManager()
+
+        activity.lifecycleScope.launch {
+
+
+        }
+
         val loadingOrSelect = memoryDroid?.findViewById<View>(R.id.loadingOrSelect) as TextView
         loadingOrSelect.text = "Press or Long Press a Deck"
         loadComplete = true
@@ -179,7 +192,6 @@ object DeckChooseModeSetter : ModeSetter() {
     fun loadDeck(deckInfo: DeckInfo?) {
         if (deckInfo != null) {
             CategorySingleton.getInstance().setDeckInfo(deckInfo)
-            currentDeckReviewQueue = deckInfo.revisionQueue
         }
     }
 
@@ -189,7 +201,7 @@ object DeckChooseModeSetter : ModeSetter() {
                 return null
             }
             for ((_, value) in deckIdToInfo) {
-                if (value.name.contains("inactive")) {
+                if (!value.isActive) {
                     continue
                 }
                 if (value.revisionQueue.getSize() > 0) {
@@ -200,6 +212,4 @@ object DeckChooseModeSetter : ModeSetter() {
         }
 
         fun getInstance() = this
-
-
 }
