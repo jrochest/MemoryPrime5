@@ -2,7 +2,6 @@ package com.md.modesetters
 
 import android.app.Activity
 import android.os.SystemClock
-import android.provider.MediaStore.Audio
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -211,7 +210,7 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
             val context = mActivity
             if (context != null && editor != null) {
                 currentNote.decreasePriority()
-                editor.update(context, currentNote)
+                editor.update(currentNote)
             } else {
                 TtsSpeaker.speak("Error decreasing priority")
             }
@@ -386,7 +385,7 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
             currentNote.interval, newGrade, System.currentTimeMillis()
         )
         currentNote.process_answer(newGrade)
-        noteEditor!!.update(context!!, currentNote)
+        noteEditor!!.update(currentNote)
 
         // If you scored too low review it again, at the end.
         if (currentNote.is_due_for_acquisition_rep) {
@@ -433,7 +432,7 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
             this.currentNote = currentNote
             repCounter--
             val noteEditor = DbNoteEditor.instance
-            noteEditor!!.update(context, currentNote)
+            noteEditor!!.update(currentNote)
             // In case the grade was bad take it out of revision queue.
             currentDeckReviewQueue!!.removeNote(currentNote.id)
             currentDeckReviewQueue!!.addToFront(currentNote)
@@ -468,7 +467,7 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
         if (currentNote != null) {
             currentNote!!.isMarked = true
             val noteEditor = DbNoteEditor.instance
-            noteEditor!!.update(mActivity!!, currentNote!!)
+            noteEditor!!.update(currentNote!!)
             ToastSingleton.getInstance().msg("Marked note")
         }
     }

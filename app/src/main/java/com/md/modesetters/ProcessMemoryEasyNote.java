@@ -129,7 +129,7 @@ public class ProcessMemoryEasyNote {
 		
 		DbNoteEditor noteEditor = DbNoteEditor.getInstance();;
 
-		noteEditor.insert(memoryDroid, note);
+		noteEditor.insert(note);
 		
 	}
 

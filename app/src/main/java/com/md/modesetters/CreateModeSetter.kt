@@ -193,7 +193,7 @@ object CreateModeSetter : ModeSetter() {
                 return@setOnClickListener
             }
 
-            // Create mode
+            // Create note
             if (note == null) {
                 val noteEditor = DbNoteEditor.instance
                 var note = Note(
@@ -204,7 +204,7 @@ object CreateModeSetter : ModeSetter() {
                     )
                 )
                 Log.v(TAG, "Writing node with ID  " + note.isUnseen)
-                note = noteEditor!!.insert(memoryDroid, note) as Note
+                note = noteEditor!!.insert(note) as Note
 
                 // Add new note.
                 currentDeckReviewQueue.add(note)
@@ -442,7 +442,7 @@ object CreateModeSetter : ModeSetter() {
                     note.question = recorder.originalFile
                 }
                 DbNoteEditor.instance!!.update(
-                    memoryDroid, note
+                    note
                 )
             }
         } catch (e: IOException) {

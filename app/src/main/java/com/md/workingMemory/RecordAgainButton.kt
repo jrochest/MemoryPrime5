@@ -8,7 +8,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.md.AudioRecorder
 import com.md.DbNoteEditor
-import com.md.DbNoteEditor.Companion.instance
 import com.md.SpacedRepeaterActivity
 import com.md.provider.Note
 import dagger.hilt.android.scopes.ActivityScoped
@@ -64,7 +63,7 @@ class CurrentNotePartManager @Inject constructor(
         } else {
             note.question = filename
         }
-        DbNoteEditor.instance!!.update(activity, note)
+        DbNoteEditor.instance!!.update(note)
     }
 }
 

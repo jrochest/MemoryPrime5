@@ -198,7 +198,7 @@ public class BrowsingModeSetter extends ModeSetter implements
 				if (note != null) {
 					// swap the value.
 					note.setMarked(!note.isMarked());
-					noteEditor.update(context, note);
+					noteEditor.update(note);
 
 					dealWithMarkedModeChange(DbNoteEditor.getInstance());
 				} else {

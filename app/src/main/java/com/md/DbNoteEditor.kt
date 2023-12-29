@@ -6,7 +6,6 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import com.md.RevisionQueue.Companion.currentDeckReviewQueue
-import com.md.modesetters.TtsSpeaker
 import com.md.provider.AbstractDeck
 import com.md.provider.AbstractNote
 import com.md.provider.Deck
@@ -37,8 +36,7 @@ class DbNoteEditor protected constructor() {
         listeners.add(listener)
     }
 
-    fun update(activity: Activity, note: AbstractNote) {
-
+    fun update(note: AbstractNote) {
         // If it's in there update it.
         currentDeckReviewQueue!!.updateNote((note as Note), true)
         val values = ContentValues()
@@ -48,7 +46,7 @@ class DbNoteEditor protected constructor() {
 
         // TODO figure out how to get the ID URI
         try {
-            activity.contentResolver.update(AbstractNote.CONTENT_URI,
+            context2!!.contentResolver.update(AbstractNote.CONTENT_URI,
                     values, Note._ID + "=" + note.getId(), null)
         } catch (e: Exception) {
             val message = e.message
@@ -56,21 +54,20 @@ class DbNoteEditor protected constructor() {
         }
     }
 
-    fun insert(activity: Activity, note: AbstractNote): AbstractNote {
+    fun insert(note: AbstractNote): AbstractNote {
         val values = ContentValues()
 
         // Bump the modification time to now.
         noteToContentValues(note, values)
         try {
-            val uri = activity.contentResolver.insert(
+            val uri = context2!!.contentResolver.insert(
                     AbstractNote.CONTENT_URI, values)
             val noteId = uri!!.pathSegments[1]
             note.id = noteId.toInt()
         } catch (e: Exception) {
-
-            // TODO Log this.
             val message = e.message
             println(message)
+            throw e
         }
         return note
     }
