@@ -13,10 +13,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.md.modesetters.PracticeModeStateModel
 import com.md.workingMemory.WorkingMemoryScreen.LARGE_TAP_AREA_LABEL
+import javax.inject.Inject
 
 object WorkingMemoryScreen {
     const val MAX_FONT_SIZE = 36
@@ -41,10 +45,28 @@ Remove note from storage. Must be done twice.
 """.trimMargin()
 }
 
+class PracticeModeComposerManager @Inject constructor(val stateModel: PracticeModeStateModel,
+                                                      private val recordButtonController: RecordButtonController,) {
+
+    val viewState = ViewState()
+    class ViewState(val recordUnlocked: MutableState<Boolean> = mutableStateOf(false))
+    @Composable
+    fun compose() {
+        PracticeModeComposable(
+            viewState = viewState,
+            onAudioRecorderTripleTap = {
+                viewState.recordUnlocked.value = true
+            }
+        )
+    }
+}
 
 @Composable
-fun WorkingMemoryScreenComposable(
+fun PracticeModeComposable(
     onAudioRecorderTripleTap: () -> Unit = { },
+    onDeleteTap: () -> Unit = {},
+    onMiddleButtonTap: () -> Unit = {},
+    viewState: PracticeModeComposerManager.ViewState,
 ) {
     Column(
         verticalArrangement = Arrangement.Top,
@@ -55,7 +77,7 @@ fun WorkingMemoryScreenComposable(
                 .fillMaxHeight(fraction = .85f)
                 .heightIn(min = 48.dp)
                 .padding(4.dp),
-            onClick = { }
+            onClick = { onMiddleButtonTap() }
         ) {
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
@@ -70,12 +92,13 @@ fun WorkingMemoryScreenComposable(
             .padding(4.dp)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
             RecordAgainButton(
+                viewState = viewState,
                 modifier = bottomButtonModifier.fillMaxWidth(fraction = .5f),
-                onAudioRecorderTripleTap
+                onTripleTapToUnlock = onAudioRecorderTripleTap
             )
             Button(
                 modifier = bottomButtonModifier.fillMaxWidth(fraction = 1f),
-                onClick = { }
+                onClick = { onDeleteTap() }
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
@@ -102,7 +125,7 @@ fun TripleTapButton(
 ) {
     var tapCount = 0
     var previousTapTimeMillis = 0L
-    val maxTimeBetweenTapsMillis = 500
+    val maxTimeBetweenTapsMillis = 1000
     Button(modifier = modifier, onClick = {
         val currentTime = SystemClock.uptimeMillis()
         if (currentTime - previousTapTimeMillis <= maxTimeBetweenTapsMillis) {

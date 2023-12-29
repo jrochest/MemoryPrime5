@@ -1,6 +1,7 @@
 package com.md.workingMemory
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -68,20 +69,42 @@ class CurrentNotePartManager @Inject constructor(
 }
 
 @Composable
-fun RecordAgainButton(modifier: Modifier, onTripleTap: () -> Unit) {
-    TripleTapButton(
-        modifier = modifier,
-        onTripleTap = onTripleTap
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "Record again",
-                style = MaterialTheme.typography.titleLarge
-            )
-            Text(
-                text = "Triple Tap and then tap hold to record",
-                style = MaterialTheme.typography.labelSmall
-            )
+fun RecordAgainButton(
+    modifier: Modifier,
+    onTripleTapToUnlock: () -> Unit,
+    viewState: PracticeModeComposerManager.ViewState
+) {
+    if (viewState.recordUnlocked.value) {
+        Button(
+            modifier = modifier,
+            onClick = {}
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Record (Unlocked)",
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Text(
+                    text = "Tap hold to record",
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
+    } else {
+        TripleTapButton(
+            modifier = modifier,
+            onTripleTap = onTripleTapToUnlock
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Record (Locked)",
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Text(
+                    text = "Triple Tap and then tap hold to record",
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
         }
     }
 }

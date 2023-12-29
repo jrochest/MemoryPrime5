@@ -58,7 +58,7 @@ class AddNoteComposeManager @Inject constructor(
 
 
     @Composable
-    fun ComposeMode() {
+    fun compose() {
         ShowUiForState(state)
     }
 

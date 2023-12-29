@@ -2,10 +2,6 @@ package com.md.modesetters
 
 import android.app.Activity
 import android.os.SystemClock
-import android.view.View
-import android.view.ViewGroup
-import android.widget.Button
-import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import com.md.*
 import com.md.RevisionQueue.Companion.currentDeckReviewQueue
@@ -14,33 +10,37 @@ import com.md.provider.Note
 import com.md.utils.ScreenDimmer
 import com.md.utils.ToastSingleton
 import com.md.workers.BackupPreferences.markAllStale
+import com.md.workingMemory.CurrentNotePartManager
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.*
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @ActivityScoped
-class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandler {
+class PracticeModeStateModel @Inject constructor(
+    val currentNotePartManager: CurrentNotePartManager,
+    val memoryDroid: SpacedRepeaterActivity
+    // TODOJNOW remove the mode setter
+) : ModeSetter(), ItemDeletedHandler {
     /**
-     * @param memoryDroid
+     * @param activity
      * @param modeHand
      */
-    fun setUp(memoryDroid: SpacedRepeaterActivity?, modeHand: ModeHandler?) {
-        parentSetup(memoryDroid, modeHand)
-        this.memoryDroid = memoryDroid
+    fun setUp(activity: SpacedRepeaterActivity?, modeHand: ModeHandler?) {
+        parentSetup(activity, modeHand)
     }
 
     private val lastNoteList: Deque<Note> = ArrayDeque()
     private var lastNoteRep: AbstractRep? = null
-    private var memoryDroid: SpacedRepeaterActivity? = null
+    // TODOJNOW delete this
     private var currentNote: Note? = null
     private var originalSize = 0
     var repCounter = 0
     private var missCounter = 0
+    // TODOJNOW delete this
     private var questionMode = true
     override fun switchModeImpl(context: Activity) {
         originalSize = currentDeckReviewQueue!!.getSize()
@@ -51,78 +51,14 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
         setupQuestionMode(context)
     }
 
-    var middleTappableButton: View? = null
-
-    private fun commonLayoutSetup() {
-        val memoryDroid = memoryDroid!!
-        middleTappableButton = memoryDroid
-            .findViewById<ViewGroup>(R.id.gestures)
-        middleTappableButton?.setOnClickListener { _ ->
-            mActivity!!.handleRhythmUiTaps(
-                this@LearningModeSetter,
-                SystemClock.uptimeMillis(),
-                SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN
-            )
-        }
-        middleTappableButton?.setOnLongClickListener { _ ->
-            if (AudioPlayer.instance.wantsToPlay) {
-                AudioPlayer.instance.pause()
-            } else {
-                AudioPlayer.instance.playWhenReady()
-            }
-
-            true
-        }
-        val reviewNumber = memoryDroid
-            .findViewById<View>(R.id.reviewNumber) as TextView
-        var firstLine = "Scheduled: $originalSize"
-        firstLine += "\nPerformed: $repCounter"
-        var secondLine = "\nItems Missed: $missCounter"
-        secondLine += """
-            
-            Remaining: ${currentDeckReviewQueue!!.getSize()}
-            """.trimIndent()
-        if (currentNote != null) {
-            secondLine += """
-                
-                
-                Easiness: ${currentNote!!.easiness}
-                """.trimIndent()
-            secondLine += """
-                
-                Interval: ${currentNote!!.interval()}
-                """.trimIndent()
-        }
-        reviewNumber.text = """
-            ::::${if (questionMode) "Question" else "Answer"}::::
-            $firstLine
-            $secondLine
-            """.trimIndent()
-        val noteEditor = DbNoteEditor.instance
-        val deleteButton = memoryDroid
-            .findViewById<Button>(R.id.deleteButton)
-        deleteButton.setOnClickListener(DeleterOnClickListener(noteEditor, mActivity, this))
-        memoryDroid.findViewById<View>(R.id.new_note_button)
-            .setOnClickListener(object : MultiClickListener() {
-                override fun onMultiClick(v: View?) {
-                    CreateModeSetter.switchMode(memoryDroid!!)
-                }
-            })
-        memoryDroid.findViewById<View>(R.id.dim_screen_button)
-            .setOnClickListener(object : MultiClickListener() {
-                override fun onMultiClick(v: View?) {
-                    //toggleDim()
-                }
-            })
-        memoryDroid.findViewById<View>(R.id.back_button)
-            .setOnClickListener(object : MultiClickListener() {
-                override fun onMultiClick(v: View?) {
-                    mActivity!!.onBackPressed()
-                }
-            })
-        val audioFocusToggle = memoryDroid!!.findViewById<View>(R.id.audio_focus_toggle)
-        audioFocusToggle.setOnClickListener { v: View? -> AudioPlayer.instance.playWhenReady() }
-    }
+    /**
+     * TODOJNOW use this
+     *  memoryDroid!!.handleRhythmUiTaps(
+     *                 this@PracticeModeStateModel,
+     *                 SystemClock.uptimeMillis(),
+     *                 SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN
+     *             )
+     */
 
     fun handleTapCount(count: Int) {
         memoryDroid!!.handleRhythmUiTaps(
@@ -133,37 +69,15 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
         )
     }
 
-    /**
-     * Note: currently this is hardcoded to 3 clicks.
-     */
-    abstract class MultiClickListener : View.OnClickListener {
-        private var mClickWindowStartMillis = 0L
-        private var mClickCount = 0
-        abstract fun onMultiClick(v: View?)
-        override fun onClick(v: View) {
-            val currentTimeMillis = SystemClock.uptimeMillis()
-            if (currentTimeMillis - mClickWindowStartMillis < TimeUnit.SECONDS.toMillis(1)) {
-                mClickCount++
-                if (mClickCount == 3) {
-                    onMultiClick(v)
-                }
-            } else {
-                // Start new window.
-                mClickWindowStartMillis = currentTimeMillis
-                mClickCount = 1
-            }
-        }
-    }
-
     override fun undo() {
         if (questionMode) {
             if (!AudioPlayer.instance.wantsToPlay) {
                 AudioPlayer.instance.playWhenReady()
             } else {
-                undoLastQuestion(mActivity!!)
+                undoFromQuestionToAnswerMode()
             }
         } else {
-            undoThisQuestion(mActivity!!)
+            undoThisQuestion(memoryDroid!!)
         }
     }
 
@@ -178,9 +92,9 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
 
     override fun proceedFailure() {
         if (questionMode) {
-            proceed(mActivity!!)
+            proceedCommon()
         } else {
-            updateScoreAndMoveToNext(mActivity!!, 1)
+            updateScoreAndMoveToNext(1)
         }
     }
 
@@ -207,7 +121,7 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
             currentDeckReviewQueue!!.updateNote(currentNote, false)
         } else {
             val editor = DbNoteEditor.instance
-            val context = mActivity
+            val context = memoryDroid
             if (context != null && editor != null) {
                 currentNote.decreasePriority()
                 editor.update(currentNote)
@@ -218,18 +132,18 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
             currentDeckReviewQueue!!.hardPostpone(currentNote)
         }
         // Prepare the next note in the queue.
-        setupQuestionMode(mActivity!!)
+        setupQuestionMode(memoryDroid!!)
     }
 
     override fun proceed() {
-        ScreenDimmer.getInstance().keepScreenOn(mActivity)
+        ScreenDimmer.getInstance().keepScreenOn(memoryDroid)
         if (!AudioPlayer.instance.hasPlayedCurrentFile()) {
           return
         }
         if (questionMode) {
-            proceed(mActivity!!)
+            proceedCommon()
         } else {
-            updateScoreAndMoveToNext(mActivity!!, 4)
+            updateScoreAndMoveToNext(4)
         }
         hideSystemUi()
     }
@@ -240,15 +154,13 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
     ) {
         MoveManager.recordQuestionProceed()
         if (shouldUpdateQuestion) {
-            updateVal()
+            updateStartingInQuestionMode()
         }
-        memoryDroid!!.setContentView(R.layout.learnquestion)
-        applyDim(mIsDimmed)
         questionMode = true
-
-        val lifeCycleOwner = mActivity
+        val lifeCycleOwner = memoryDroid
         val currentNote = currentNote
-        if (currentNote != null && lifeCycleOwner != null) {
+        currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = true)
+        if (currentNote != null) {
             val questionAudioFilePath = currentNote.question
             var shouldPlayTwiceInARow = true
             MoveManager.replaceMoveJobWith(lifeCycleOwner.lifecycleScope.launch(Dispatchers.Main) {
@@ -257,11 +169,7 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
                         // TODOJ maybe turn into precondition.
                         return@launch
                     }
-                    while (middleTappableButton?.isPressed == true) {
-                        delay(500)
-                        continue
-                    }
-                    if (!mActivity.isAtLeastResumed()) {
+                    if (!memoryDroid.isAtLeastResumed()) {
                         return@launch
                     }
 
@@ -293,40 +201,29 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
                 }
             })
         } else {
-            if (mActivity != null) {
-                // Release audio focus since the dialog prevents keyboards from controlling memprime.
-                mActivity!!.maybeChangeAudioFocus(false)
-            }
+            // Release audio focus since the dialog prevents keyboards from controlling memprime.
+            memoryDroid.maybeChangeAudioFocus(false)
             TtsSpeaker.speak("Great job! Deck done.")
             val deckChooser = DeckChooseModeSetter.getInstance()
             val nextDeckWithItems = deckChooser.nextDeckWithItems
             if (nextDeckWithItems != null) {
                 deckChooser.loadDeck(nextDeckWithItems)
-                this.switchMode(mActivity!!)
+                this.switchMode(memoryDroid)
                 TtsSpeaker.speak("Loading " + nextDeckWithItems.name)
             } else {
                 TtsSpeaker.speak("All decks done..")
             }
         }
-        commonLayoutSetup()
-        memoryDroid!!.findViewById<View>(R.id.rerecord)
-            .setOnTouchListener(
-                RecordOnClickListener(
-                    currentNote, context, false,
-                    lastOrNull
-                )
-            )
     }
 
     private val lastOrNull: Note?
         get() = if (!lastNoteList.isEmpty()) lastNoteList.last else null
 
-    private fun setupAnswerMode(context: Activity) {
+    private fun setupAnswerMode() {
         questionMode = false
-        memoryDroid!!.setContentView(R.layout.learnquestion)
-        applyDim(mIsDimmed)
         val currentNote = currentNote
-        val lifeCycleOwner = mActivity
+        currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = false)
+        val lifeCycleOwner = memoryDroid
         if (currentNote != null && lifeCycleOwner != null) {
             MoveManager.replaceMoveJobWith(lifeCycleOwner.lifecycleScope.launch(Dispatchers.Main) {
                 AudioPlayer.instance.playFile(currentNote.answer, shouldRepeat = true)
@@ -337,40 +234,31 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
                 }
             })
         }
-        commonLayoutSetup()
-        memoryDroid!!.findViewById<View>(R.id.rerecord)
-            .setOnTouchListener(
-                RecordOnClickListener(
-                    currentNote, context, true,
-                    lastOrNull
-                )
-            )
-
     }
 
 
-    private fun updateVal() {
+    private fun updateStartingInQuestionMode() {
         currentNote = currentDeckReviewQueue!!.peekQueue()
+        currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = false)
         if (currentNote != null) {
             repCounter++
             if (repCounter % 10 == 9) {
-                markAllStale(mActivity!!)
+                markAllStale(memoryDroid!!)
             }
         }
     }
 
-    private fun updateScoreAndMoveToNext(context: Activity, newGrade: Int) {
+    private fun updateScoreAndMoveToNext(newGrade: Int) {
         if (currentNote != null) {
-            applyGradeStatic(context, newGrade, currentNote!!)
+            applyGradeStatic(newGrade, currentNote!!)
             ToastSingleton.getInstance()
                 .msg("Easiness: " + currentNote!!.easiness + " Interval " + currentNote!!.interval)
-            setupQuestionMode(context)
+            setupQuestionMode(memoryDroid)
         }
     }
 
     private fun applyGradeStatic(
-        context: Activity?, newGrade: Int,
-        currentNote: Note
+        newGrade: Int, currentNote: Note
     ) {
         val noteEditor = DbNoteEditor.instance
         if (lastNoteRep != null && lastOrNull != null) {
@@ -400,50 +288,52 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
         val noteEditor = DbNoteEditor.instance
         val note = currentNote
         if (note != null) {
-            noteEditor!!.deleteCurrent(mActivity!!, note)
+            noteEditor!!.deleteCurrent(memoryDroid!!, note)
             currentDeckReviewQueue!!.removeNote(note.id)
         }
-        setupQuestionMode(mActivity!!)
+        setupQuestionMode(memoryDroid!!)
     }
 
     private fun replayA() {
-        ScreenDimmer.getInstance().keepScreenOn(mActivity)
+        ScreenDimmer.getInstance().keepScreenOn(memoryDroid)
         if (currentNote != null) {
             AudioPlayer.instance.playFile(currentNote!!.answer, null, true)
         }
     }
 
     private fun replay() {
-        ScreenDimmer.getInstance().keepScreenOn(mActivity)
+        ScreenDimmer.getInstance().keepScreenOn(memoryDroid)
         if (currentNote != null) {
             AudioPlayer.instance.playFile(currentNote!!.question, null, true)
         }
     }
 
-    private fun proceed(context: Activity) {
+    private fun proceedCommon() {
         if (currentNote != null) {
-            setupAnswerMode(context)
+            setupAnswerMode()
         }
     }
 
-    private fun undoLastQuestion(context: Activity) {
+    private fun undoFromQuestionToAnswerMode() {
         if (!lastNoteList.isEmpty()) {
             val currentNote = lastNoteList.removeLast()
             this.currentNote = currentNote
+            currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = true)
+
             repCounter--
             val noteEditor = DbNoteEditor.instance
             noteEditor!!.update(currentNote)
             // In case the grade was bad take it out of revision queue.
             currentDeckReviewQueue!!.removeNote(currentNote.id)
             currentDeckReviewQueue!!.addToFront(currentNote)
-            setupAnswerMode(context)
+            setupAnswerMode()
         } else {
             TtsSpeaker.speak("Nothing to undo")
         }
     }
 
     override fun resetActivity() {
-        switchMode(mActivity!!)
+        switchMode(memoryDroid!!)
     }
 
     private fun undoThisQuestion(context: Activity) {
@@ -451,16 +341,8 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
     }
 
     override fun adjustScreenLock() {
-        ScreenDimmer.getInstance().keepScreenOn(mActivity)
+        ScreenDimmer.getInstance().keepScreenOn(memoryDroid)
         hideSystemUi()
-        mIsDimmed = false
-    }
-
-    private var mIsDimmed = false
-    override fun toggleDim() {
-        mIsDimmed = !mIsDimmed
-        applyDim(mIsDimmed)
-        showSystemUi()
     }
 
     override fun mark() {
@@ -472,23 +354,4 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
         }
     }
 
-    private fun applyDim(isDimmed: Boolean) {
-        // Note making the root invisible makes the background grey.
-        val layout = memoryDroid!!.findViewById<ViewGroup>(R.id.learn_layout_root)
-        for (i in 0 until layout.childCount) {
-            applyDimToView(isDimmed, layout.getChildAt(i))
-        }
-        applyDimToView(isDimmed, memoryDroid!!.findViewById(R.id.reviewNumber))
-
-        // Gestures listeners don't work if dimmed.
-        applyDimToView(false, memoryDroid!!.findViewById(R.id.gestures))
-    }
-
-    private fun applyDimToView(isDimmed: Boolean, view: View) {
-        if (!isDimmed) {
-            view.visibility = View.VISIBLE
-        } else {
-            view.visibility = View.INVISIBLE
-        }
-    }
 }

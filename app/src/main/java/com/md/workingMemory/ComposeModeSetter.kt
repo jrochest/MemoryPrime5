@@ -41,7 +41,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import javax.inject.Inject
 
 enum class Mode {
-    Learning,
+    Practice,
     NewNote,
     DeckChooser,
     Settings,
@@ -50,7 +50,7 @@ enum class Mode {
 
 @ActivityScoped
 class ModeViewModel @Inject constructor() {
-    val modeModel = MutableStateFlow(Mode.Learning)
+    val modeModel = MutableStateFlow(Mode.Practice)
 }
 
 @ActivityScoped
@@ -59,8 +59,8 @@ class ComposeModeSetter @Inject constructor(
     private val modeHandler: ModeHandler,
     private val modeViewModel: ModeViewModel,
     private val deckLoadManager: DeckLoadManager,
-    private val recordButtonController: RecordButtonController,
     private val addNoteComposeManager: AddNoteComposeManager,
+    private val practiceModeComposerManager: PracticeModeComposerManager
 ) : ModeSetter(), ItemDeletedHandler {
     init {
         parentSetup(activity, modeHandler)
@@ -79,22 +79,21 @@ class ComposeModeSetter @Inject constructor(
                             Column {
                                 val mode = modeViewModel.modeModel.collectAsState()
                                 TopLevelMenu(onLearningMode = {
-                                    modeViewModel.modeModel.value = Mode.Learning
+                                    modeViewModel.modeModel.value = Mode.Practice
                                     this@ComposeModeSetter.switchMode(context = activity)
                                 }, onDeckChooseMode = {
                                     modeViewModel.modeModel.value = Mode.DeckChooser
                                     this@ComposeModeSetter.switchMode(context = activity)
                                 }, modeViewModel)
                                 when (mode.value) {
-                                    Mode.Learning -> {
-                                        WorkingMemoryScreenComposable(
-                                            onAudioRecorderTripleTap = { recordButtonController.onTripleTap() })
+                                    Mode.Practice -> {
+                                        practiceModeComposerManager.compose()
                                     }
                                     Mode.DeckChooser -> {
                                         DeckModeComposable(context)
                                     }
                                     Mode.NewNote -> {
-                                        addNoteComposeManager.ComposeMode()
+                                        addNoteComposeManager.compose()
                                     }
                                     else -> {}
                                 }
@@ -132,7 +131,7 @@ class ComposeModeSetter @Inject constructor(
                             VerticalDivider()
                             TextButton(onClick = {
                                 CategorySingleton.getInstance().setDeckInfo(it)
-                                modeViewModel.modeModel.value = Mode.Learning
+                                modeViewModel.modeModel.value = Mode.Practice
                             }) {
                                 Text(text = "Practice", style = MaterialTheme.typography.labelLarge)
                             }

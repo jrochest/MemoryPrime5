@@ -274,9 +274,7 @@ class SpacedRepeaterActivity
 
 
     fun maybeDim() {
-        val modeBackStack = modeHandler.get()
-        val modeSetter = modeBackStack.whoseOnTop() ?: return
-        modeSetter.toggleDim()
+        // TODOJNOW delete.
     }
 
     companion object {
@@ -324,6 +322,11 @@ class SpacedRepeaterActivity
 
     @JvmOverloads
     fun handleRhythmUiTaps(learningModeSetter: LearningModeSetter, uptimeMillis: Long, pressGroupMaxGapMsScreen: Long, tapCount: Int = 1) {
+        externalClickCounter.get().handleRhythmUiTaps(learningModeSetter, uptimeMillis, pressGroupMaxGapMsScreen, tapCount)
+    }
+
+    @JvmOverloads
+    fun handleRhythmUiTaps(learningModeSetter: PracticeModeStateModel, uptimeMillis: Long, pressGroupMaxGapMsScreen: Long, tapCount: Int = 1) {
         externalClickCounter.get().handleRhythmUiTaps(learningModeSetter, uptimeMillis, pressGroupMaxGapMsScreen, tapCount)
     }
 
