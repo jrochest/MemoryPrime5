@@ -53,7 +53,7 @@ class DbNoteEditor constructor() {
 
         // TODO figure out how to get the ID URI
         try {
-            contextForDbAccess!!.contentResolver.update(AbstractNote.CONTENT_URI,
+            contextForDbAccess.contentResolver.update(AbstractNote.CONTENT_URI,
                     values, Note._ID + "=" + note.getId(), null)
         } catch (e: Exception) {
             val message = e.message
@@ -67,7 +67,7 @@ class DbNoteEditor constructor() {
         // Bump the modification time to now.
         noteToContentValues(note, values)
         try {
-            val uri = contextForDbAccess!!.contentResolver.insert(
+            val uri = contextForDbAccess.contentResolver.insert(
                     AbstractNote.CONTENT_URI, values)
             val noteId = uri!!.pathSegments[1]
             note.id = noteId.toInt()
@@ -191,7 +191,7 @@ class DbNoteEditor constructor() {
                     + ")")
         }
         try {
-            query = contextForDbAccess!!.contentResolver.query(
+            query = contextForDbAccess.contentResolver.query(
                     AbstractNote.CONTENT_URI, null, selection, null,
                     AbstractNote.DEFAULT_SORT_ORDER)
         } catch (e: Exception) {
@@ -267,7 +267,7 @@ class DbNoteEditor constructor() {
 
     private fun loadNote(currentId: Int): Note? {
         val query: Cursor?
-        query = contextForDbAccess!!.contentResolver.query(AbstractNote.CONTENT_URI,
+        query = contextForDbAccess.contentResolver.query(AbstractNote.CONTENT_URI,
                 null, Note._ID + " = " + currentId, null,
                 AbstractNote.DEFAULT_SORT_ORDER)
         if (query!!.moveToNext()) {
@@ -423,7 +423,7 @@ class DbNoteEditor constructor() {
     }
 
     fun debugDeleteAll() {
-        contextForDbAccess!!.contentResolver.delete(AbstractNote.CONTENT_URI, null,
+        contextForDbAccess.contentResolver.delete(AbstractNote.CONTENT_URI, null,
                 null)
         if (currentNoteId != null) {
             val intCurrentId = currentNoteId!!.toInt()
@@ -437,7 +437,7 @@ class DbNoteEditor constructor() {
         val query: Cursor?
         val selection = (Note.GRADE + " < " + 2 + " AND "
                 + categoryCriteria(category))
-        query = contextForDbAccess!!.contentResolver.query(AbstractNote.CONTENT_URI,
+        query = contextForDbAccess.contentResolver.query(AbstractNote.CONTENT_URI,
                 null, selection, null, AbstractNote.DEFAULT_SORT_ORDER)
         val notes = Vector<Note>()
         while (query != null && query.moveToNext()) {

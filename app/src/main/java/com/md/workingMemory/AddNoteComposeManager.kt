@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.md.AudioRecorder
 import com.md.DbNoteEditor
+import com.md.RecordingTooSmallException
 import com.md.RevisionQueue
 import com.md.SpacedRepeaterActivity
 import com.md.modesetters.TtsSpeaker
@@ -141,24 +142,32 @@ class AddNoteComposeManager @Inject constructor(
             }
             DisposableEffect(Unit) {
                 onDispose {
-                    val newRecorder = notePart.pendingRecorder
-                    if (newRecorder != null) {
-                        newRecorder.stop()
-                        if (newRecorder.isRecorded) {
-                            notePart.updateHasPart(true)
-                            val oldRecording = notePart.recorder
-                            if (oldRecording != null) {
-                                oldRecording.stop()
-                                oldRecording.deleteFile()
-                            }
-                            notePart.recorder = newRecorder
-                        } else {
-                            TtsSpeaker.speak("Recording failed")
-                            newRecorder.deleteFile()
-                            notePart.recorder = null
-                            notePart.updateHasPart(false)
-                        }
+                    fun handleFailedPendingRecording() {
+                        val recorder = checkNotNull(notePart.pendingRecorder)
                         notePart.pendingRecorder = null
+                        recorder.deleteFile()
+                    }
+                    val pendingRecorder = notePart.pendingRecorder
+                    if (pendingRecorder != null) {
+                        try {
+                            pendingRecorder.stop()
+                            if (pendingRecorder.isRecorded) {
+                                notePart.updateHasPart(true)
+                                val oldRecording = notePart.recorder
+                                if (oldRecording != null) {
+                                    oldRecording.stop()
+                                    oldRecording.deleteFile()
+                                }
+                                notePart.recorder = pendingRecorder
+                            } else {
+                                TtsSpeaker.speak("Recording failed")
+                                handleFailedPendingRecording()
+                            }
+                            notePart.pendingRecorder = null
+                        } catch (e: RecordingTooSmallException) {
+                            TtsSpeaker.speak("Recording too short")
+                            handleFailedPendingRecording()
+                        }
                     }
                 }
             }

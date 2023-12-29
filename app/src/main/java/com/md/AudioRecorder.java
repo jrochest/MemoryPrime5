@@ -12,6 +12,7 @@ import com.md.modesetters.TtsSpeaker;
 import com.md.utils.ToastSingleton;
 import com.md.workers.BackupToUsbManager;
 
+
 public class AudioRecorder {
 	public static final String sessionSuffixTwoDigitNumber = createSuffix();
 	private static final String sessionSuffixTwoDigitNumberWithExtension = sessionSuffixTwoDigitNumber + ".m4a";
@@ -79,13 +80,16 @@ public class AudioRecorder {
 		File audioFileExists = new File(this.path);
 		if (!audioFileExists.exists()) {
 			ToastSingleton.getInstance().error(this.path + " does not exist!");
-		} else if (audioFileExists.length() < 16_000) {
+		} else if (audioFileExists.length() < 4_000) {
 			audioFileExists.delete();
+			throw new RecordingTooSmallException();
 		} else {
 			recorded = true;
 			BackupToUsbManager.INSTANCE.markPathAsUpdated(originalFile);
 		}
 	}
+
+
 
 	/**
 	 * Starts a new recording.
