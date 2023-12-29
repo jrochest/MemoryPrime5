@@ -119,20 +119,6 @@ fun WorkingMemoryScreenComposable(
 
         }
     }
-
-
-    @Preview
-    @Composable
-    fun WorkMemoryUiPreview() {
-        val notes = SnapshotStateList<ShortTermNote>().apply {
-            add(
-                ShortTermNote(Instant.parse("2023-12-03T10:15:29.00Z").toEpochMilli())
-            )
-        }
-        WorkingMemoryScreenComposable(notes, onNotePress = {
-
-        })
-    }
 }
 
     @Composable

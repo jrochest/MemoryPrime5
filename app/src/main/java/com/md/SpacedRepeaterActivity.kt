@@ -16,7 +16,7 @@ import com.md.workers.BackupPreferences
 import com.md.workers.BackupToUsbManager.createAndWriteZipBackToNewLocation
 import com.md.workers.IncrementalBackupManager
 import com.md.workers.IncrementalBackupPreferences
-import com.md.workingMemory.WorkingMemoryModeSetter
+import com.md.workingMemory.ComposeModeSetter
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -31,7 +31,7 @@ class SpacedRepeaterActivity
     @Inject
     lateinit var externalClickCounter: Lazy<ExternalClickCounter>
     @Inject
-    lateinit var workingModeSetter: Lazy<WorkingMemoryModeSetter>
+    lateinit var workingModeSetter: Lazy<ComposeModeSetter>
     @Inject
     lateinit var modeHandler: Lazy<ModeHandler>
     @Inject

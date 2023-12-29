@@ -8,7 +8,7 @@ import com.md.modesetters.*
 import com.md.utils.ToastSingleton
 import com.md.workers.BackupToUsbManager
 import com.md.workers.IncrementalBackupManager.createAndWriteZipBackToPreviousLocation
-import com.md.workingMemory.WorkingMemoryModeSetter
+import com.md.workingMemory.ComposeModeSetter
 import dagger.Lazy
 import dagger.hilt.android.scopes.ActivityScoped
 import java.io.File
@@ -17,7 +17,7 @@ import javax.inject.Inject
 @ActivityScoped
 class ActivityHelper @Inject constructor(
     val activity: Activity,
-    private val workingMemoryModeSetter: Lazy<WorkingMemoryModeSetter>,
+    private val composeModeSetter: Lazy<ComposeModeSetter>,
     private val learningModeSetter: Lazy<LearningModeSetter>) {
     fun commonActivitySetup() {
         val theFile = File(DbContants.getDatabasePath())
@@ -85,7 +85,7 @@ class ActivityHelper @Inject constructor(
         addMenu(menu, R.id.learningModeMenuItem, learningModeSetter.get(), activity)
         addMenu(menu, R.id.selectDeckModeMenuItem, DeckChooseModeSetter, activity)
         addMenu(menu, R.id.settings, SettingModeSetter, activity)
-        addMenu(menu, R.id.working_memory, workingMemoryModeSetter.get(), activity)
+        addMenu(menu, R.id.working_memory, composeModeSetter.get(), activity)
         addMenu(menu, R.id.clean_up_files, CleanUpAudioFilesModeSetter.getInstance(), activity)
     }
 
