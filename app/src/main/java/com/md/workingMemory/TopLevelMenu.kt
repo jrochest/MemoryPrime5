@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
@@ -24,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.md.modesetters.SettingModeSetter
 import com.md.workers.IncrementalBackupManager
 
@@ -42,11 +44,11 @@ fun TopLevelMenu(
         onClick: () -> Unit,
                    content: @Composable RowScope.() -> Unit) {
         Button(
+            modifier = Modifier.height(64.dp),
             colors = if (myMode != null && myMode == mode.value) {ButtonDefaults.buttonColors()} else  { ButtonDefaults.filledTonalButtonColors() },
             onClick = onClick,
             content = content)
     }
-
 
     Row(
         modifier = Modifier.fillMaxWidth(),
