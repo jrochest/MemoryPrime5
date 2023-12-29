@@ -22,7 +22,6 @@ import javax.inject.Inject
 @ActivityScoped
 class RecordButtonController @Inject constructor(
     @ActivityContext val context: Context,
-
     private val currentNotePartManager: CurrentNotePartManager
 ) {
     val activity: SpacedRepeaterActivity by lazy {

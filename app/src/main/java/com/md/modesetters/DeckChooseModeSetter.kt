@@ -68,6 +68,7 @@ class DeckLoadManager @Inject constructor(@ActivityContext val context: Context,
         }
     }
 }
+//TODOJNOW hook up the proceed button.
 
 @SuppressLint("StaticFieldLeak")
 object DeckChooseModeSetter : ModeSetter() {

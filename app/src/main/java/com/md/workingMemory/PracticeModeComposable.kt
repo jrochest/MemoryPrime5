@@ -2,6 +2,7 @@ package com.md.workingMemory
 
 import android.content.Context
 import android.os.SystemClock
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -80,7 +81,12 @@ class PracticeModeComposerManager @Inject constructor(
             onAudioRecorderTripleTap = {
                 viewState.recordUnlocked.value = true
             },
-            currentNotePartManager = currentNotePartManager
+            currentNotePartManager = currentNotePartManager,
+            onMiddleButtonTap = {
+                activity.handleRhythmUiTaps(stateModel,
+                SystemClock.uptimeMillis(),
+                SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN)
+            }
         )
     }
 }
@@ -158,7 +164,7 @@ fun TripleTapButton(
     Button(modifier = modifier, onClick = {
         val currentTime = SystemClock.uptimeMillis()
         if (currentTime - previousTapTimeMillis <= maxTimeBetweenTapsMillis) {
-            if (tapCount > 2) {
+            if (tapCount >= 2) {
                 onTripleTap()
                 tapCount = 0
             } else {
