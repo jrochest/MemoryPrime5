@@ -44,7 +44,8 @@ enum class Mode {
     Learning,
     NewNote,
     DeckChooser,
-    Settings
+    Settings,
+    Backup
 }
 
 @ActivityScoped

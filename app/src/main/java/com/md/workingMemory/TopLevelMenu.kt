@@ -1,0 +1,113 @@
+package com.md.workingMemory
+
+import android.app.Activity
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import com.md.modesetters.SettingModeSetter
+import com.md.workers.IncrementalBackupManager
+
+@Composable
+fun TopLevelMenu(
+    onLearningMode: () -> Unit,
+    onDeckChooseMode: () -> Unit,
+    modeViewModel: ModeViewModel
+) {
+    val mode = modeViewModel.modeModel.collectAsState()
+    var showMenu by remember { mutableStateOf(false) }
+
+
+    @Composable
+    fun MenuButton(    myMode: Mode?,
+        onClick: () -> Unit,
+                   content: @Composable RowScope.() -> Unit) {
+        Button(
+            colors = if (myMode != null && myMode == mode.value) {ButtonDefaults.buttonColors()} else  { ButtonDefaults.filledTonalButtonColors() },
+            onClick = onClick,
+            content = content)
+    }
+
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        val activity = LocalContext.current as Activity
+        MenuButton(
+            myMode = Mode.NewNote,
+            onClick = {
+            modeViewModel.modeModel.value = Mode.NewNote
+        }) {
+            Text(text = "Add note",
+                style = MaterialTheme.typography.labelLarge)
+        }
+        MenuButton(
+            myMode = Mode.Learning,
+            onClick = {
+            onLearningMode()
+        }) {
+            Text(text = "Practice", style = MaterialTheme.typography.labelLarge)
+        }
+        MenuButton(
+            myMode = Mode.DeckChooser,
+            onClick = {
+            onDeckChooseMode()
+        }) {
+            Text(text = "Decks", style = MaterialTheme.typography.labelLarge)
+        }
+        MenuButton(
+            myMode = Mode.Backup,
+            onClick = {
+                modeViewModel.modeModel.value = Mode.Backup
+            IncrementalBackupManager.createAndWriteZipBackToPreviousLocation(
+                activity,
+                activity.contentResolver,
+                shouldSpeak = true,
+                runExtraValidation = false
+            )
+
+        }) {
+            Text(text = "Backup", style = MaterialTheme.typography.labelLarge)
+        }
+        MenuButton(
+            myMode = null,
+            onClick = {
+                showMenu = !showMenu
+            }) {
+            Text(text = "More", style = MaterialTheme.typography.labelLarge)
+            Icon(
+                imageVector = Icons.Default.MoreVert,
+                contentDescription = "More",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+            DropdownMenu(
+                expanded = showMenu,
+                onDismissRequest = { showMenu = false }
+            ) {
+                DropdownMenuItem({ Text("Settings") }, onClick = {
+                    SettingModeSetter.switchMode(activity)
+                })
+            }
+        }
+    }
+}
