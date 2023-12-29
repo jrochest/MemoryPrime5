@@ -20,19 +20,19 @@ import java.util.*
  * [Intent.ACTION_EDIT], or create a new note [Intent.ACTION_INSERT]
  * .
  */
-class DbNoteEditor protected constructor() {
-    private var currentId: String? = null
-
+class DbNoteEditor constructor() {
+    // TODO: This global out of context note ID should be refactored away eventually.
+    private var currentNoteId: String? = null
 
     /**
      * Using a passed at the time of need activity instead of this one that is provided at
      * activity creation time causes a failure like this.
      * android.content.Context.getContentResolver()' on a null object reference
      */
-    private var contextForDbAccess: Activity? = null
+    private lateinit var contextForDbAccess: Activity
 
     fun setContext(context: Activity?) {
-        this.contextForDbAccess = context
+        this.contextForDbAccess = checkNotNull(context)
 
         // TODO Do this to init the database.
         getOverdue(0)
@@ -113,7 +113,7 @@ class DbNoteEditor protected constructor() {
             query = result.cursor
             if (query.moveToNext()) {
                 if (query.getInt(0) != 0) {
-                    currentId = "" + query.getInt(0)
+                    currentNoteId = "" + query.getInt(0)
                     returnValue = loadDataCurrentId()
                 }
             }
@@ -216,12 +216,12 @@ class DbNoteEditor protected constructor() {
     fun getNext(howFarToGo: Int): Note? {
         var returnVal: Note? = null
         var query: DatabaseResult? = null
-        if (currentId == null) {
+        if (currentNoteId == null) {
             return null
         }
         var queryString = ("SELECT MIN(" + Note._ID + ") FROM "
                 + NotesProvider.NOTES_TABLE_NAME + " WHERE " + Note._ID + " > "
-                + (currentId!!.toInt() + howFarToGo) + " AND "
+                + (currentNoteId!!.toInt() + howFarToGo) + " AND "
                 + categoryCriteria())
         if (isMarkedMode) {
             queryString += " AND " + Note.MARKED + " = 1"
@@ -239,7 +239,7 @@ class DbNoteEditor protected constructor() {
             var query2 = rawQuery(queryString) ?: return null
             if (query2.cursor.moveToFirst()) {
                 if (query2.cursor.getInt(0) != 0) {
-                    currentId = "" + query2.cursor.getInt(0)
+                    currentNoteId = "" + query2.cursor.getInt(0)
                     returnVal = loadDataCurrentId()
                 }
             }
@@ -253,8 +253,8 @@ class DbNoteEditor protected constructor() {
     }
 
     private fun loadDataCurrentId(): Note? {
-        if (currentId != null) {
-            note = loadNote(currentId!!.toInt())
+        if (currentNoteId != null) {
+            note = loadNote(currentNoteId!!.toInt())
         } else {
             // The listener need to be able to handle null notes.
             note = null
@@ -337,12 +337,12 @@ class DbNoteEditor protected constructor() {
 
     fun getLast(howFarToGo: Int): Note? {
         var returnVal: Note? = null
-        if (currentId == null) {
+        if (currentNoteId == null) {
             return null
         }
         var queryString = ("SELECT MAX(" + Note._ID + ") FROM "
                 + NotesProvider.NOTES_TABLE_NAME + " WHERE " + Note._ID + " < "
-                + (currentId!!.toInt() - howFarToGo) + " AND "
+                + (currentNoteId!!.toInt() - howFarToGo) + " AND "
                 + categoryCriteria())
         if (isMarkedMode) {
             queryString += " AND " + Note.MARKED + " = 1"
@@ -361,7 +361,7 @@ class DbNoteEditor protected constructor() {
             val cursor2 = query2.cursor
             if (cursor2.moveToFirst()) {
                 if (cursor2.getInt(0) != 0) {
-                    currentId = "" + cursor2.getInt(0)
+                    currentNoteId = "" + cursor2.getInt(0)
                     returnVal = loadDataCurrentId()
                 }
             }
@@ -389,7 +389,7 @@ class DbNoteEditor protected constructor() {
         if (note == null) {
             return null
         }
-        context.contentResolver.delete(AbstractNote.CONTENT_URI,
+        contextForDbAccess.contentResolver.delete(AbstractNote.CONTENT_URI,
                 Note._ID + " = " + note.id, null)
         if (note != null) {
             if (!AudioRecorder.deleteFile(note.answer)) {
@@ -401,8 +401,8 @@ class DbNoteEditor protected constructor() {
                         + note.question)
             }
         }
-        if (currentId != null) {
-            val intCurrentId = currentId!!.toInt()
+        if (currentNoteId != null) {
+            val intCurrentId = currentNoteId!!.toInt()
             currentDeckReviewQueue!!.removeNote(intCurrentId)
         }
         if (this.note == note) {
@@ -414,7 +414,7 @@ class DbNoteEditor protected constructor() {
 
                 // Double fail no more items.
                 if (returnVal == null) {
-                    currentId = null
+                    currentNoteId = null
                     loadDataCurrentId()
                 }
             }
@@ -425,8 +425,8 @@ class DbNoteEditor protected constructor() {
     fun debugDeleteAll() {
         contextForDbAccess!!.contentResolver.delete(AbstractNote.CONTENT_URI, null,
                 null)
-        if (currentId != null) {
-            val intCurrentId = currentId!!.toInt()
+        if (currentNoteId != null) {
+            val intCurrentId = currentNoteId!!.toInt()
             currentDeckReviewQueue!!.removeNote(intCurrentId)
         }
     }
@@ -448,7 +448,7 @@ class DbNoteEditor protected constructor() {
     }
 
     fun setNullNote() {
-        currentId = null
+        currentNoteId = null
         loadDataCurrentId()
     }
 
