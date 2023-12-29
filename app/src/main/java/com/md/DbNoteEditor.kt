@@ -22,10 +22,17 @@ import java.util.*
  */
 class DbNoteEditor protected constructor() {
     private var currentId: String? = null
-    var context2: Activity? = null
+
+
+    /**
+     * Using a passed at the time of need activity instead of this one that is provided at
+     * activity creation time causes a failure like this.
+     * android.content.Context.getContentResolver()' on a null object reference
+     */
+    private var contextForDbAccess: Activity? = null
 
     fun setContext(context: Activity?) {
-        this.context2 = context
+        this.contextForDbAccess = context
 
         // TODO Do this to init the database.
         getOverdue(0)
@@ -46,7 +53,7 @@ class DbNoteEditor protected constructor() {
 
         // TODO figure out how to get the ID URI
         try {
-            context2!!.contentResolver.update(AbstractNote.CONTENT_URI,
+            contextForDbAccess!!.contentResolver.update(AbstractNote.CONTENT_URI,
                     values, Note._ID + "=" + note.getId(), null)
         } catch (e: Exception) {
             val message = e.message
@@ -60,7 +67,7 @@ class DbNoteEditor protected constructor() {
         // Bump the modification time to now.
         noteToContentValues(note, values)
         try {
-            val uri = context2!!.contentResolver.insert(
+            val uri = contextForDbAccess!!.contentResolver.insert(
                     AbstractNote.CONTENT_URI, values)
             val noteId = uri!!.pathSegments[1]
             note.id = noteId.toInt()
@@ -184,7 +191,7 @@ class DbNoteEditor protected constructor() {
                     + ")")
         }
         try {
-            query = context2!!.contentResolver.query(
+            query = contextForDbAccess!!.contentResolver.query(
                     AbstractNote.CONTENT_URI, null, selection, null,
                     AbstractNote.DEFAULT_SORT_ORDER)
         } catch (e: Exception) {
@@ -260,7 +267,7 @@ class DbNoteEditor protected constructor() {
 
     private fun loadNote(currentId: Int): Note? {
         val query: Cursor?
-        query = context2!!.contentResolver.query(AbstractNote.CONTENT_URI,
+        query = contextForDbAccess!!.contentResolver.query(AbstractNote.CONTENT_URI,
                 null, Note._ID + " = " + currentId, null,
                 AbstractNote.DEFAULT_SORT_ORDER)
         if (query!!.moveToNext()) {
@@ -416,7 +423,7 @@ class DbNoteEditor protected constructor() {
     }
 
     fun debugDeleteAll() {
-        context2!!.contentResolver.delete(AbstractNote.CONTENT_URI, null,
+        contextForDbAccess!!.contentResolver.delete(AbstractNote.CONTENT_URI, null,
                 null)
         if (currentId != null) {
             val intCurrentId = currentId!!.toInt()
@@ -430,7 +437,7 @@ class DbNoteEditor protected constructor() {
         val query: Cursor?
         val selection = (Note.GRADE + " < " + 2 + " AND "
                 + categoryCriteria(category))
-        query = context2!!.contentResolver.query(AbstractNote.CONTENT_URI,
+        query = contextForDbAccess!!.contentResolver.query(AbstractNote.CONTENT_URI,
                 null, selection, null, AbstractNote.DEFAULT_SORT_ORDER)
         val notes = Vector<Note>()
         while (query != null && query.moveToNext()) {
