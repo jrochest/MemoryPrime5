@@ -76,12 +76,11 @@ public class AudioRecorder {
 			}
 		}
 
-		File fileMp3 = new File(this.path);
-		if (!fileMp3.exists()) {
+		File audioFileExists = new File(this.path);
+		if (!audioFileExists.exists()) {
 			ToastSingleton.getInstance().error(this.path + " does not exist!");
-		} else if (fileMp3.length() < 4_000) {
-			System.out.println("Length is: " + fileMp3.length());
-			fileMp3.delete();
+		} else if (audioFileExists.length() < 16_000) {
+			audioFileExists.delete();
 		} else {
 			recorded = true;
 			BackupToUsbManager.INSTANCE.markPathAsUpdated(originalFile);
@@ -140,6 +139,11 @@ public class AudioRecorder {
 				createModeSetter, currentIndex);
 
         audioPlayer.playFile(originalFile, listener);
+	}
+
+	public void playFile() {
+		final AudioPlayer audioPlayer = AudioPlayer.getInstance();
+		audioPlayer.playFile(originalFile);
 	}
 
 	public boolean isRecorded() {

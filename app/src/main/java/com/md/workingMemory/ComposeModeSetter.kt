@@ -4,7 +4,6 @@ import android.app.Activity
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -51,56 +50,6 @@ enum class Mode {
 @ActivityScoped
 class ModeViewModel @Inject constructor() {
     val modeModel = MutableStateFlow(Mode.Learning)
-}
-
-@ActivityScoped
-class AddNoteComposeManager @Inject constructor(
-    val activity: SpacedRepeaterActivity,
-    val recordButtonController: RecordButtonController
-) {
-
-    @Composable
-    fun ComposeMode() {
-        val buttonModifier = Modifier.fillMaxHeight()
-        val firstButtonModifier = buttonModifier.fillMaxWidth(.5f)
-        val secondButtonModifier = buttonModifier.fillMaxWidth(1f)
-        @Composable
-        fun ButtonText(text: String,) {
-            Text(text = text, style = MaterialTheme.typography.labelLarge)
-        }
-        Column {
-            Row(Modifier.fillMaxHeight(.33f)) {
-                Button(modifier = firstButtonModifier,
-                    onClick = { /*TODO*/ }) {
-                    ButtonText(text = "Record question")
-                }
-                Button(modifier = secondButtonModifier,
-                    onClick = { /*TODO*/ }) {
-                    ButtonText(text = "Save question")
-                }
-            }
-            Row(Modifier.fillMaxHeight(.5f)) {
-                Button(modifier = firstButtonModifier,
-                    onClick = { /*TODO*/ }) {
-                    ButtonText(text = "Record answer")
-                }
-                Button(modifier = secondButtonModifier,
-                    onClick = { /*TODO*/ }) {
-                    ButtonText(text = "Save answer")
-                }
-            }
-            Row(Modifier.fillMaxHeight(1f)) {
-                Button(modifier = firstButtonModifier,
-                    onClick = { /*TODO*/ }) {
-                    ButtonText(text = "Reset")
-                }
-                Button(modifier = secondButtonModifier,
-                    onClick = { /*TODO*/ }) {
-                    ButtonText(text = "Save note")
-                }
-            }
-        }
-    }
 }
 
 @ActivityScoped
