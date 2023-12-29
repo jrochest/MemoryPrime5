@@ -119,9 +119,7 @@ class PlayerService : MediaBrowserServiceCompat() {
     }
 
     private fun handleTapCount(tapCount: Int) {
-        val learningModeSetter = LearningModeSetter.instance ?: return
-        learningModeSetter.handleTapCount(tapCount)
-        TtsSpeaker.speak("Play count from Player service should never happen!!")
+          TtsSpeaker.speak("Play count from Player service should never happen!!")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

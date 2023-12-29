@@ -17,7 +17,8 @@ import javax.inject.Inject
 @ActivityScoped
 class ActivityHelper @Inject constructor(
     val activity: Activity,
-    private val workingMemoryModeSetter: Lazy<WorkingMemoryModeSetter>) {
+    private val workingMemoryModeSetter: Lazy<WorkingMemoryModeSetter>,
+    private val learningModeSetter: Lazy<LearningModeSetter>) {
     fun commonActivitySetup() {
         val theFile = File(DbContants.getDatabasePath())
         val parentFile = File(theFile.parent)
@@ -81,7 +82,7 @@ class ActivityHelper @Inject constructor(
         }
         addMenu(menu, R.id.creationModeMenuItem, CreateModeSetter, activity)
         addMenu(menu, R.id.browseDeckModeMenuItem, BrowsingModeSetter.getInstance(), activity)
-        addMenu(menu, R.id.learningModeMenuItem, LearningModeSetter.instance, activity)
+        addMenu(menu, R.id.learningModeMenuItem, learningModeSetter.get(), activity)
         addMenu(menu, R.id.selectDeckModeMenuItem, DeckChooseModeSetter, activity)
         addMenu(menu, R.id.settings, SettingModeSetter, activity)
         addMenu(menu, R.id.working_memory, workingMemoryModeSetter.get(), activity)

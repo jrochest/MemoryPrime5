@@ -37,6 +37,10 @@ class SpacedRepeaterActivity
     @Inject
     lateinit var activityHelper: ActivityHelper
 
+    @Inject
+    lateinit var learningModeSetter: Lazy<LearningModeSetter>
+
+
     @Inject lateinit var toneManager: Lazy<ToneManagerImpl>
 
     /** Called when the activity is first created.  */
@@ -55,7 +59,7 @@ class SpacedRepeaterActivity
         CreateModeSetter.setUp(this, handler)
         BrowsingModeSetter.getInstance().setup(this, handler)
         DeckChooseModeSetter.getInstance()?.setUp(this, handler)
-        LearningModeSetter.instance.setUp(this, handler)
+        learningModeSetter.get().setUp(this, handler)
         SettingModeSetter.setup(this, handler)
         CleanUpAudioFilesModeSetter.getInstance().setup(this, handler)
 
@@ -233,7 +237,7 @@ class SpacedRepeaterActivity
             return super.onKeyDown(keyCode, event)
         }
         if (modeSetter !is LearningModeSetter) {
-            LearningModeSetter.instance.switchMode(this)
+            learningModeSetter.get().switchMode(this)
             return true
         }
         val eventTimeMs = event.eventTime
@@ -317,6 +321,10 @@ class SpacedRepeaterActivity
     @JvmOverloads
     fun handleRhythmUiTaps(learningModeSetter: LearningModeSetter, uptimeMillis: Long, pressGroupMaxGapMsScreen: Long, tapCount: Int = 1) {
         externalClickCounter.get().handleRhythmUiTaps(learningModeSetter, uptimeMillis, pressGroupMaxGapMsScreen, tapCount)
+    }
+
+    fun switchToLearningMode() {
+        learningModeSetter.get().switchMode(this)
     }
 }
 

@@ -7,15 +7,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.md.AudioRecorder
+import com.md.DbNoteEditor
+import com.md.DbNoteEditor.Companion.instance
 import com.md.SpacedRepeaterActivity
 import com.md.provider.Note
 import dagger.hilt.android.scopes.ActivityScoped
+import kotlinx.coroutines.flow.MutableStateFlow
 import javax.inject.Inject
 
 
 @ActivityScoped
 class RecordButtonController @Inject constructor(
     val activity: SpacedRepeaterActivity,
+    private val currentNotePartManager: CurrentNotePartManager
 ) {
     private var audioRecorder: AudioRecorder? = null
 
@@ -24,7 +28,8 @@ class RecordButtonController @Inject constructor(
         if (recorder != null) {
             recorder.stop()
             if (recorder.isRecorded) {
-                val file = recorder.originalFile
+                val filename = recorder.originalFile
+                currentNotePartManager.updateAudioFilename(filename)
             }
 
         } else {
@@ -41,9 +46,25 @@ class CurrentNotePartManager @Inject constructor(
     val activity: SpacedRepeaterActivity,
 ) {
     private var currentNote: Note? = null
+    private var partIsAnswer: Boolean? = null
 
-    fun updateAudioFilename() {
+    fun changeCurrentNotePart(note: Note?, partIsAnswer: Boolean?) {
+        currentNote = note
+        this.partIsAnswer = partIsAnswer
+        stateFlow.value = (note != null && partIsAnswer != null)
+    }
 
+    val stateFlow = MutableStateFlow(false)
+
+    fun updateAudioFilename(filename: String) {
+       val note = checkNotNull(currentNote)
+       val partIsAnswer = checkNotNull(partIsAnswer)
+        if (partIsAnswer) {
+            note.answer = filename
+        } else {
+            note.question = filename
+        }
+        DbNoteEditor.instance!!.update(activity, note)
     }
 }
 

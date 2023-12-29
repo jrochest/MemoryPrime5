@@ -24,8 +24,8 @@ import java.util.*
 object DeckChooseModeSetter : ModeSetter() {
     private var mTotalNotes = 0
     @SuppressLint("StaticFieldLeak")
-    private var memoryDroid: Activity? = null
-    fun setUp(memoryDroid: Activity?,
+    private var memoryDroid: SpacedRepeaterActivity? = null
+    fun setUp(memoryDroid: SpacedRepeaterActivity?,
               modeHand: ModeHandler?) {
         parentSetup(memoryDroid, modeHand)
         this.memoryDroid = memoryDroid
@@ -100,7 +100,10 @@ object DeckChooseModeSetter : ModeSetter() {
         }
     }
 
-    private class DeckAdapter(private val decks: List<Deck>, private val context: Activity) : BaseAdapter() {
+    private class DeckAdapter(
+        private val decks: List<Deck>,
+        private val context: Activity,
+    ) : BaseAdapter() {
         override fun getCount(): Int {
             return decks.size
         }
@@ -142,7 +145,7 @@ object DeckChooseModeSetter : ModeSetter() {
                 view.findViewById<Button>(R.id.learn_button).setOnClickListener {
                 val info = deckIdToInfo[deck.id] ?: return@setOnClickListener
                 loadDeck(info)
-                LearningModeSetter.instance.switchMode(memoryDroid!!)
+                    memoryDroid?.switchToLearningMode()
             }
 
             return view

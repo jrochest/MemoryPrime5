@@ -15,14 +15,17 @@ import com.md.provider.Note
 import com.md.utils.ScreenDimmer
 import com.md.utils.ToastSingleton
 import com.md.workers.BackupPreferences.markAllStale
+import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.*
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
-class LearningModeSetter private constructor() : ModeSetter(), ItemDeletedHandler {
+@ActivityScoped
+class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandler {
     /**
      * @param memoryDroid
      * @param modeHand
@@ -300,7 +303,7 @@ class LearningModeSetter private constructor() : ModeSetter(), ItemDeletedHandle
             val nextDeckWithItems = deckChooser.nextDeckWithItems
             if (nextDeckWithItems != null) {
                 deckChooser.loadDeck(nextDeckWithItems)
-                instance.switchMode(mActivity!!)
+                this.switchMode(mActivity!!)
                 TtsSpeaker.speak("Loading " + nextDeckWithItems.name)
             } else {
                 TtsSpeaker.speak("All decks done..")
@@ -488,10 +491,5 @@ class LearningModeSetter private constructor() : ModeSetter(), ItemDeletedHandle
         } else {
             view.visibility = View.INVISIBLE
         }
-    }
-
-    companion object {
-        @JvmStatic
-        val instance: LearningModeSetter by lazy { LearningModeSetter() }
     }
 }

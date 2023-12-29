@@ -15,7 +15,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,7 +33,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.md.modesetters.CreateModeSetter
 import com.md.modesetters.DeckChooseModeSetter
-import com.md.modesetters.LearningModeSetter
 import com.md.modesetters.SettingModeSetter
 import com.md.uiTheme.AppTheme
 import java.time.Instant
@@ -65,12 +63,12 @@ Remove note from storage. Must be done twice.
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkingMemoryScreenComposable(
     notes: SnapshotStateList<ShortTermNote>,
     onNotePress: (note: ShortTermNote) -> Unit = { },
     onAudioRecorderTripleTap: () -> Unit = { },
+    onLearningMode: () -> Unit = { },
 ) {
     AppTheme {
         Surface {
@@ -79,7 +77,7 @@ fun WorkingMemoryScreenComposable(
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.Start
             ) {
-                TopLevelMenu()
+                TopLevelMenu(onLearningMode)
                 Button(
                     modifier = Modifier
                         .fillMaxHeight(fraction = .85f)
@@ -137,9 +135,8 @@ fun WorkingMemoryScreenComposable(
     }
 }
 
-
     @Composable
-    fun TopLevelMenu() {
+    fun TopLevelMenu(onLearningMode: () -> Unit) {
         var showMenu by remember { mutableStateOf(false) }
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -152,7 +149,7 @@ fun WorkingMemoryScreenComposable(
                 Text(text = "New note", style = MaterialTheme.typography.labelLarge)
             }
             Button(onClick = {
-                LearningModeSetter.instance.switchMode(activity)
+                onLearningMode()
             }) {
                 Text(text = "Practice", style = MaterialTheme.typography.labelLarge)
             }
