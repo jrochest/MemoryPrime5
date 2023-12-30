@@ -12,34 +12,101 @@ import com.md.utils.ScreenDimmer
 import com.md.utils.ToastSingleton
 import com.md.workers.BackupPreferences.markAllStale
 import com.md.composeModes.CurrentNotePartManager
+import com.md.composeModes.Mode
+import com.md.composeModes.ModeViewModel
+import com.md.composeModes.PracticeMode
+import com.md.composeModes.PracticeModeViewModel
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
 @ActivityScoped
-class PracticeModeStateModel @Inject constructor(
+class PracticeModeStateHandler @Inject constructor(
     val currentNotePartManager: CurrentNotePartManager,
     @ActivityContext val context: Context,
     private val revisionQueueStateModel: RevisionQueueStateModel,
-    // TODOJNOW remove the mode setter
-) : ItemDeletedHandler {
+    // TODOJNOW use theses.
+    private val model: ModeViewModel,
+    private val practiceModeViewModel: PracticeModeViewModel
+) {
     val activity: SpacedRepeaterActivity = context as SpacedRepeaterActivity
 
     private val lastNoteList: Deque<Note> = ArrayDeque()
     private var lastNoteRep: AbstractRep? = null
-    // TODOJNOW delete this
+    // TODOJSOONNOW delete this
     private var currentNote: Note? = null
     private var originalSize = 0
     var repCounter = 0
     private var missCounter = 0
-    // TODOJNOW delete this
+    // TODOJSOONNOW delete this
     private var questionMode = true
     fun onSwitchToMode() {
+        activity.lifecycleScope.launch {
+            combine(flow = model.modeModel, flow2 = practiceModeViewModel.practiceStateFlow,
+                flow3 = revisionQueueStateModel.queue,
+                flow4 = currentNotePartManager.noteStateFlow) { mode: Mode, practiceMode: PracticeMode, revisionQueue: RevisionQueue?,
+                noteState: CurrentNotePartManager.NoteState? ->
+                if (mode != Mode.Practice || practiceMode != PracticeMode.Practicing) {
+                    MoveManager.cancelJobs()
+                    return@combine
+                }
+
+                if (revisionQueue == null || revisionQueue.getSize() == 0 || noteState == null) {
+                    MoveManager.cancelJobs()
+                    val deckChooser = DeckChooseModeSetter.getInstance()
+                    val nextDeckWithItems = deckChooser.nextDeckWithItems
+                    if (nextDeckWithItems != null) {
+                        revisionQueueStateModel.queue.value = nextDeckWithItems.revisionQueue
+                        CategorySingleton.getInstance().setDeckInfo(nextDeckWithItems)
+                        TtsSpeaker.speak("Great job! Deck done. Loading " + nextDeckWithItems.name)
+                    } else {
+                        TtsSpeaker.speak("Great job! Deck done. All decks done..")
+                    }
+                    return@combine
+                }
+
+                MoveManager.replaceMoveJobWith(activity.lifecycleScope.launch(Dispatchers.Main) {
+                    var shouldPlayTwiceInARow = true
+                    while (isActive) {
+                        if (!activity.isAtLeastResumed()) {
+                            delay(100)
+                            continue
+                        }
+                        val part = noteState.notePart
+                        val note = checkNotNull(noteState.currentNote)
+                        if (part.partIsAnswer) {
+                            AudioPlayer.instance.playFile(note.answer, shouldRepeat = false)
+                            delay(30_000)
+                            if (isActive) {
+                                TtsSpeaker.speak("Auto-proceed from answer.")
+                                proceed()
+                                return@launch
+                            }
+                        } else {
+                            AudioPlayer.instance.playFile(
+                                note.question,
+                                firedOnceCompletionListener = {},
+                                shouldRepeat = shouldPlayTwiceInARow)
+                            // Note this works fine if it replays before the note is done.
+                            shouldPlayTwiceInARow = false
+                            delay(30_000)
+                            // This TTS is mostly helpful to avoid the bluetooth speakers being off during
+                            // replay.
+                            TtsSpeaker.speak("replay", lowVolume = true)
+                            delay(500)
+                        }
+                    }
+                })
+            }.collect() {}
+        }
+
+
         activity.lifecycleScope.launch {
             revisionQueueStateModel.queue.collect {
                 val revisionQueue = it ?: return@collect
@@ -51,17 +118,8 @@ class PracticeModeStateModel @Inject constructor(
         }
     }
 
-    /**
-     * TODOJNOW use this
-     *  memoryDroid!!.handleRhythmUiTaps(
-     *                 this@PracticeModeStateModel,
-     *                 SystemClock.uptimeMillis(),
-     *                 SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN
-     *             )
-     */
-
     fun handleTapCount(count: Int) {
-        activity!!.handleRhythmUiTaps(
+        activity.handleRhythmUiTaps(
             this,
             SystemClock.uptimeMillis(),
             SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_INSTANT,
@@ -150,69 +208,12 @@ class PracticeModeStateModel @Inject constructor(
     private fun setupQuestionMode(
         shouldUpdateQuestion: Boolean = true
     ) {
-        MoveManager.recordQuestionProceed()
         if (shouldUpdateQuestion) {
             updateStartingInQuestionMode()
         }
         questionMode = true
-        val lifeCycleOwner = activity
         val currentNote = currentNote
-
         currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = false)
-        if (currentNote != null) {
-            val questionAudioFilePath = currentNote.question
-            var shouldPlayTwiceInARow = true
-            MoveManager.replaceMoveJobWith(lifeCycleOwner.lifecycleScope.launch(Dispatchers.Main) {
-                while (isActive) {
-                    if (questionAudioFilePath != currentNote.question) {
-                        // TODOJ maybe turn into precondition.
-                        return@launch
-                    }
-                    if (!activity.isAtLeastResumed()) {
-                        delay(100)
-                        continue
-                    }
-
-                    AudioPlayer.instance.playFile(
-                        questionAudioFilePath,
-                        firedOnceCompletionListener = {},
-                        shouldRepeat = shouldPlayTwiceInARow,
-                        autoPlay = true)
-
-                    // Delay for 1 second to avoid interfering with the main file that is playing...
-                    delay(1_000)
-                    // ... then preload a file that is likely to be used soon.
-                    try {
-                        currentDeckReviewQueue!!.preload()
-                    } catch (e: IllegalStateException) {
-                        TtsSpeaker.speak("preload failed", lowVolume = true)
-                        e.printStackTrace()
-                    }
-
-                    // TODO(jrochest) Start the delay below after done playing. Utilize the
-                    // firedOnceCompletionListener
-                    // Note this works fine if it replays before the note is done.
-                    shouldPlayTwiceInARow = false
-                    delay(30_000)
-                    // This TTS is mostly helpful to avoid the bluetooth speakers being off during
-                    // replay.
-                    TtsSpeaker.speak("replay", lowVolume = true)
-                    delay(500)
-                }
-            })
-        } else {
-            // Release audio focus since the dialog prevents keyboards from controlling memprime.
-            activity.maybeChangeAudioFocus(false)
-            TtsSpeaker.speak("Great job! Deck done.")
-            val deckChooser = DeckChooseModeSetter.getInstance()
-            val nextDeckWithItems = deckChooser.nextDeckWithItems
-            if (nextDeckWithItems != null) {
-                deckChooser.loadDeck(nextDeckWithItems)
-                TtsSpeaker.speak("Loading " + nextDeckWithItems.name)
-            } else {
-                TtsSpeaker.speak("All decks done..")
-            }
-        }
     }
 
     private val lastOrNull: Note?
@@ -222,19 +223,7 @@ class PracticeModeStateModel @Inject constructor(
         questionMode = false
         val currentNote = currentNote
         currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = true)
-        val lifeCycleOwner = activity
-        if (currentNote != null && lifeCycleOwner != null) {
-            MoveManager.replaceMoveJobWith(lifeCycleOwner.lifecycleScope.launch(Dispatchers.Main) {
-                AudioPlayer.instance.playFile(currentNote.answer, shouldRepeat = true)
-                delay(30_000)
-                if (isActive) {
-                    TtsSpeaker.speak("Auto-proceed from answer.")
-                    proceed()
-                }
-            })
-        }
     }
-
 
     private fun updateStartingInQuestionMode() {
         currentNote = currentDeckReviewQueue!!.peekQueue()
@@ -283,7 +272,7 @@ class PracticeModeStateModel @Inject constructor(
         }
     }
 
-    override fun deleteNote() {
+    fun deleteNote() {
         val noteEditor = DbNoteEditor.instance
         val note = currentNote
         if (note != null) {

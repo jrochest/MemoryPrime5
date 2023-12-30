@@ -5,9 +5,6 @@ import kotlinx.coroutines.Job
 
 object MoveManager {
 
-    fun recordQuestionProceed() {
-    }
-
     private val currentJobs = mutableListOf<Job>()
 
     fun replaceMoveJobWith(job: Job) {

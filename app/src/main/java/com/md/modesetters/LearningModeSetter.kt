@@ -238,7 +238,6 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
         context: Activity,
         shouldUpdateQuestion: Boolean = true
     ) {
-        MoveManager.recordQuestionProceed()
         if (shouldUpdateQuestion) {
             updateVal()
         }

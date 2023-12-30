@@ -5,7 +5,7 @@ import android.os.SystemClock
 import androidx.lifecycle.lifecycleScope
 import com.md.modesetters.MoveManager
 import com.md.modesetters.ModeSetter
-import com.md.modesetters.PracticeModeStateModel
+import com.md.modesetters.PracticeModeStateHandler
 import com.md.modesetters.TtsSpeaker
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
@@ -106,7 +106,7 @@ class ExternalClickCounter
 
 
 
-    fun handleRhythmUiTaps(modeSetter: PracticeModeStateModel, eventTimeMs: Long, pressGroupMaxGapMs: Long, tapCount: Int): Boolean {
+    fun handleRhythmUiTaps(modeSetter: PracticeModeStateHandler, eventTimeMs: Long, pressGroupMaxGapMs: Long, tapCount: Int): Boolean {
         currentJob?.cancel()
         currentJob = null
         val currentTimeMs = SystemClock.uptimeMillis()

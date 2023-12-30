@@ -276,7 +276,7 @@ class SpacedRepeaterActivity
 
 
     fun maybeDim() {
-        // TODOJNOW delete.
+        // TODOJSOONNOW delete.
     }
 
     companion object {
@@ -328,7 +328,7 @@ class SpacedRepeaterActivity
     }
 
     @JvmOverloads
-    fun handleRhythmUiTaps(learningModeSetter: PracticeModeStateModel, uptimeMillis: Long, pressGroupMaxGapMsScreen: Long, tapCount: Int = 1) {
+    fun handleRhythmUiTaps(learningModeSetter: PracticeModeStateHandler, uptimeMillis: Long, pressGroupMaxGapMsScreen: Long, tapCount: Int = 1) {
         externalClickCounter.get().handleRhythmUiTaps(learningModeSetter, uptimeMillis, pressGroupMaxGapMsScreen, tapCount)
     }
 

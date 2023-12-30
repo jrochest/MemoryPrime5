@@ -56,7 +56,15 @@ class CurrentNotePartManager @Inject constructor(
         context as SpacedRepeaterActivity
     }
 
-    private var currentNote: Note? = null
+    class NoteState(
+        val currentNote: Note,
+        val notePart: NotePart
+    )
+
+    val noteStateFlow = MutableStateFlow<NoteState?>(null)
+
+
+    var currentNote: Note? = null
     private var partIsAnswer: Boolean? = null
     val hasNote = MutableStateFlow(false)
     val hasSavable = mutableStateOf(false)
@@ -66,6 +74,7 @@ class CurrentNotePartManager @Inject constructor(
     }
 
     fun onDelete() {
+        noteStateFlow.value = null
         notePart.clearRecordings()
         currentNote = null
         this.partIsAnswer = null
@@ -88,15 +97,14 @@ class CurrentNotePartManager @Inject constructor(
         // Create a note part that has all the parts already.
         notePart.partIsAnswer = partIsAnswer
         hasNote.value = true
+        noteStateFlow.value = NoteState(note, notePart)
     }
 
     fun saveNewAudio() {
        val savableRecorder = checkNotNull(checkNotNull(notePart, {"note part null"}).consumeSavableRecorder())
         updateAudioFilename(savableRecorder.originalFile)
         notePart.clearRecordings()
-        practiceModeComposerManager.get().practiceModeViewModel.practiceViewState.mode.value = PracticeMode.Practicing
-        practiceModeComposerManager.get().practiceModeViewModel.practiceViewState.recordUnlocked.value = false
-    }
+     }
 
     fun updateAudioFilename(filename: String) {
        val note = checkNotNull(currentNote)

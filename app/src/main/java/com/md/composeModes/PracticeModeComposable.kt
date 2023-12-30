@@ -12,23 +12,21 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.md.SpacedRepeaterActivity
-import com.md.modesetters.PracticeModeStateModel
+import com.md.modesetters.PracticeModeStateHandler
 import com.md.composeModes.WorkingMemoryScreen.LARGE_TAP_AREA_LABEL
 import com.md.composeStyles.ButtonStyles
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -61,15 +59,9 @@ enum class PracticeMode {
     Practicing
 }
 
-class PracticeViewState(
-    val recordUnlocked: MutableState<Boolean> = mutableStateOf(false),
-    val mode: MutableState<PracticeMode> = mutableStateOf(PracticeMode.Practicing)
-)
-
-
 @ActivityScoped
 class PracticeModeViewModel @Inject constructor() {
-    val practiceViewState = PracticeViewState()
+    val practiceStateFlow = MutableStateFlow(PracticeMode.Practicing)
 }
 
 
@@ -77,7 +69,7 @@ class PracticeModeViewModel @Inject constructor() {
 class PracticeModeComposerManager @Inject constructor(
     @ActivityContext val context: Context,
     val practiceModeViewModel: PracticeModeViewModel,
-    val stateModel: PracticeModeStateModel,
+    val stateModel: PracticeModeStateHandler,
     val model: ModeViewModel,
     val currentNotePartManager: CurrentNotePartManager,
 ) {
@@ -99,13 +91,12 @@ class PracticeModeComposerManager @Inject constructor(
     @Composable
     fun compose() {
         PracticeModeComposable(
-
-            practiceViewState = practiceModeViewModel.practiceViewState,
             onAudioRecorderTripleTap = {
-                practiceModeViewModel.practiceViewState.recordUnlocked.value = true
-                practiceModeViewModel.practiceViewState.mode.value = PracticeMode.Recording
+                practiceModeViewModel.practiceStateFlow.value = PracticeMode.Recording
             },
-            currentNotePartManager = currentNotePartManager,
+            onDeleteTap = {
+                stateModel.deleteNote()
+            },
             onMiddleButtonTapInPracticeMode = {
                 activity.handleRhythmUiTaps(
                     stateModel,
@@ -113,136 +104,178 @@ class PracticeModeComposerManager @Inject constructor(
                     SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN
                 )
             },
-            onDeleteTap = {
-                stateModel.deleteNote()
-            }
-
+            practiceMode = practiceModeViewModel.practiceStateFlow.collectAsState().value,
+            currentNotePartManager = currentNotePartManager
         )
     }
-}
 
-@Composable
-fun PracticeModeComposable(
-    onAudioRecorderTripleTap: () -> Unit = { },
-    onDeleteTap: () -> Unit = {},
-    onMiddleButtonTapInPracticeMode: () -> Unit = {},
-    practiceViewState: PracticeViewState,
-    currentNotePartManager: CurrentNotePartManager
-) {
-    val hasNote = currentNotePartManager.hasNote.collectAsState()
 
-    if (!hasNote.value) {
-        Text(text = "Nothing more to study")
-        return
-    }
-    val notePart = checkNotNull(currentNotePartManager.notePart)
 
-    Column(
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.Start
+    @Composable
+    fun PracticeModeComposable(
+        onAudioRecorderTripleTap: () -> Unit = { },
+        onDeleteTap: () -> Unit = {},
+        onMiddleButtonTapInPracticeMode: () -> Unit = {},
+        practiceMode: PracticeMode,
+        currentNotePartManager: CurrentNotePartManager
     ) {
+        val hasNote = currentNotePartManager.hasNote.collectAsState()
 
-        val largeButtonModifier = Modifier
-            .fillMaxHeight(fraction = .85f)
-            .heightIn(min = 48.dp)
-            .padding(4.dp)
-        // LARGE BUTTON.
-        when (practiceViewState.mode.value) {
-            PracticeMode.Practicing -> {
-                MiddlePracticeButton(
-                    largeButtonModifier, onMiddleButtonTapInPracticeMode,
-                    colors = ButtonStyles.ImportantButtonColor()
-                ) {
-                    Text(
-                        text = LARGE_TAP_AREA_LABEL,
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                }
-            }
-
-            PracticeMode.Recording -> {
-                var modifier = largeButtonModifier
-                val text =
-                    if (currentNotePartManager.hasSavable.value) {
-                        "Play pending recording"
-                    } else {
-                        "Waiting..."
-                    }
-                MiddlePracticeButton(modifier,
-                    onMiddleButtonTap = {
-                        notePart.savableRecorder?.playFile()
-                    }) {
-                    Text(
-                        text = text,
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                }
-            }
-
-            PracticeMode.Deleting ->  {
-                MiddlePracticeButton(
-                    largeButtonModifier,
-                    { practiceViewState.mode.value = PracticeMode.Practicing },
-                    colors = ButtonStyles.MediumImportanceButtonColor()
-                ) {
-                    Text(
-                        text = "Exit delete mode",
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                }
-            }
+        if (!hasNote.value) {
+            Text(text = "Nothing more to study")
+            return
         }
+        val notePart = checkNotNull(currentNotePartManager.notePart)
 
-        // END LARGE BUTTON.
+        Column(
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start
+        ) {
 
-        // START Medium button row.
-        val bottomButtonHeight = 180.dp
-        val bottomButtonModifier = Modifier
-            .heightIn(min = bottomButtonHeight)
-            .padding(4.dp)
+            val largeButtonModifier = Modifier
+                .fillMaxHeight(fraction = .85f)
+                .heightIn(min = 48.dp)
+                .padding(4.dp)
+            // LARGE BUTTON.
+            when (practiceMode) {
+                PracticeMode.Practicing -> {
+                    MiddlePracticeButton(
+                        largeButtonModifier, onMiddleButtonTapInPracticeMode,
+                        colors = ButtonStyles.ImportantButtonColor()
+                    ) {
+                        Text(
+                            text = LARGE_TAP_AREA_LABEL,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                }
 
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
-            // BOTTOM LEFT BUTTON
-            val bottomLeftButtonModifier = bottomButtonModifier.fillMaxWidth(fraction = .5f)
-            when (practiceViewState.mode.value) {
                 PracticeMode.Recording -> {
-                    AudioRecordButton(
+                    var modifier = largeButtonModifier
+                    val text =
+                        if (currentNotePartManager.hasSavable.value) {
+                            "Play pending recording"
+                        } else {
+                            "Waiting..."
+                        }
+                    MiddlePracticeButton(modifier,
+                        onMiddleButtonTap = {
+                            notePart.savableRecorder?.playFile()
+                        }) {
+                        Text(
+                            text = text,
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
+                }
+
+                PracticeMode.Deleting ->  {
+                    MiddlePracticeButton(
+                        largeButtonModifier,
+                        {
+                          practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
+                        },
+                        colors = ButtonStyles.MediumImportanceButtonColor()
+                    ) {
+                        Text(
+                            text = "Exit delete mode",
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
+                }
+            }
+
+            // END LARGE BUTTON.
+
+            // START Medium button row.
+            val bottomButtonHeight = 180.dp
+            val bottomButtonModifier = Modifier
+                .heightIn(min = bottomButtonHeight)
+                .padding(4.dp)
+
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                // BOTTOM LEFT BUTTON
+                val bottomLeftButtonModifier = bottomButtonModifier.fillMaxWidth(fraction = .5f)
+                when (practiceMode) {
+                    PracticeMode.Recording -> {
+                        AudioRecordButton(
                             bottomLeftButtonModifier, notePart,
                             hasSavable = currentNotePartManager.hasSavable
                         )
-                }
-                PracticeMode.Deleting -> {
-                    Button(modifier = bottomLeftButtonModifier,
-                        colors = ButtonStyles.MediumImportanceButtonColor(),
-                        onClick = { practiceViewState.mode.value = PracticeMode.Practicing }) {
-                        Text(text = "Exit delete mode")
+                    }
+                    PracticeMode.Deleting -> {
+                        Button(modifier = bottomLeftButtonModifier,
+                            colors = ButtonStyles.MediumImportanceButtonColor(),
+                            onClick = {
+                                practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
+                            }) {
+                            Text(text = "Exit delete mode")
+                        }
+                    }
+                    PracticeMode.Practicing -> {
+                        UnlockRecordButton(
+                            modifier = bottomLeftButtonModifier,
+                            unlock = onAudioRecorderTripleTap
+                        )
                     }
                 }
-                PracticeMode.Practicing -> {
-                    UnlockRecordButton(
-                        modifier = bottomLeftButtonModifier,
-                        unlock = onAudioRecorderTripleTap
-                    )
-                }
-            }
-            // BOTTOM RIGHT BUTTON
-            val bottomRightButtonModifier = bottomButtonModifier.fillMaxWidth(fraction = 1f)
-            when (practiceViewState.mode.value) {
-                PracticeMode.Recording -> {
-                    SaveButtonForPendingNotePartRecording(
-                        modifier = bottomRightButtonModifier,
-                        onSaveTap = { currentNotePartManager.saveNewAudio() },
-                        hasSavable = currentNotePartManager.hasSavable
-                    )
-                }
-                PracticeMode.Deleting,
-                PracticeMode.Practicing -> {
-                    DeleteButton(bottomRightButtonModifier, onDeleteTap, practiceViewState.mode)
+                // BOTTOM RIGHT BUTTON
+                val bottomRightButtonModifier = bottomButtonModifier.fillMaxWidth(fraction = 1f)
+                when (practiceMode) {
+                    PracticeMode.Recording -> {
+                        SaveButtonForPendingNotePartRecording(
+                            modifier = bottomRightButtonModifier,
+                            onSaveTap = {
+                                currentNotePartManager.saveNewAudio()
+                                practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
+                            },
+                            hasSavable = currentNotePartManager.hasSavable
+                        )
+                    }
+                    PracticeMode.Deleting,
+                    PracticeMode.Practicing -> {
+                        DeleteButton(bottomRightButtonModifier, onDeleteTap, practiceMode)
+                    }
                 }
             }
         }
     }
+
+
+
+    @Composable
+    private fun DeleteButton(
+        bottomRightButtonModifier: Modifier,
+        onDeleteTap: () -> Unit,
+        mode: PracticeMode
+    ) {
+        TripleTapButton(
+            modifier = bottomRightButtonModifier,
+            onTripleTap = {
+                if (mode == PracticeMode.Deleting) {
+                    onDeleteTap()
+                    practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
+                } else {
+                    practiceModeViewModel.practiceStateFlow.value = PracticeMode.Deleting
+                }
+            },
+            colors = if (mode == PracticeMode.Deleting) ButtonStyles.ImportantButtonColor() else ButtonStyles.MediumImportanceButtonColor()
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Delete",
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Text(
+                    text = "Triple tap quickly",
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
+    }
+
 }
+
 
 @Composable
 private fun MiddlePracticeButton(
@@ -261,37 +294,6 @@ private fun MiddlePracticeButton(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             content()
-        }
-    }
-}
-
-@Composable
-private fun DeleteButton(
-    bottomRightButtonModifier: Modifier,
-    onDeleteTap: () -> Unit,
-    mode: MutableState<PracticeMode>
-) {
-    TripleTapButton(
-        modifier = bottomRightButtonModifier,
-        onTripleTap = {
-            if (mode.value == PracticeMode.Deleting) {
-                onDeleteTap()
-                mode.value = PracticeMode.Practicing
-            } else {
-                mode.value = PracticeMode.Deleting
-            }
-        },
-        colors = if (mode.value == PracticeMode.Deleting) ButtonStyles.ImportantButtonColor() else ButtonStyles.MediumImportanceButtonColor()
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "Delete",
-                style = MaterialTheme.typography.titleLarge
-            )
-            Text(
-                text = "Triple tap quickly",
-                style = MaterialTheme.typography.labelSmall
-            )
         }
     }
 }

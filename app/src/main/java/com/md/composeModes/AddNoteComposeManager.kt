@@ -22,7 +22,6 @@ import com.md.DbNoteEditor
 import com.md.RecordingTooSmallException
 import com.md.RevisionQueue
 import com.md.SpacedRepeaterActivity
-import com.md.composeStyles.ButtonStyles
 import com.md.composeStyles.ButtonStyles.ImportantButtonColor
 import com.md.composeStyles.ButtonStyles.MediumImportanceButtonColor
 import com.md.modesetters.TtsSpeaker
@@ -128,8 +127,6 @@ fun AudioRecordAndPlayButtonForPart(
     firstButtonModifier: Modifier,
     secondButtonModifier: Modifier,
     notePart: NotePart,
-    showSaveButton: Boolean = false,
-    onSaveTap: () -> Unit = {},
     hasSavable: MutableState<Boolean> = mutableStateOf(false)
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -188,14 +185,6 @@ fun AudioRecordAndPlayButtonForPart(
                 notePart.savableRecorder?.playFile()
             }) {
             RecorderButtonText(text = "Play ${notePart.name}")
-        }
-        if (showSaveButton) {
-            Button(
-                modifier = secondButtonModifier,
-                onClick = onSaveTap
-            ) {
-                RecorderButtonText(text = "Save")
-            }
         }
     }
 }
