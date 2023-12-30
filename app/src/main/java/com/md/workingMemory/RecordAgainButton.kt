@@ -2,17 +2,12 @@ package com.md.workingMemory
 
 import android.content.Context
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.md.AudioRecorder
 import com.md.DbNoteEditor
 import com.md.SpacedRepeaterActivity
@@ -65,7 +60,7 @@ class CurrentNotePartManager @Inject constructor(
     private var partIsAnswer: Boolean? = null
     val hasNote = MutableStateFlow(false)
     val hasSavable = mutableStateOf(false)
-     val notePart = NotePart(updateHasPart = { value: Boolean -> hasSavable.value = value })
+    val notePart = NotePart(updateHasPart = { value: Boolean -> hasSavable.value = value })
     init {
         changeCurrentNotePart(null, null)
     }
@@ -92,7 +87,8 @@ class CurrentNotePartManager @Inject constructor(
        val savableRecorder = checkNotNull(checkNotNull(notePart, {"note part null"}).consumeSavableRecorder())
         updateAudioFilename(savableRecorder.originalFile)
         notePart.clearRecordings()
-        practiceModeComposerManager.get().viewState.recordUnlocked.value = false
+        practiceModeComposerManager.get().practiceModeViewModel.practiceViewState.mode.value = PracticeMode.Practicing
+        practiceModeComposerManager.get().practiceModeViewModel.practiceViewState.recordUnlocked.value = false
     }
 
     fun updateAudioFilename(filename: String) {
@@ -108,28 +104,13 @@ class CurrentNotePartManager @Inject constructor(
 }
 
 @Composable
-fun RecordAgainButton(
+fun UnlockRecordButton(
     modifier: Modifier,
-    onTripleTapToUnlock: () -> Unit,
-    viewState: PracticeModeComposerManager.ViewState,
-    currentNotePartManager: CurrentNotePartManager
+    unlock: () -> Unit,
 ) {
-    val hasNote = currentNotePartManager.hasNote.collectAsState()
-    if (viewState.recordUnlocked.value) {
-         if (hasNote.value) {
-             val buttonModifier = Modifier.height(64.dp)
-             val firstButtonModifier = buttonModifier
-             val secondButtonModifier = buttonModifier
-
-                 val notePart = checkNotNull(currentNotePartManager.notePart)
-            AudioRecordAndPlayButtonForPart(firstButtonModifier, secondButtonModifier, notePart, showSaveButton = true,
-                onSaveTap = {currentNotePartManager.saveNewAudio()},
-                currentNotePartManager.hasSavable)
-        }
-    } else {
         TripleTapButton(
             modifier = modifier,
-            onTripleTap = onTripleTapToUnlock
+            onTripleTap = unlock
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
@@ -142,5 +123,4 @@ fun RecordAgainButton(
                 )
             }
         }
-    }
 }

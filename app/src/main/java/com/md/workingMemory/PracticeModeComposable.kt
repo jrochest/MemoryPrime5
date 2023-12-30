@@ -2,7 +2,6 @@ package com.md.workingMemory
 
 import android.content.Context
 import android.os.SystemClock
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -52,18 +51,38 @@ Remove note from storage. Must be done twice.
 
 """.trimMargin()
 }
+ enum class PracticeMode {
+    Recording,
+    Deleting,
+    Practicing
+}
+
+class PracticeViewState(
+    val recordUnlocked: MutableState<Boolean> = mutableStateOf(false),
+    val mode: MutableState<PracticeMode> = mutableStateOf(PracticeMode.Practicing)
+)
+
+
+@ActivityScoped
+class PracticeModeViewModel @Inject constructor() {
+    val practiceViewState = PracticeViewState()
+}
+
 
 @ActivityScoped
 class PracticeModeComposerManager @Inject constructor(
     @ActivityContext val context: Context,
+    val practiceModeViewModel: PracticeModeViewModel,
     val stateModel: PracticeModeStateModel,
     val model: ModeViewModel,
     val currentNotePartManager: CurrentNotePartManager,
-    private val recordButtonController: RecordButtonController,) {
+    private val recordButtonController: RecordButtonController,
+) {
 
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
     }
+
     init {
         activity.lifecycleScope.launch {
             model.modeModel.collect { mode ->
@@ -74,20 +93,22 @@ class PracticeModeComposerManager @Inject constructor(
         }
     }
 
-    val viewState = ViewState()
-    class ViewState(val recordUnlocked: MutableState<Boolean> = mutableStateOf(false))
+
     @Composable
     fun compose() {
         PracticeModeComposable(
-            viewState = viewState,
+            practiceViewState = practiceModeViewModel.practiceViewState,
             onAudioRecorderTripleTap = {
-                viewState.recordUnlocked.value = true
+                practiceModeViewModel.practiceViewState.recordUnlocked.value = true
+                practiceModeViewModel.practiceViewState.mode.value = PracticeMode.Recording
             },
             currentNotePartManager = currentNotePartManager,
             onMiddleButtonTap = {
-                activity.handleRhythmUiTaps(stateModel,
-                SystemClock.uptimeMillis(),
-                SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN)
+                activity.handleRhythmUiTaps(
+                    stateModel,
+                    SystemClock.uptimeMillis(),
+                    SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN
+                )
             }
         )
     }
@@ -98,13 +119,22 @@ fun PracticeModeComposable(
     onAudioRecorderTripleTap: () -> Unit = { },
     onDeleteTap: () -> Unit = {},
     onMiddleButtonTap: () -> Unit = {},
-    viewState: PracticeModeComposerManager.ViewState,
+    practiceViewState: PracticeViewState,
     currentNotePartManager: CurrentNotePartManager
 ) {
+    val hasNote = currentNotePartManager.hasNote.collectAsState()
+
+    if (!hasNote.value) {
+        Text(text = "Nothing more to study")
+        return
+    }
+    val notePart = checkNotNull(currentNotePartManager.notePart)
+
     Column(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.Start
     ) {
+        // LARGE BUTTON.
         Button(
             modifier = Modifier
                 .fillMaxHeight(fraction = .85f)
@@ -119,36 +149,70 @@ fun PracticeModeComposable(
                 )
             }
         }
+        // END LARGE BUTTON.
+
+        // START Medium button row.
         val bottomButtonHeight = 180.dp
         val bottomButtonModifier = Modifier
             .heightIn(min = bottomButtonHeight)
             .padding(4.dp)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            RecordAgainButton(
-                viewState = viewState,
-                modifier = bottomButtonModifier.fillMaxWidth(fraction = .5f),
-                onTripleTapToUnlock = onAudioRecorderTripleTap,
-                currentNotePartManager = currentNotePartManager
-            )
-            // Why hide the delete button while recording a note.
-            val hasNote = currentNotePartManager.hasNote.collectAsState()
-            if (!viewState.recordUnlocked.value) {
-                Button(
-                    modifier = bottomButtonModifier.fillMaxWidth(fraction = 1f),
-                    onClick = { onDeleteTap() }
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "Delete",
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                        Text(
-                            text = "Triple tap quickly",
-                            style = MaterialTheme.typography.labelSmall
-                        )
+
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+            // BOTTOM LEFT BUTTON
+            val bottomLeftButtonModifier = bottomButtonModifier.fillMaxWidth(fraction = .5f)
+            when (practiceViewState.mode.value) {
+                PracticeMode.Recording -> {
+                    if (hasNote.value) {
+                        AudioRecordButton(bottomLeftButtonModifier, notePart)
                     }
                 }
+                PracticeMode.Deleting -> TODO()
+                PracticeMode.Practicing -> {
+                    UnlockRecordButton(
+                        modifier = bottomLeftButtonModifier,
+                        unlock = onAudioRecorderTripleTap
+                    )
+                }
             }
+
+            // BOTTOM RIGHT BUTTON
+            val bottomRightButtonModifier = bottomButtonModifier.fillMaxWidth(fraction = 1f)
+            when (practiceViewState.mode.value) {
+                PracticeMode.Recording -> {
+                    SaveButtonForPendingNotePartRecording(
+                        modifier = bottomRightButtonModifier,
+                        notePart = notePart,
+                        hasSavable = currentNotePartManager.hasSavable,
+                        onSaveTap2 = {currentNotePartManager.saveNewAudio()}
+                    )
+                }
+                PracticeMode.Deleting -> TODO()
+                PracticeMode.Practicing -> {
+                    DeleteButton(bottomRightButtonModifier, onDeleteTap)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DeleteButton(
+    bottomRightButtonModifier: Modifier,
+    onDeleteTap: () -> Unit
+) {
+    Button(
+        modifier = bottomRightButtonModifier,
+        onClick = { onDeleteTap() }
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "Delete",
+                style = MaterialTheme.typography.titleLarge
+            )
+            Text(
+                text = "Triple tap quickly",
+                style = MaterialTheme.typography.labelSmall
+            )
         }
     }
 }

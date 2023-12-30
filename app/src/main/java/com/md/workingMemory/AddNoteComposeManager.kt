@@ -64,13 +64,15 @@ class AddNoteComposeManager @Inject constructor(
                 AudioRecordAndPlayButtonForPart(
                     firstButtonModifier, secondButtonModifier,
                     notePart = notePartQuestion,
-                    hasSavable = state.hasQuestion)
+                    hasSavable = state.hasQuestion
+                )
             }
             Row(Modifier.fillMaxHeight(.5f)) {
                 AudioRecordAndPlayButtonForPart(
                     firstButtonModifier, secondButtonModifier,
                     notePart = notePartAnswer,
-                    hasSavable = state.hasAnswer)
+                    hasSavable = state.hasAnswer
+                )
             }
             Row(Modifier.fillMaxHeight(1f)) {
                 Button(modifier = firstButtonModifier,
@@ -86,7 +88,7 @@ class AddNoteComposeManager @Inject constructor(
                     }) {
                     RecorderButtonText(text = "Reset")
                 }
-                if ( state.hasAnswer.value && state.hasQuestion.value) {
+                if (state.hasAnswer.value && state.hasQuestion.value) {
                     Button(modifier = secondButtonModifier,
                         onClick = {
                             val currentDeckReviewQueue = RevisionQueue.currentDeckReviewQueue
@@ -94,8 +96,10 @@ class AddNoteComposeManager @Inject constructor(
                                 TtsSpeaker.error("No revision queue. Make and or select a deck.")
                                 return@Button
                             }
-                            val questionFile = checkNotNull(notePartQuestion.savableRecorder).originalFile
-                            val answerFile = checkNotNull(notePartAnswer.savableRecorder).originalFile
+                            val questionFile =
+                                checkNotNull(notePartQuestion.savableRecorder).originalFile
+                            val answerFile =
+                                checkNotNull(notePartAnswer.savableRecorder).originalFile
                             val noteEditor = checkNotNull(DbNoteEditor.instance)
                             var note = Note(questionFile, answerFile)
                             note = noteEditor.insert(note) as Note
@@ -138,6 +142,7 @@ fun AudioRecordAndPlayButtonForPart(
                     notePart.pendingRecorder = null
                     recorder.deleteFile()
                 }
+
                 val pendingRecorder = notePart.pendingRecorder
                 if (pendingRecorder != null) {
                     try {
@@ -182,13 +187,104 @@ fun AudioRecordAndPlayButtonForPart(
             RecorderButtonText(text = "Play ${notePart.name}")
         }
         if (showSaveButton) {
-            Button(modifier = secondButtonModifier,
-                onClick = onSaveTap) {
+            Button(
+                modifier = secondButtonModifier,
+                onClick = onSaveTap
+            ) {
                 RecorderButtonText(text = "Save")
             }
         }
     }
 }
+
+
+@Composable
+fun PlayButtonForPendingRecording(
+    modifier: Modifier,
+    notePart: NotePart,
+    hasSavable: MutableState<Boolean> = mutableStateOf(false)
+) {
+    if (hasSavable.value) {
+        Button(modifier = modifier,
+            onClick = {
+                notePart.savableRecorder?.playFile()
+            }) {
+            RecorderButtonText(text = "Play ${notePart.name}")
+        }
+    }
+}
+
+@Composable
+fun SaveButtonForPendingNotePartRecording(
+    modifier: Modifier,
+    notePart: NotePart,
+    onSaveTap2: () -> Unit = {},
+    hasSavable: MutableState<Boolean> = mutableStateOf(false)
+) {
+    if (hasSavable.value) {
+        Button(modifier = modifier,
+            onClick = { onSaveTap2() }) {
+            RecorderButtonText(text = "Save")
+        }
+    }
+}
+
+@Composable
+fun AudioRecordButton(
+    modifier: Modifier,
+    notePart: NotePart,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    if (isPressed) {
+        if (notePart.pendingRecorder == null) {
+            notePart.pendingRecorder = AudioRecorder().apply { start() }
+        }
+        DisposableEffect(Unit) {
+            onDispose {
+                fun handleFailedPendingRecording() {
+                    val recorder = checkNotNull(notePart.pendingRecorder)
+                    notePart.pendingRecorder = null
+                    recorder.deleteFile()
+                }
+
+                val pendingRecorder = notePart.pendingRecorder
+                if (pendingRecorder != null) {
+                    try {
+                        pendingRecorder.stop()
+                        if (pendingRecorder.isRecorded) {
+                            val oldRecording = notePart.savableRecorder
+                            if (oldRecording != null) {
+                                oldRecording.stop()
+                                oldRecording.deleteFile()
+                            }
+                            notePart.savableRecorder = pendingRecorder
+                        } else {
+                            TtsSpeaker.speak("Recording failed")
+                            handleFailedPendingRecording()
+                        }
+                        notePart.pendingRecorder = null
+                    } catch (e: RecordingTooSmallException) {
+                        TtsSpeaker.speak("Recording too short")
+                        handleFailedPendingRecording()
+                    }
+                }
+            }
+        }
+    }
+    Button(modifier = modifier,
+        interactionSource = interactionSource,
+        onClick = {}) {
+        RecorderButtonText(
+            text = if (isPressed) {
+                "Recording ${notePart.name}"
+            } else {
+                "Record ${notePart.name} "
+            }
+        )
+    }
+}
+
 
 @Composable
 fun RecorderButtonText(text: String) {
