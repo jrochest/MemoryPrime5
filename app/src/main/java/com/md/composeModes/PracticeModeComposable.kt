@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,6 +25,7 @@ import androidx.lifecycle.lifecycleScope
 import com.md.SpacedRepeaterActivity
 import com.md.modesetters.PracticeModeStateModel
 import com.md.composeModes.WorkingMemoryScreen.LARGE_TAP_AREA_LABEL
+import com.md.composeStyles.ButtonStyles
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.launch
@@ -51,7 +53,8 @@ Remove note from storage. Must be done twice.
 
 """.trimMargin()
 }
- enum class PracticeMode {
+
+enum class PracticeMode {
     Recording,
     Deleting,
     Practicing
@@ -133,20 +136,24 @@ fun PracticeModeComposable(
         horizontalAlignment = Alignment.Start
     ) {
 
- val largeButtonModifier = Modifier
-     .fillMaxHeight(fraction = .85f)
-     .heightIn(min = 48.dp)
-     .padding(4.dp)
+        val largeButtonModifier = Modifier
+            .fillMaxHeight(fraction = .85f)
+            .heightIn(min = 48.dp)
+            .padding(4.dp)
         // LARGE BUTTON.
         when (practiceViewState.mode.value) {
             PracticeMode.Practicing -> {
-                MiddlePracticeButton(largeButtonModifier, onMiddleButtonTapInPracticeMode) {
+                MiddlePracticeButton(
+                    largeButtonModifier, onMiddleButtonTapInPracticeMode,
+                    colors = ButtonStyles.ImportantButtonColor()
+                ) {
                     Text(
                         text = LARGE_TAP_AREA_LABEL,
                         style = MaterialTheme.typography.labelMedium
                     )
                 }
             }
+
             PracticeMode.Recording -> {
                 var modifier = largeButtonModifier
                 val text =
@@ -165,7 +172,18 @@ fun PracticeModeComposable(
                     )
                 }
             }
-            PracticeMode.Deleting -> TODO()
+
+            PracticeMode.Deleting ->  {
+                MiddlePracticeButton(
+                    largeButtonModifier, onMiddleButtonTapInPracticeMode,
+                    colors = ButtonStyles.MediumImportanceButtonColor()
+                ) {
+                    Text(
+                        text = "Undo",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+            }
         }
 
         // END LARGE BUTTON.
@@ -181,11 +199,18 @@ fun PracticeModeComposable(
             val bottomLeftButtonModifier = bottomButtonModifier.fillMaxWidth(fraction = .5f)
             when (practiceViewState.mode.value) {
                 PracticeMode.Recording -> {
-                    if (hasNote.value) {
-                        AudioRecordButton(bottomLeftButtonModifier, notePart)
+                    AudioRecordButton(
+                            bottomLeftButtonModifier, notePart,
+                            hasSavable = currentNotePartManager.hasSavable
+                        )
+                }
+                PracticeMode.Deleting -> {
+                    Button(modifier = bottomLeftButtonModifier,
+                        colors = ButtonStyles.MediumImportanceButtonColor(),
+                        onClick = { }) {
+                        Text(text = "Undo")
                     }
                 }
-                PracticeMode.Deleting -> TODO()
                 PracticeMode.Practicing -> {
                     UnlockRecordButton(
                         modifier = bottomLeftButtonModifier,
@@ -193,20 +218,19 @@ fun PracticeModeComposable(
                     )
                 }
             }
-
             // BOTTOM RIGHT BUTTON
             val bottomRightButtonModifier = bottomButtonModifier.fillMaxWidth(fraction = 1f)
             when (practiceViewState.mode.value) {
                 PracticeMode.Recording -> {
                     SaveButtonForPendingNotePartRecording(
                         modifier = bottomRightButtonModifier,
-                        onSaveTap = {currentNotePartManager.saveNewAudio()},
+                        onSaveTap = { currentNotePartManager.saveNewAudio() },
                         hasSavable = currentNotePartManager.hasSavable
                     )
                 }
-                PracticeMode.Deleting -> TODO()
+                PracticeMode.Deleting,
                 PracticeMode.Practicing -> {
-                    DeleteButton(bottomRightButtonModifier, onDeleteTap)
+                    DeleteButton(bottomRightButtonModifier, onDeleteTap, practiceViewState.mode)
                 }
             }
         }
@@ -217,11 +241,13 @@ fun PracticeModeComposable(
 private fun MiddlePracticeButton(
     modifier: Modifier,
     onMiddleButtonTap: () -> Unit,
-    content: @Composable () -> Unit
+    colors: ButtonColors = ButtonStyles.MediumImportanceButtonColor(),
+    content: @Composable () -> Unit,
 ) {
     Button(
         modifier = modifier,
-        onClick = { onMiddleButtonTap() }
+        onClick = { onMiddleButtonTap() },
+        colors = colors,
     ) {
         Column(
             Modifier.fillMaxWidth(),
@@ -235,11 +261,19 @@ private fun MiddlePracticeButton(
 @Composable
 private fun DeleteButton(
     bottomRightButtonModifier: Modifier,
-    onDeleteTap: () -> Unit
+    onDeleteTap: () -> Unit,
+    mode: MutableState<PracticeMode>
 ) {
     Button(
         modifier = bottomRightButtonModifier,
-        onClick = { onDeleteTap() }
+        onClick = {
+            if (mode.value == PracticeMode.Deleting) {
+                onDeleteTap()
+            } else {
+                mode.value = PracticeMode.Deleting
+            }
+        },
+        colors = if (mode.value == PracticeMode.Deleting) ButtonStyles.ImportantButtonColor() else ButtonStyles.MediumImportanceButtonColor()
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
@@ -264,21 +298,24 @@ fun TripleTapButton(
     var tapCount = 0
     var previousTapTimeMillis = 0L
     val maxTimeBetweenTapsMillis = 1000
-    Button(modifier = modifier, onClick = {
-        val currentTime = SystemClock.uptimeMillis()
-        if (currentTime - previousTapTimeMillis <= maxTimeBetweenTapsMillis) {
-            if (tapCount >= 2) {
-                onTripleTap()
-                tapCount = 0
+    Button(
+        modifier = modifier, onClick = {
+            val currentTime = SystemClock.uptimeMillis()
+            if (currentTime - previousTapTimeMillis <= maxTimeBetweenTapsMillis) {
+                if (tapCount >= 2) {
+                    onTripleTap()
+                    tapCount = 0
+                } else {
+                    tapCount++
+                }
             } else {
-                tapCount++
+                tapCount = 1
             }
-        } else {
-            tapCount = 1
-        }
-        previousTapTimeMillis = currentTime
+            previousTapTimeMillis = currentTime
 
-    }, content = content)
+        }, content = content,
+        colors = ButtonStyles.MediumImportanceButtonColor()
+    )
 }
 
 

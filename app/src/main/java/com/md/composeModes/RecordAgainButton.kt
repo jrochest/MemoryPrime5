@@ -111,6 +111,7 @@ fun UnlockRecordButton(
         TripleTapButton(
             modifier = modifier,
             onTripleTap = unlock
+
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(

@@ -22,6 +22,9 @@ import com.md.DbNoteEditor
 import com.md.RecordingTooSmallException
 import com.md.RevisionQueue
 import com.md.SpacedRepeaterActivity
+import com.md.composeStyles.ButtonStyles
+import com.md.composeStyles.ButtonStyles.ImportantButtonColor
+import com.md.composeStyles.ButtonStyles.MediumImportanceButtonColor
 import com.md.modesetters.TtsSpeaker
 import com.md.provider.Note
 import dagger.hilt.android.scopes.ActivityScoped
@@ -201,10 +204,11 @@ fun AudioRecordAndPlayButtonForPart(
 fun SaveButtonForPendingNotePartRecording(
     modifier: Modifier,
     onSaveTap: () -> Unit = {},
-    hasSavable: MutableState<Boolean> = mutableStateOf(false)
+    hasSavable: MutableState<Boolean> = mutableStateOf(false),
 ) {
     if (hasSavable.value) {
         Button(modifier = modifier,
+            colors = ImportantButtonColor(),
             onClick = { onSaveTap() }) {
             RecorderButtonText(text = "Save")
         }
@@ -215,6 +219,7 @@ fun SaveButtonForPendingNotePartRecording(
 fun AudioRecordButton(
     modifier: Modifier,
     notePart: NotePart,
+    hasSavable: MutableState<Boolean>,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -256,7 +261,9 @@ fun AudioRecordButton(
     }
     Button(modifier = modifier,
         interactionSource = interactionSource,
-        onClick = {}) {
+        onClick = {},
+        colors = if (hasSavable.value) MediumImportanceButtonColor() else ImportantButtonColor()
+    ) {
         RecorderButtonText(
             text = if (isPressed) {
                 "Recording ${notePart.name}"
