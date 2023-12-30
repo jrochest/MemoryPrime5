@@ -186,7 +186,7 @@ fun PracticeModeComposable(
                     colors = ButtonStyles.MediumImportanceButtonColor()
                 ) {
                     Text(
-                        text = "Undo",
+                        text = "Exit delete mode",
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
@@ -215,7 +215,7 @@ fun PracticeModeComposable(
                     Button(modifier = bottomLeftButtonModifier,
                         colors = ButtonStyles.MediumImportanceButtonColor(),
                         onClick = { practiceViewState.mode.value = PracticeMode.Practicing }) {
-                        Text(text = "Undo")
+                        Text(text = "Exit delete mode")
                     }
                 }
                 PracticeMode.Practicing -> {
