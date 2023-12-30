@@ -181,9 +181,11 @@ fun AudioRecordAndPlayButtonForPart(
             }) {
             RecorderButtonText(text = "Play ${notePart.name}")
         }
-        Button(modifier = secondButtonModifier,
-            onClick = onSaveTap) {
-            RecorderButtonText(text = "Save")
+        if (showSaveButton) {
+            Button(modifier = secondButtonModifier,
+                onClick = onSaveTap) {
+                RecorderButtonText(text = "Save")
+            }
         }
     }
 }
