@@ -2,17 +2,18 @@ package com.md.workingMemory
 
 import android.content.Context
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.md.AudioRecorder
 import com.md.DbNoteEditor
 import com.md.SpacedRepeaterActivity
 import com.md.provider.Note
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,36 +51,45 @@ class RecordButtonController @Inject constructor(
 @ActivityScoped
 class CurrentNotePartManager @Inject constructor(
     @ActivityContext val context: Context,
+    val practiceModeComposerManager: Lazy<PracticeModeComposerManager>,
 ) {
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
     }
+
     private var currentNote: Note? = null
     private var partIsAnswer: Boolean? = null
-    var notePart: NotePart? = null
+    val hasNote = MutableStateFlow(false)
+    val hasSavable = mutableStateOf(false)
+     val notePart = NotePart(updateHasPart = { value: Boolean -> hasSavable.value = value })
+    init {
+        changeCurrentNotePart(null, null)
+    }
+
 
     fun changeCurrentNotePart(note: Note?, partIsAnswer: Boolean?) {
-
         if (note == null || partIsAnswer == null) {
+            notePart.clearRecordings()
             currentNote = null
             this.partIsAnswer = null
-            notePart = null
             hasNote.value = false
+            hasSavable.value = false
             return
         }
 
         currentNote = note
         this.partIsAnswer = partIsAnswer
         // Create a note part that has all the parts already.
-        notePart = NotePart(
-            updateHasPart = {},
-            hasPart =  { true },
-            partIsAnswer = partIsAnswer
-        )
+        notePart.partIsAnswer = partIsAnswer
         hasNote.value = true
     }
 
-    val hasNote = MutableStateFlow(false)
+    fun saveNewAudio() {
+       val savableRecorder = checkNotNull(checkNotNull(notePart, {"note part null"}).consumeSavableRecorder())
+        updateAudioFilename(savableRecorder.originalFile)
+        notePart.clearRecordings()
+        practiceModeComposerManager.get().viewState.recordUnlocked.value = false
+    }
 
     fun updateAudioFilename(filename: String) {
        val note = checkNotNull(currentNote)
@@ -104,7 +114,9 @@ fun RecordAgainButton(
     if (viewState.recordUnlocked.value) {
         if (hasNote.value) {
             val notePart = checkNotNull(currentNotePartManager.notePart)
-            AudioRecordAndPlayButtonForPart(Modifier, Modifier, notePart)
+            AudioRecordAndPlayButtonForPart(Modifier, Modifier, notePart, showSaveButton = true,
+                onSaveTap = {currentNotePartManager.saveNewAudio()},
+                currentNotePartManager.hasSavable)
         }
     } else {
         TripleTapButton(

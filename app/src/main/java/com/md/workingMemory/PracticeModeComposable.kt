@@ -26,6 +26,7 @@ import com.md.SpacedRepeaterActivity
 import com.md.modesetters.PracticeModeStateModel
 import com.md.workingMemory.WorkingMemoryScreen.LARGE_TAP_AREA_LABEL
 import dagger.hilt.android.qualifiers.ActivityContext
+import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -52,6 +53,7 @@ Remove note from storage. Must be done twice.
 """.trimMargin()
 }
 
+@ActivityScoped
 class PracticeModeComposerManager @Inject constructor(
     @ActivityContext val context: Context,
     val stateModel: PracticeModeStateModel,

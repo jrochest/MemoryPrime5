@@ -3,11 +3,26 @@ package com.md.workingMemory
 import com.md.AudioRecorder
 
 class NotePart(
-    var recorder: AudioRecorder? = null,
-    var pendingRecorder: AudioRecorder? = null,
+    var partIsAnswer: Boolean = true,
     val updateHasPart: (Boolean) -> Unit,
-    val hasPart: () -> Boolean,
-    val partIsAnswer: Boolean = true,
 ) {
+    var pendingRecorder: AudioRecorder? = null
+    var savableRecorder: AudioRecorder? = null
+        set(value) {
+            updateHasPart(value != null && value.isRecorded)
+            field = value
+        }
+
+    fun consumeSavableRecorder(): AudioRecorder? {
+        val savableRecorder = checkNotNull(savableRecorder)
+        this.savableRecorder = null
+        return savableRecorder
+    }
+
+    fun clearRecordings() {
+        pendingRecorder = null
+        savableRecorder = null
+    }
+
     val name: String = if (partIsAnswer) "answer" else "question"
 }
