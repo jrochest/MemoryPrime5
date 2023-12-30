@@ -150,11 +150,11 @@ fun PracticeModeComposable(
             PracticeMode.Recording -> {
                 var modifier = largeButtonModifier
                 val text =
-                if (currentNotePartManager.hasSavable.value) {
-                    "Play pending recording"
-                } else {
-                    "Waiting..."
-                }
+                    if (currentNotePartManager.hasSavable.value) {
+                        "Play pending recording"
+                    } else {
+                        "Waiting..."
+                    }
                 MiddlePracticeButton(modifier,
                     onMiddleButtonTap = {
                         notePart.savableRecorder?.playFile()
