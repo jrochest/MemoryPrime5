@@ -1,4 +1,4 @@
-package com.md.workingMemory
+package com.md.composeModes
 
 import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
@@ -28,7 +28,7 @@ import com.md.modesetters.SettingModeSetter
 import com.md.workers.IncrementalBackupManager
 
 @Composable
-fun TopLevelMenu(
+fun TopMenu(
     onLearningMode: () -> Unit,
     onDeckChooseMode: () -> Unit,
     modeViewModel: ModeViewModel
@@ -36,14 +36,17 @@ fun TopLevelMenu(
     val mode = modeViewModel.modeModel.collectAsState()
     var showMenu by remember { mutableStateOf(false) }
 
-
     @Composable
-    fun MenuButton(    myMode: Mode?,
+    fun MenuButton(myMode: Mode?,
         onClick: () -> Unit,
                    content: @Composable RowScope.() -> Unit) {
         Button(
             modifier = Modifier.height(64.dp),
-            colors = if (myMode != null && myMode == mode.value) {ButtonDefaults.buttonColors()} else  { ButtonDefaults.filledTonalButtonColors() },
+            colors = if (myMode != null && myMode == mode.value) {
+                ButtonDefaults.buttonColors()
+            } else  {
+                ButtonDefaults.filledTonalButtonColors()
+                    },
             onClick = onClick,
             content = content)
     }

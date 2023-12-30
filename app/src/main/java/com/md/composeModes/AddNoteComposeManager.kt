@@ -1,4 +1,4 @@
-package com.md.workingMemory
+package com.md.composeModes
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState

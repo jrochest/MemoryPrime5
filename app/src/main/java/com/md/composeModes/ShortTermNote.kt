@@ -1,9 +1,8 @@
-package com.md.workingMemory
+package com.md.composeModes
 
 import android.annotation.SuppressLint
 import android.os.SystemClock
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import com.md.SpacedRepeaterActivity
 import java.text.SimpleDateFormat
 import java.util.Date
 

@@ -8,7 +8,7 @@ import com.md.modesetters.*
 import com.md.utils.ToastSingleton
 import com.md.workers.BackupToUsbManager
 import com.md.workers.IncrementalBackupManager.createAndWriteZipBackToPreviousLocation
-import com.md.workingMemory.ComposeModeSetter
+import com.md.composeModes.ComposeModeSetter
 import dagger.Lazy
 import dagger.hilt.android.scopes.ActivityScoped
 import java.io.File

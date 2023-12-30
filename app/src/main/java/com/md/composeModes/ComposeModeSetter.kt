@@ -1,4 +1,4 @@
-package com.md.workingMemory
+package com.md.composeModes
 
 import android.app.Activity
 import android.content.Context
@@ -85,7 +85,7 @@ class ComposeModeSetter @Inject constructor(
                         Surface {
                             Column {
                                 val mode = modeViewModel.modeModel.collectAsState()
-                                TopLevelMenu(onLearningMode = {
+                                TopMenu(onLearningMode = {
                                     modeViewModel.modeModel.value = Mode.Practice
                                     this@ComposeModeSetter.switchMode(context = activity)
                                 }, onDeckChooseMode = {

@@ -11,7 +11,7 @@ import com.md.provider.Note
 import com.md.utils.ScreenDimmer
 import com.md.utils.ToastSingleton
 import com.md.workers.BackupPreferences.markAllStale
-import com.md.workingMemory.CurrentNotePartManager
+import com.md.composeModes.CurrentNotePartManager
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.Dispatchers

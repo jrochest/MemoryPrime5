@@ -1,4 +1,4 @@
-package com.md.workingMemory
+package com.md.composeModes
 
 import android.content.Context
 import androidx.compose.foundation.layout.Column

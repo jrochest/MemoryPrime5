@@ -1,4 +1,4 @@
-package com.md.workingMemory
+package com.md.composeModes
 
 import android.content.Context
 import android.os.SystemClock
@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.md.SpacedRepeaterActivity
 import com.md.modesetters.PracticeModeStateModel
-import com.md.workingMemory.WorkingMemoryScreen.LARGE_TAP_AREA_LABEL
+import com.md.composeModes.WorkingMemoryScreen.LARGE_TAP_AREA_LABEL
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.launch
