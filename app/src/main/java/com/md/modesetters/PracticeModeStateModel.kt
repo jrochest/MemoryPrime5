@@ -289,6 +289,7 @@ class PracticeModeStateModel @Inject constructor(
         if (note != null) {
             noteEditor!!.deleteCurrent(activity!!, note)
             currentDeckReviewQueue!!.removeNote(note.id)
+            currentNotePartManager.onDelete()
         }
         setupQuestionMode()
     }

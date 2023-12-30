@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -98,6 +99,7 @@ class PracticeModeComposerManager @Inject constructor(
     @Composable
     fun compose() {
         PracticeModeComposable(
+
             practiceViewState = practiceModeViewModel.practiceViewState,
             onAudioRecorderTripleTap = {
                 practiceModeViewModel.practiceViewState.recordUnlocked.value = true
@@ -110,7 +112,11 @@ class PracticeModeComposerManager @Inject constructor(
                     SystemClock.uptimeMillis(),
                     SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN
                 )
+            },
+            onDeleteTap = {
+                stateModel.deleteNote()
             }
+
         )
     }
 }
@@ -175,7 +181,8 @@ fun PracticeModeComposable(
 
             PracticeMode.Deleting ->  {
                 MiddlePracticeButton(
-                    largeButtonModifier, onMiddleButtonTapInPracticeMode,
+                    largeButtonModifier,
+                    { practiceViewState.mode.value = PracticeMode.Practicing },
                     colors = ButtonStyles.MediumImportanceButtonColor()
                 ) {
                     Text(
@@ -207,7 +214,7 @@ fun PracticeModeComposable(
                 PracticeMode.Deleting -> {
                     Button(modifier = bottomLeftButtonModifier,
                         colors = ButtonStyles.MediumImportanceButtonColor(),
-                        onClick = { }) {
+                        onClick = { practiceViewState.mode.value = PracticeMode.Practicing }) {
                         Text(text = "Undo")
                     }
                 }
@@ -264,11 +271,12 @@ private fun DeleteButton(
     onDeleteTap: () -> Unit,
     mode: MutableState<PracticeMode>
 ) {
-    Button(
+    TripleTapButton(
         modifier = bottomRightButtonModifier,
-        onClick = {
+        onTripleTap = {
             if (mode.value == PracticeMode.Deleting) {
                 onDeleteTap()
+                mode.value = PracticeMode.Practicing
             } else {
                 mode.value = PracticeMode.Deleting
             }
@@ -293,6 +301,7 @@ private fun DeleteButton(
 fun TripleTapButton(
     onTripleTap: () -> Unit,
     modifier: Modifier = Modifier,
+    colors: ButtonColors = ButtonStyles.MediumImportanceButtonColor(),
     content: @Composable RowScope.() -> Unit
 ) {
     var tapCount = 0
@@ -314,7 +323,7 @@ fun TripleTapButton(
             previousTapTimeMillis = currentTime
 
         }, content = content,
-        colors = ButtonStyles.MediumImportanceButtonColor()
+        colors = colors
     )
 }
 

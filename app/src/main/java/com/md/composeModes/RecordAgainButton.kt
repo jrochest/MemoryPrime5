@@ -65,6 +65,13 @@ class CurrentNotePartManager @Inject constructor(
         changeCurrentNotePart(null, null)
     }
 
+    fun onDelete() {
+        notePart.clearRecordings()
+        currentNote = null
+        this.partIsAnswer = null
+        hasNote.value = false
+        hasSavable.value = false
+    }
 
     fun changeCurrentNotePart(note: Note?, partIsAnswer: Boolean?) {
         if (note == null || partIsAnswer == null) {
