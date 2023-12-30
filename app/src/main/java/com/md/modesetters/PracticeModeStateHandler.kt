@@ -89,6 +89,8 @@ class PracticeModeStateHandler @Inject constructor(
                                 return@launch
                             }
                         } else {
+                            // TODOJNOW added next task. Make Play file suspending so that we can
+                            // play multiple times and stop playback on cancelation.
                             AudioPlayer.instance.playFile(
                                 note.question,
                                 firedOnceCompletionListener = {},

@@ -273,7 +273,6 @@ class PracticeModeComposerManager @Inject constructor(
             }
         }
     }
-
 }
 
 
