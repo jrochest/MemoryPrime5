@@ -76,7 +76,6 @@ class PracticeModeComposerManager @Inject constructor(
     val stateModel: PracticeModeStateModel,
     val model: ModeViewModel,
     val currentNotePartManager: CurrentNotePartManager,
-    private val recordButtonController: RecordButtonController,
 ) {
 
     val activity: SpacedRepeaterActivity by lazy {
@@ -93,7 +92,6 @@ class PracticeModeComposerManager @Inject constructor(
         }
     }
 
-
     @Composable
     fun compose() {
         PracticeModeComposable(
@@ -103,7 +101,7 @@ class PracticeModeComposerManager @Inject constructor(
                 practiceModeViewModel.practiceViewState.mode.value = PracticeMode.Recording
             },
             currentNotePartManager = currentNotePartManager,
-            onMiddleButtonTap = {
+            onMiddleButtonTapInPracticeMode = {
                 activity.handleRhythmUiTaps(
                     stateModel,
                     SystemClock.uptimeMillis(),
@@ -118,7 +116,7 @@ class PracticeModeComposerManager @Inject constructor(
 fun PracticeModeComposable(
     onAudioRecorderTripleTap: () -> Unit = { },
     onDeleteTap: () -> Unit = {},
-    onMiddleButtonTap: () -> Unit = {},
+    onMiddleButtonTapInPracticeMode: () -> Unit = {},
     practiceViewState: PracticeViewState,
     currentNotePartManager: CurrentNotePartManager
 ) {
@@ -134,21 +132,42 @@ fun PracticeModeComposable(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.Start
     ) {
+
+ val largeButtonModifier = Modifier
+     .fillMaxHeight(fraction = .85f)
+     .heightIn(min = 48.dp)
+     .padding(4.dp)
         // LARGE BUTTON.
-        Button(
-            modifier = Modifier
-                .fillMaxHeight(fraction = .85f)
-                .heightIn(min = 48.dp)
-                .padding(4.dp),
-            onClick = { onMiddleButtonTap() }
-        ) {
-            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = LARGE_TAP_AREA_LABEL,
-                    style = MaterialTheme.typography.labelMedium
-                )
+        when (practiceViewState.mode.value) {
+            PracticeMode.Practicing -> {
+                MiddlePracticeButton(largeButtonModifier, onMiddleButtonTapInPracticeMode) {
+                    Text(
+                        text = LARGE_TAP_AREA_LABEL,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
             }
+            PracticeMode.Recording -> {
+                var modifier = largeButtonModifier
+                val text =
+                if (currentNotePartManager.hasSavable.value) {
+                    "Play pending recording"
+                } else {
+                    "Waiting..."
+                }
+                MiddlePracticeButton(modifier,
+                    onMiddleButtonTap = {
+                        notePart.savableRecorder?.playFile()
+                    }) {
+                    Text(
+                        text = text,
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+            }
+            PracticeMode.Deleting -> TODO()
         }
+
         // END LARGE BUTTON.
 
         // START Medium button row.
@@ -181,9 +200,8 @@ fun PracticeModeComposable(
                 PracticeMode.Recording -> {
                     SaveButtonForPendingNotePartRecording(
                         modifier = bottomRightButtonModifier,
-                        notePart = notePart,
-                        hasSavable = currentNotePartManager.hasSavable,
-                        onSaveTap2 = {currentNotePartManager.saveNewAudio()}
+                        onSaveTap = {currentNotePartManager.saveNewAudio()},
+                        hasSavable = currentNotePartManager.hasSavable
                     )
                 }
                 PracticeMode.Deleting -> TODO()
@@ -191,6 +209,25 @@ fun PracticeModeComposable(
                     DeleteButton(bottomRightButtonModifier, onDeleteTap)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun MiddlePracticeButton(
+    modifier: Modifier,
+    onMiddleButtonTap: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    Button(
+        modifier = modifier,
+        onClick = { onMiddleButtonTap() }
+    ) {
+        Column(
+            Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            content()
         }
     }
 }

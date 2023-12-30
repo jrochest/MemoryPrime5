@@ -197,33 +197,15 @@ fun AudioRecordAndPlayButtonForPart(
     }
 }
 
-
-@Composable
-fun PlayButtonForPendingRecording(
-    modifier: Modifier,
-    notePart: NotePart,
-    hasSavable: MutableState<Boolean> = mutableStateOf(false)
-) {
-    if (hasSavable.value) {
-        Button(modifier = modifier,
-            onClick = {
-                notePart.savableRecorder?.playFile()
-            }) {
-            RecorderButtonText(text = "Play ${notePart.name}")
-        }
-    }
-}
-
 @Composable
 fun SaveButtonForPendingNotePartRecording(
     modifier: Modifier,
-    notePart: NotePart,
-    onSaveTap2: () -> Unit = {},
+    onSaveTap: () -> Unit = {},
     hasSavable: MutableState<Boolean> = mutableStateOf(false)
 ) {
     if (hasSavable.value) {
         Button(modifier = modifier,
-            onClick = { onSaveTap2() }) {
+            onClick = { onSaveTap() }) {
             RecorderButtonText(text = "Save")
         }
     }
