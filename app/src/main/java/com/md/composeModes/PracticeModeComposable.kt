@@ -152,7 +152,7 @@ class PracticeModeComposerManager @Inject constructor(
                 PracticeMode.Practicing -> {
                     MiddlePracticeButton(
                         largeButtonModifier, onMiddleButtonTapInPracticeMode,
-                        colors = ButtonStyles.ImportantButtonColor()
+                        colors = ButtonStyles.MediumImportanceButtonColor()
                     ) {
                         val metrics = practiceModeViewModel.metricsFlow.collectAsState().value
                         val isAnswer = currentNotePartManager.noteStateFlow.collectAsState().value?.notePart?.partIsAnswer

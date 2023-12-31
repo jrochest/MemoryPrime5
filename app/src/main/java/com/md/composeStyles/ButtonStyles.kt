@@ -9,14 +9,15 @@ object ButtonStyles {
 
     @Composable
     fun ImportantButtonColor(): ButtonColors {
-       return ButtonDefaults.outlinedButtonColors()
+        return ButtonDefaults.outlinedButtonColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        )
+
     }
 
     @Composable
     fun MediumImportanceButtonColor(): ButtonColors {
-        return ButtonDefaults.outlinedButtonColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-        )
+        return ButtonDefaults.outlinedButtonColors()
     }
 }
