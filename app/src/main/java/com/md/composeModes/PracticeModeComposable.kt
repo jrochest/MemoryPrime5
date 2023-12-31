@@ -247,8 +247,6 @@ class PracticeModeComposerManager @Inject constructor(
         }
     }
 
-
-
     @Composable
     private fun DeleteButton(
         bottomRightButtonModifier: Modifier,

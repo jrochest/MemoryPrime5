@@ -37,7 +37,13 @@ class DeckLoadManager @Inject constructor(@ActivityContext val context: Context,
     }
 
     init {
-        activity.lifecycleScope.launch(Dispatchers.IO) {
+        activity.lifecycleScope.launch {
+            refreshDeckList()
+        }
+    }
+
+    suspend fun refreshDeckList() {
+        withContext(Dispatchers.IO) {
             val resultingDeckList = mutableListOf<DeckInfo>()
             val deckList = mutableListOf<Deck>()
             val queryDeck = DbNoteEditor.instance!!.queryDeck()
@@ -53,19 +59,14 @@ class DeckLoadManager @Inject constructor(@ActivityContext val context: Context,
                 val deckInfo = DeckInfo(deck, revisionQueue, deckCount)
                 resultingDeckList.add(deckInfo)
                 // Use the first deck that is active.
-                if (currentDeckReviewQueue == null && deckInfo.isActive) {
+                if (currentDeckReviewQueue == null && deckInfo.isActive && deckInfo.revisionQueue.getSize() > 0) {
                     revisionQueueStateModel.queue.value = deckInfo.revisionQueue
                     CategorySingleton.getInstance().setDeckInfo(deckInfo)
                 }
             }
             decks.value = resultingDeckList
-
-            withContext(Dispatchers.Main) {
-                if (DeckChooseModeSetter.modeHand!!.whoseOnTop() === DeckChooseModeSetter.getInstance()) {
-                    DeckChooseModeSetter.onComplete()
-                }
-            }
         }
+
     }
 }
 //TODOJNOW hook up the proceed button.

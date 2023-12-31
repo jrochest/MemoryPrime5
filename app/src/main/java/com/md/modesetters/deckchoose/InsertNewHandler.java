@@ -28,7 +28,6 @@ public final class InsertNewHandler implements View.OnClickListener {
 		// Set an EditText view to get user input
 		final EditText input = new EditText(memoryDroid);
 		alert.setView(input);
-
 		alert.setPositiveButton("Ok",
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog,

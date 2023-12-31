@@ -16,17 +16,39 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.lifecycle.lifecycleScope
 import com.md.CategorySingleton
+import com.md.DbNoteEditor.Companion.instance
 import com.md.RevisionQueueStateModel
+import com.md.SpacedRepeaterActivity
+import com.md.modesetters.DeckChooseModeSetter.setupCreateMode
+import com.md.modesetters.DeckInfo
 import com.md.modesetters.DeckLoadManager
+import com.md.provider.Deck
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+
+enum class DeckMode {
+    Default,
+    AddingDeck
+}
+@ActivityScoped
+class DeckModeStateModel @Inject constructor() {
+    val modeModel = MutableStateFlow(DeckMode.Default)
+}
 
 @ActivityScoped
 class DeckModeComposableManager @Inject constructor(
@@ -34,7 +56,13 @@ class DeckModeComposableManager @Inject constructor(
     private val deckLoadManager: DeckLoadManager,
     private val revisionQueueStateModel: RevisionQueueStateModel,
     private val modeViewModel: ModeViewModel,
+    private val deckModeStateModel: DeckModeStateModel,
 ) {
+
+    val activity: SpacedRepeaterActivity by lazy {
+        context as SpacedRepeaterActivity
+    }
+
     @Composable
     fun compose() {
         DeckModeComposable()
@@ -43,77 +71,110 @@ class DeckModeComposableManager @Inject constructor(
     @Composable
     fun DeckModeComposable() {
         val decks = deckLoadManager.decks.collectAsState().value
+        val deckMode = deckModeStateModel.modeModel.collectAsState().value
         if (decks != null) {
             Row {
-                Button(onClick = { /*TODO*/ }) {
+                Button(onClick = {
+                    deckModeStateModel.modeModel.value = DeckMode.AddingDeck
+                }) {
                     Text(text = "Add deck")
                 }
             }
-            Column {
-                decks.forEach {
-                    Divider()
-                    Column {
+            when (deckMode) {
+                DeckMode.Default -> {
+                    DeckList(decks)
+                }
+                DeckMode.AddingDeck -> {
+                    var textValue by remember { mutableStateOf(TextFieldValue("")) }
+                    TextField(
+                        value = textValue,
+                        onValueChange = { newText ->
+                            textValue = newText
+                        },
+                        label = { Text(text = "Deck name") },
+                        placeholder = { Text(text = "My deck (active)") },
+                    )
+                    Button(onClick = {
+                        val deck = Deck(/* name= */ textValue.text)
+                        instance!!.insertDeck(deck)
+                        activity.lifecycleScope.launch {
+                            deckModeStateModel.modeModel.value = DeckMode.Default
+                            deckLoadManager.refreshDeckList()
+                        }
+                    }) {
+                        Text(text = "Save deck")
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun DeckList(decks: List<DeckInfo>) {
+        Column {
+            decks.forEach {
+                Divider()
+                Column {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = it.name,
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                    Row {
                         Text(
-                            modifier = Modifier.fillMaxWidth(),
-                            text = it.name,
-                            style = MaterialTheme.typography.headlineMedium
+                            text = "Queue: " + it.revisionQueue.getSize() + "\nTotal: " + it.deckCount,
+                            style = MaterialTheme.typography.labelLarge
                         )
-                        Row {
+                        VerticalDivider()
+                        TextButton(onClick = {
+                            revisionQueueStateModel.queue.value = it.revisionQueue
+                            CategorySingleton.getInstance().setDeckInfo(it)
+                            modeViewModel.modeModel.value = Mode.Practice
+                        }) {
+                            Text(text = "Practice", style = MaterialTheme.typography.labelLarge)
+                        }
+                        VerticalDivider()
+                        TextButton(onClick = {
+                            revisionQueueStateModel.queue.value = it.revisionQueue
+                            CategorySingleton.getInstance().setDeckInfo(it)
+                            modeViewModel.modeModel.value = Mode.NewNote
+                        }) {
                             Text(
-                                text = "Queue: " + it.revisionQueue.getSize() + "\nTotal: " + it.deckCount,
+                                text = "Add to deck",
                                 style = MaterialTheme.typography.labelLarge
                             )
-                            VerticalDivider()
-                            TextButton(onClick = {
-                                revisionQueueStateModel.queue.value = it.revisionQueue
-                                CategorySingleton.getInstance().setDeckInfo(it)
-                                modeViewModel.modeModel.value = Mode.Practice
-                            }) {
-                                Text(text = "Practice", style = MaterialTheme.typography.labelLarge)
-                            }
-                            VerticalDivider()
-                            TextButton(onClick = {
-                                revisionQueueStateModel.queue.value = it.revisionQueue
-                                CategorySingleton.getInstance().setDeckInfo(it)
-                                modeViewModel.modeModel.value = Mode.NewNote
-                            }) {
-                                Text(
-                                    text = "Add to deck",
-                                    style = MaterialTheme.typography.labelLarge
-                                )
-                            }
-                            var expanded by remember { mutableStateOf(false) }
-                            IconButton(onClick = { expanded = !expanded }) {
-                                Icon(
-                                    imageVector = Icons.Default.MoreVert,
-                                    contentDescription = "More"
-                                )
-                            }
-                            DropdownMenu(
-                                expanded = expanded,
-                                onDismissRequest = { expanded = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("Rename") },
-                                    onClick = {
-                                        Toast.makeText(
-                                            context,
-                                            "Rename",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Delete") },
-                                    onClick = {
-                                        Toast.makeText(
-                                            context,
-                                            "Delete",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                )
-                            }
+                        }
+                        var expanded by remember { mutableStateOf(false) }
+                        IconButton(onClick = { expanded = !expanded }) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "More"
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Rename") },
+                                onClick = {
+                                    Toast.makeText(
+                                        context,
+                                        "Rename",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Delete") },
+                                onClick = {
+                                    Toast.makeText(
+                                        context,
+                                        "Delete",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            )
                         }
                     }
                 }
