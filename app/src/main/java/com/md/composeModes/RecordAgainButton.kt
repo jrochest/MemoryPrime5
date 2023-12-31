@@ -135,11 +135,11 @@ fun UnlockRecordButton(
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Record (Locked)",
+                    text = "Record",
                     style = MaterialTheme.typography.titleLarge
                 )
                 Text(
-                    text = "Triple Tap and then tap hold to record",
+                    text = "(Locked) - Triple Tap and then tap hold to record",
                     style = MaterialTheme.typography.labelSmall
                 )
             }

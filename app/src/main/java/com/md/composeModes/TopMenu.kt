@@ -13,6 +13,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -41,7 +42,7 @@ fun TopMenu(
     fun MenuButton(myMode: Mode?,
         onClick: () -> Unit,
                    content: @Composable RowScope.() -> Unit) {
-        Button(
+        OutlinedButton(
             modifier = Modifier.height(64.dp),
             colors = if (myMode != null && myMode == mode.value) {
                 ImportantButtonColor()

@@ -9,7 +9,7 @@ import com.md.*
 import com.md.RevisionQueue.Companion.currentDeckReviewQueue
 import com.md.provider.AbstractRep
 import com.md.provider.Note
-import com.md.utils.ScreenDimmer
+import com.md.utils.KeepScreenOn
 import com.md.utils.ToastSingleton
 import com.md.workers.BackupPreferences.markAllStale
 import com.md.composeModes.CurrentNotePartManager
@@ -160,21 +160,13 @@ class PracticeModeStateHandler @Inject constructor(
         }
     }
 
-     fun handleReplay() {
-        if (questionMode) {
-            replay()
-        } else {
-            replayA()
-        }
-
-    }
-
-
     // Used to indicate a answer was not remembered
     fun secondaryAction(): String {
         if (!practiceModeViewModel.hasPlayedCurrentNotePart.value) {
             return ""
         }
+
+        KeepScreenOn.getInstance().keepScreenOn(activity)
 
         val messageToSpeak = if (questionMode) {
             "secondary action. proceed"
@@ -199,7 +191,7 @@ class PracticeModeStateHandler @Inject constructor(
         } else {
             val editor = DbNoteEditor.instance
             val context = activity
-            if (context != null && editor != null) {
+            if (editor != null) {
                 currentNote.decreasePriority()
                 editor.update(currentNote)
             } else {
@@ -213,7 +205,7 @@ class PracticeModeStateHandler @Inject constructor(
     }
 
      fun proceed() {
-        //ScreenDimmer.getInstance().keepScreenOn(memoryDroid)
+         KeepScreenOn.getInstance().keepScreenOn(activity)
         if (!practiceModeViewModel.hasPlayedCurrentNotePart.value) {
           return
         }
@@ -303,14 +295,14 @@ class PracticeModeStateHandler @Inject constructor(
     }
 
     private fun replayA() {
-        ScreenDimmer.getInstance().keepScreenOn(activity)
+        KeepScreenOn.getInstance().keepScreenOn(activity)
         if (currentNote != null) {
             AudioPlayer.instance.playFile(currentNote!!.answer, null, true)
         }
     }
 
     private fun replay() {
-        ScreenDimmer.getInstance().keepScreenOn(activity)
+        KeepScreenOn.getInstance().keepScreenOn(activity)
         if (currentNote != null) {
             AudioPlayer.instance.playFile(currentNote!!.question, null, true)
         }
@@ -345,7 +337,7 @@ class PracticeModeStateHandler @Inject constructor(
     }
 
      fun adjustScreenLock() {
-        ScreenDimmer.getInstance().keepScreenOn(activity)
+        KeepScreenOn.getInstance().keepScreenOn(activity)
        // hideSystemUi()
     }
 

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -148,7 +149,6 @@ class PracticeModeComposerManager @Inject constructor(
                         largeButtonModifier, onMiddleButtonTapInPracticeMode,
                         colors = ButtonStyles.ImportantButtonColor()
                     ) {
-
                         val isAnswer = currentNotePartManager.noteStateFlow.collectAsState().value?.notePart?.partIsAnswer
                         Text(
                             text = if (isAnswer == true) "Answer" else "Question",
@@ -216,7 +216,7 @@ class PracticeModeComposerManager @Inject constructor(
                         )
                     }
                     PracticeMode.Deleting -> {
-                        Button(modifier = bottomLeftButtonModifier,
+                        OutlinedButton(modifier = bottomLeftButtonModifier,
                             colors = ButtonStyles.MediumImportanceButtonColor(),
                             onClick = {
                                 practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
@@ -294,7 +294,7 @@ private fun MiddlePracticeButton(
     colors: ButtonColors = ButtonStyles.MediumImportanceButtonColor(),
     content: @Composable () -> Unit,
 ) {
-    Button(
+    OutlinedButton(
         modifier = modifier,
         onClick = { onMiddleButtonTap() },
         colors = colors,
@@ -319,7 +319,7 @@ fun TripleTapButton(
     var tapCount = 0
     var previousTapTimeMillis = 0L
     val maxTimeBetweenTapsMillis = 1000
-    Button(
+    OutlinedButton(
         modifier = modifier, onClick = {
             val currentTime = SystemClock.uptimeMillis()
             if (currentTime - previousTapTimeMillis <= maxTimeBetweenTapsMillis) {

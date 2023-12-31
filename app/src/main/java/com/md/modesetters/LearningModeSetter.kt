@@ -11,7 +11,7 @@ import com.md.*
 import com.md.RevisionQueue.Companion.currentDeckReviewQueue
 import com.md.provider.AbstractRep
 import com.md.provider.Note
-import com.md.utils.ScreenDimmer
+import com.md.utils.KeepScreenOn
 import com.md.utils.ToastSingleton
 import com.md.workers.BackupPreferences.markAllStale
 import dagger.hilt.android.scopes.ActivityScoped
@@ -222,7 +222,7 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
     }
 
     override fun proceed() {
-        ScreenDimmer.getInstance().keepScreenOn(mActivity)
+        KeepScreenOn.getInstance().keepScreenOn(mActivity)
         if (!AudioPlayer.instance.hasPlayedCurrentFile()) {
           return
         }
@@ -406,14 +406,14 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
     }
 
     private fun replayA() {
-        ScreenDimmer.getInstance().keepScreenOn(mActivity)
+        KeepScreenOn.getInstance().keepScreenOn(mActivity)
         if (currentNote != null) {
             AudioPlayer.instance.playFile(currentNote!!.answer, null, true)
         }
     }
 
     private fun replay() {
-        ScreenDimmer.getInstance().keepScreenOn(mActivity)
+        KeepScreenOn.getInstance().keepScreenOn(mActivity)
         if (currentNote != null) {
             AudioPlayer.instance.playFile(currentNote!!.question, null, true)
         }
@@ -450,7 +450,7 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
     }
 
     override fun adjustScreenLock() {
-        ScreenDimmer.getInstance().keepScreenOn(mActivity)
+        KeepScreenOn.getInstance().keepScreenOn(mActivity)
         hideSystemUi()
         mIsDimmed = false
     }

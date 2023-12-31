@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -18,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import com.google.firebase.inappmessaging.model.Button
 import com.md.AudioRecorder
 import com.md.DbNoteEditor
 import com.md.RecordingTooSmallException
@@ -84,7 +86,7 @@ class AddNoteComposeManager @Inject constructor(
                 )
             }
             Row(Modifier.fillMaxHeight(1f)) {
-                Button(modifier = firstButtonModifier,
+                OutlinedButton(modifier = firstButtonModifier,
                     onClick = {
                         notePartQuestion.pendingRecorder?.deleteFile()
                         notePartQuestion.pendingRecorder = null
@@ -98,12 +100,12 @@ class AddNoteComposeManager @Inject constructor(
                     RecorderButtonText(text = "Reset")
                 }
                 if (state.hasAnswer.value && state.hasQuestion.value) {
-                    Button(modifier = secondButtonModifier,
+                    OutlinedButton(modifier = secondButtonModifier,
                         onClick = {
                             val currentDeckReviewQueue = RevisionQueue.currentDeckReviewQueue
                             if (currentDeckReviewQueue == null) {
                                 TtsSpeaker.error("No revision queue. Make and or select a deck.")
-                                return@Button
+                                return@OutlinedButton
                             }
                             val questionFile =
                                 checkNotNull(notePartQuestion.savableRecorder).originalFile
@@ -175,7 +177,7 @@ fun AudioRecordAndPlayButtonForPart(
         }
     }
 
-    Button(modifier = firstButtonModifier,
+    OutlinedButton(modifier = firstButtonModifier,
         interactionSource = interactionSource,
         onClick = {}) {
         RecorderButtonText(
@@ -187,7 +189,7 @@ fun AudioRecordAndPlayButtonForPart(
         )
     }
     if (hasSavable.value) {
-        Button(modifier = secondButtonModifier,
+        OutlinedButton(modifier = secondButtonModifier,
             onClick = {
                 notePart.savableRecorder?.playFile()
             }) {
@@ -203,7 +205,7 @@ fun SaveButtonForPendingNotePartRecording(
     hasSavable: MutableState<Boolean> = mutableStateOf(false),
 ) {
     if (hasSavable.value) {
-        Button(modifier = modifier,
+        OutlinedButton(modifier = modifier,
             colors = ImportantButtonColor(),
             onClick = { onSaveTap() }) {
             RecorderButtonText(text = "Save")
@@ -255,7 +257,7 @@ fun AudioRecordButton(
             }
         }
     }
-    Button(modifier = modifier,
+    OutlinedButton(modifier = modifier,
         interactionSource = interactionSource,
         onClick = {},
         colors = if (hasSavable.value) MediumImportanceButtonColor() else ImportantButtonColor()

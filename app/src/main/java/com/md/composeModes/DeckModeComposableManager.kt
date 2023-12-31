@@ -14,6 +14,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -74,7 +75,7 @@ class DeckModeComposableManager @Inject constructor(
         val deckMode = deckModeStateModel.modeModel.collectAsState().value
         if (decks != null) {
             Row {
-                Button(onClick = {
+                OutlinedButton(onClick = {
                     deckModeStateModel.modeModel.value = DeckMode.AddingDeck
                 }) {
                     Text(text = "Add deck")
@@ -94,7 +95,7 @@ class DeckModeComposableManager @Inject constructor(
                         label = { Text(text = "Deck name") },
                         placeholder = { Text(text = "My deck (active)") },
                     )
-                    Button(onClick = {
+                    OutlinedButton(onClick = {
                         val deck = Deck(/* name= */ textValue.text)
                         instance!!.insertDeck(deck)
                         activity.lifecycleScope.launch {
