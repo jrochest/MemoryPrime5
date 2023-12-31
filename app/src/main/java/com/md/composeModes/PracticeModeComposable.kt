@@ -156,9 +156,12 @@ class PracticeModeComposerManager @Inject constructor(
                     ) {
                         val metrics = practiceModeViewModel.metricsFlow.collectAsState().value
                         val isAnswer = currentNotePartManager.noteStateFlow.collectAsState().value?.notePart?.partIsAnswer
-                        // TODOJ now
                         Text(
-                            text = "Reps: ${metrics.notesPracticed}. Remaining: ${metrics.remainingInQueue}",
+                            text = "Reps: ${metrics.notesPracticed}",
+                            style = MaterialTheme.typography.displayMedium
+                        )
+                        Text(
+                            text = "Remaining: ${metrics.remainingInQueue}",
                             style = MaterialTheme.typography.headlineSmall
                         )
                         Text(
