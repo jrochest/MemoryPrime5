@@ -19,6 +19,7 @@ class BackupModeStateModel @Inject constructor() {
     val summary = MutableStateFlow("Starting backup...")
     val remainingItems = MutableStateFlow("")
     val errorMessage = MutableStateFlow("")
+    val backupInProgress = MutableStateFlow(false)
 }
 
 @ActivityScoped
@@ -35,7 +36,8 @@ class BackupModeComposeManager @Inject constructor(
     init {
         activity.lifecycleScope.launch {
             modeViewModel.modeModel.collect() { mode ->
-                if (mode == Mode.Backup) {
+                if (mode == Mode.Backup && !backupModeStateModel.backupInProgress.value) {
+                    backupModeStateModel.backupInProgress.value = true
                     IncrementalBackupManager.createAndWriteZipBackToPreviousLocation(
                         activity,
                         activity.contentResolver,
@@ -60,6 +62,10 @@ class BackupModeComposeManager @Inject constructor(
         val summary = backupModeStateModel.summary.collectAsState()
         val errorMessage = backupModeStateModel.errorMessage.collectAsState()
         val remainingItems = backupModeStateModel.remainingItems.collectAsState()
+        val inProgress = backupModeStateModel.backupInProgress.collectAsState()
+        if (inProgress.value) {
+            Text(text = "Backup in progress... ", style = MaterialTheme.typography.headlineSmall)
+        }
         Text(text = "Backup status: ", style = MaterialTheme.typography.headlineSmall)
         Text(text = summary.value, style = MaterialTheme.typography.bodyLarge)
         Text(text = remainingItems.value, style = MaterialTheme.typography.bodyMedium)

@@ -103,6 +103,12 @@ object IncrementalBackupManager {
                 )
                 launch (Dispatchers.Main) {
                     onFinished?.invoke(result)
+                    if (result) {
+                        backupModeStateModel?.summary?.value = "\nBackup complete!\n"
+                    } else {
+                        backupModeStateModel?.summary?.value = "\nBackup failed!\n"
+                    }
+                    backupModeStateModel?.backupInProgress?.value = false
                 }
             }
         }
@@ -121,8 +127,8 @@ object IncrementalBackupManager {
         val validBackupUris = backupUris.filter { uri ->
             try {
                 if (DocumentFile.fromTreeUri(context, uri.value)?.isDirectory == true) {
-                    TtsSpeaker.speak("Backup needed for" + (uri.value.lastPathSegment))
-                    backupModeStateModel?.summary?.value = "Backup needed for" + (uri.value.lastPathSegment)
+                    TtsSpeaker.speak("Backup needed for: " + (uri.value.lastPathSegment))
+                    backupModeStateModel?.summary?.value = "Backup needed for: " + (uri.value.lastPathSegment)
                     return@filter true
                 }
             } catch (e: FileNotFoundException) {
@@ -189,7 +195,6 @@ object IncrementalBackupManager {
                             } else {
                                 TtsSpeaker.error("Audio directory contained unknown file")
                             }
-                            backupModeStateModel?.remainingItems?.value = "Analyzing audio directory $index"
                         }
                     } else { // Else it's the database.
                         // Files only. No directories
@@ -210,13 +215,24 @@ object IncrementalBackupManager {
                 }
 
                 // consider it a success if just one succeeds.
-                success = success or zipBackup(validBackupUris, context, contentResolver, mutableListOf(databaseFile), dirsToZip, audioDirectoryToAudioFiles, runExtraValidation, audioDirectoryToModificationTime, shouldSpeak)
+                success = success or zipBackup(validBackupUris, context, contentResolver, mutableListOf(databaseFile), dirsToZip, audioDirectoryToAudioFiles, runExtraValidation, audioDirectoryToModificationTime, shouldSpeak, backupModeStateModel)
             }
         }
         return success
     }
 
-    private suspend fun zipBackup(validBackupUris: Map<String, Uri>, context: Context, contentResolver: ContentResolver, databaseFilesToZip: MutableList<File>, dirsToZip: MutableList<File>, audioDirectoryToAudioFiles: MutableMap<String, List<File>>, runExtraValidation: Boolean, audioDirectoryToModificationTime: MutableMap<String, Long>, shouldSpeak: Boolean) : Boolean {
+    private suspend fun zipBackup(
+        validBackupUris: Map<String, Uri>,
+        context: Context,
+        contentResolver: ContentResolver,
+        databaseFilesToZip: MutableList<File>,
+        dirsToZip: MutableList<File>,
+        audioDirectoryToAudioFiles: MutableMap<String, List<File>>,
+        runExtraValidation: Boolean,
+        audioDirectoryToModificationTime: MutableMap<String, Long>,
+        shouldSpeak: Boolean,
+        backupModeStateModel: BackupModeStateModel?
+    ) : Boolean {
         var success = false
         for (uri: Map.Entry<String, Uri> in validBackupUris) {
             try {
@@ -322,6 +338,10 @@ object IncrementalBackupManager {
                                     GlobalScope.launch(Dispatchers.Main) {
                                         ToastSingleton.getInstance()
                                                 .msg("Memprime backed up $dirName")
+                                        val backupModeStateModel = backupModeStateModel
+                                        if (backupModeStateModel != null) {
+                                            backupModeStateModel.remainingItems.value = backupModeStateModel.remainingItems.value + "\nBackup dir: $dirName"
+                                        }
                                     }
                                     return@async true
                                 } else {
