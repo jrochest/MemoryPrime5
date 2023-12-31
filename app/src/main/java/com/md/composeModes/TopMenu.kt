@@ -4,15 +4,13 @@ import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -49,7 +47,7 @@ fun TopMenu(
         myMode: Mode?,
         onClick: () -> Unit,
         label: String? = null,
-        content: @Composable() (RowScope.() -> Unit) = {},
+        sentContent: @Composable() (() -> Unit) = {},
     ) {
         OutlinedButton(
             modifier = Modifier.heightIn(min = 120.dp).widthIn(max = 100.dp),
@@ -61,17 +59,19 @@ fun TopMenu(
             onClick = onClick,
             content = {
                 if (label != null) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(modifier = Modifier.align(alignment = Alignment.Top),
+                        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Top) {
                         // Show the first letter with large text size.
                         Text(
                             text = label.substring(startIndex = 0, endIndex = 1),
                             style = MaterialTheme.typography.headlineMedium)
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
                         Text(text = label,
                             textAlign = TextAlign.Center,
                             style = MaterialTheme.typography.labelLarge)
+                        sentContent()
                     }
-                    content()
+
                 }
 
             })
@@ -108,13 +108,13 @@ fun TopMenu(
                 modeViewModel.modeModel.value = Mode.Backup
         })
         MenuButton(
-            label = "More\noptions",
+            label = "More",
             myMode = null,
             onClick = {
                 showMenu = !showMenu
             }) {
             Icon(
-                imageVector = Icons.Default.MoreVert,
+                imageVector = Icons.Default.MoreHoriz,
                 contentDescription = "More",
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
