@@ -2,13 +2,17 @@ package com.md.composeModes
 
 import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -21,13 +25,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.md.RestoreFromIncrementalDirectoryManager
 import com.md.composeStyles.ButtonStyles.ImportantButtonColor
 import com.md.composeStyles.ButtonStyles.MediumImportanceButtonColor
 import com.md.modesetters.SettingModeSetter
-import com.md.workers.IncrementalBackupManager
 
 @Composable
 fun TopMenu(
@@ -39,18 +45,37 @@ fun TopMenu(
     var showMenu by remember { mutableStateOf(false) }
 
     @Composable
-    fun MenuButton(myMode: Mode?,
+    fun MenuButton(
+        myMode: Mode?,
         onClick: () -> Unit,
-                   content: @Composable RowScope.() -> Unit) {
+        label: String? = null,
+        content: @Composable() (RowScope.() -> Unit) = {},
+    ) {
         OutlinedButton(
-            modifier = Modifier.height(64.dp),
+            modifier = Modifier.heightIn(min = 120.dp).widthIn(max = 100.dp),
             colors = if (myMode != null && myMode == mode.value) {
                 ImportantButtonColor()
             } else {
                 MediumImportanceButtonColor()
                     },
             onClick = onClick,
-            content = content)
+            content = {
+                if (label != null) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        // Show the first letter with large text size.
+                        Text(
+                            text = label.substring(startIndex = 0, endIndex = 1),
+                            style = MaterialTheme.typography.headlineMedium)
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(text = label,
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.labelLarge)
+                    }
+                    content()
+                }
+
+            })
+
     }
 
     Row(
@@ -59,40 +84,35 @@ fun TopMenu(
     ) {
         val activity = LocalContext.current as Activity
         MenuButton(
+            label = "Create\nnote",
             myMode = Mode.NewNote,
             onClick = {
             modeViewModel.modeModel.value = Mode.NewNote
-        }) {
-            Text(text = "Add note",
-                style = MaterialTheme.typography.labelLarge)
-        }
+        })
         MenuButton(
             myMode = Mode.Practice,
+            label = "Review\nnotes",
             onClick = {
             onPracticeMode()
-        }) {
-            Text(text = "Practice", style = MaterialTheme.typography.labelLarge)
-        }
+        })
         MenuButton(
             myMode = Mode.DeckChooser,
+            label = "Decks",
             onClick = {
             onDeckChooseMode()
-        }) {
-            Text(text = "Decks", style = MaterialTheme.typography.labelLarge)
-        }
+        })
         MenuButton(
             myMode = Mode.Backup,
+            label = "Backup",
             onClick = {
                 modeViewModel.modeModel.value = Mode.Backup
-        }) {
-            Text(text = "Backup", style = MaterialTheme.typography.labelLarge)
-        }
+        })
         MenuButton(
+            label = "More\noptions",
             myMode = null,
             onClick = {
                 showMenu = !showMenu
             }) {
-            Text(text = "More", style = MaterialTheme.typography.labelLarge)
             Icon(
                 imageVector = Icons.Default.MoreVert,
                 contentDescription = "More",
@@ -104,6 +124,17 @@ fun TopMenu(
             ) {
                 DropdownMenuItem({ Text("Settings") }, onClick = {
                     SettingModeSetter.switchMode(activity)
+                })
+            }
+            DropdownMenu(
+                expanded = showMenu,
+                onDismissRequest = { showMenu = false }
+            ) {
+                DropdownMenuItem({ Text("Settings") }, onClick = {
+                    SettingModeSetter.switchMode(activity)
+                })
+                DropdownMenuItem({ Text("Restore from incremental directory") }, onClick = {
+                    RestoreFromIncrementalDirectoryManager.openZipFileDocument(activity)
                 })
             }
         }
