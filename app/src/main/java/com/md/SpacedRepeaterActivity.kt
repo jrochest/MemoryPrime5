@@ -17,6 +17,8 @@ import com.md.workers.BackupToUsbManager.createAndWriteZipBackToNewLocation
 import com.md.workers.IncrementalBackupManager
 import com.md.workers.IncrementalBackupPreferences
 import com.md.composeModes.ComposeModeSetter
+import com.md.composeModes.Mode
+import com.md.composeModes.ModeViewModel
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.scopes.ActivityScoped
@@ -46,6 +48,9 @@ class SpacedRepeaterActivity
     lateinit var deckLoadManager: Lazy<DeckLoadManager>
 
     @Inject lateinit var toneManager: Lazy<ToneManagerImpl>
+
+    @Inject
+    lateinit var model: ModeViewModel
 
     /** Called when the activity is first created.  */
     public override fun onCreate(savedInstanceState: Bundle?) {
@@ -229,8 +234,6 @@ class SpacedRepeaterActivity
      */
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         println("TODOJ key down event$event")
-        val modeBackStack = modeHandler.get()
-        val modeSetter = modeBackStack.whoseOnTop()
         println("TODOJ event$event")
         // BR301 sends an enter command, which we want to ignore.
         if (keyCode == KeyEvent.KEYCODE_ENTER) {
@@ -239,15 +242,13 @@ class SpacedRepeaterActivity
         if (keyCode != KeyEvent.KEYCODE_VOLUME_DOWN && keyCode != KeyEvent.KEYCODE_VOLUME_UP) {
             return super.onKeyDown(keyCode, event)
         }
-        if (modeSetter == null || !isFromMemprimeDevice(keyCode, event)) {
+        if (!isFromMemprimeDevice(keyCode, event)) {
             return super.onKeyDown(keyCode, event)
         }
-        if (modeSetter !is LearningModeSetter) {
-            learningModeSetter.get().switchMode(this)
-            return true
-        }
+        model.modeModel.value = Mode.Practice
+
         val eventTimeMs = event.eventTime
-        return externalClickCounter.get().handleRhythmUiTaps(modeSetter, eventTimeMs, PRESS_GROUP_MAX_GAP_MS_BLUETOOTH, 1)
+        return externalClickCounter.get().handleRhythmUiTaps(eventTimeMs, PRESS_GROUP_MAX_GAP_MS_BLUETOOTH, 1)
     }
 
     fun maybeChangeAudioFocus(shouldHaveFocus: Boolean) {
@@ -328,8 +329,8 @@ class SpacedRepeaterActivity
     }
 
     @JvmOverloads
-    fun handleRhythmUiTaps(learningModeSetter: PracticeModeStateHandler, uptimeMillis: Long, pressGroupMaxGapMsScreen: Long, tapCount: Int = 1) {
-        externalClickCounter.get().handleRhythmUiTaps(learningModeSetter, uptimeMillis, pressGroupMaxGapMsScreen, tapCount)
+    fun handleRhythmUiTaps(uptimeMillis: Long, pressGroupMaxGapMsScreen: Long, tapCount: Int = 1) {
+        externalClickCounter.get().handleRhythmUiTaps(uptimeMillis, pressGroupMaxGapMsScreen, tapCount)
     }
 
     fun switchToLearningMode() {

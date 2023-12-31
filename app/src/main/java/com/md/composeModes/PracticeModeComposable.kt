@@ -105,7 +105,6 @@ class PracticeModeComposerManager @Inject constructor(
             },
             onMiddleButtonTapInPracticeMode = {
                 activity.handleRhythmUiTaps(
-                    stateModel,
                     SystemClock.uptimeMillis(),
                     SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN
                 )
@@ -149,6 +148,13 @@ class PracticeModeComposerManager @Inject constructor(
                         largeButtonModifier, onMiddleButtonTapInPracticeMode,
                         colors = ButtonStyles.ImportantButtonColor()
                     ) {
+
+                        val isAnswer = currentNotePartManager.noteStateFlow.collectAsState().value?.notePart?.partIsAnswer
+                        Text(
+                            text = if (isAnswer == true) "Answer" else "Question",
+                            style = MaterialTheme.typography.headlineLarge
+                        )
+
                         Text(
                             text = LARGE_TAP_AREA_LABEL,
                             style = MaterialTheme.typography.labelMedium

@@ -146,7 +146,6 @@ class PracticeModeStateHandler @Inject constructor(
 
     fun handleTapCount(count: Int) {
         activity.handleRhythmUiTaps(
-            this,
             SystemClock.uptimeMillis(),
             SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_INSTANT,
             count

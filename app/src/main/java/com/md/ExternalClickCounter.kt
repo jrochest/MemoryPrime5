@@ -17,7 +17,9 @@ import javax.inject.Inject
 class ExternalClickCounter
 
     @Inject
-    constructor() {
+    constructor(
+       private val practiceModeHandler: PracticeModeStateHandler
+    ) {
 
     @ActivityContext @Inject lateinit var context: Context
     val activity: SpacedRepeaterActivity by lazy {
@@ -106,7 +108,8 @@ class ExternalClickCounter
 
 
 
-    fun handleRhythmUiTaps(modeSetter: PracticeModeStateHandler, eventTimeMs: Long, pressGroupMaxGapMs: Long, tapCount: Int): Boolean {
+    fun handleRhythmUiTaps(eventTimeMs: Long, pressGroupMaxGapMs: Long, tapCount: Int): Boolean {
+        val handler = practiceModeHandler
         currentJob?.cancel()
         currentJob = null
         val currentTimeMs = SystemClock.uptimeMillis()
@@ -142,22 +145,22 @@ class ExternalClickCounter
             when (mPressGroupCount) {
                 1 -> {
                     message = null
-                    modeSetter.proceed()
+                    handler.proceed()
                 }
                 // This takes a different action based on whether it is a question or answer.
                 2 -> {
-                    message = modeSetter.secondaryAction()
+                    message = handler.secondaryAction()
                 }
                 3, 4 -> {
                     message = "undo"
-                    modeSetter.undo()
+                    handler.undo()
                 }
                 5 -> {
-                    modeSetter.postponeNote(true)
+                    handler.postponeNote(true)
                     message = "$mPressGroupCount postpone"
                 }
                 6  -> {
-                    modeSetter.postponeNote(shouldQueue = false)
+                    handler.postponeNote(shouldQueue = false)
                     message = "$mPressGroupCount postpone without requeue"
                 }
                 9, 10 -> {
