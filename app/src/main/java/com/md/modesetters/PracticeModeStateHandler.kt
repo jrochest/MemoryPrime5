@@ -32,10 +32,11 @@ import javax.inject.Inject
 class PracticeModeStateHandler @Inject constructor(
     val currentNotePartManager: CurrentNotePartManager,
     @ActivityContext val context: Context,
-    private val revisionQueueStateModel: RevisionQueueStateModel,
+    private val focusedQueueStateModel: RevisionQueueStateModel,
     // TODOJNOW use theses.
     private val model: ModeViewModel,
-    private val practiceModeViewModel: PracticeModeViewModel
+    private val practiceModeViewModel: PracticeModeViewModel,
+    private val deckLoadManager: DeckLoadManager,
 ) {
     val activity: SpacedRepeaterActivity = context as SpacedRepeaterActivity
 
@@ -54,7 +55,7 @@ class PracticeModeStateHandler @Inject constructor(
                 combine(
                     flow = model.modeModel,
                     flow2 = practiceModeViewModel.practiceStateFlow,
-                    flow3 = revisionQueueStateModel.queue,
+                    flow3 = focusedQueueStateModel.queue,
                     flow4 = currentNotePartManager.noteStateFlow
                 ) { mode: Mode, practiceMode: PracticeMode, revisionQueue: RevisionQueue?,
                     noteState: CurrentNotePartManager.NoteState? ->
@@ -65,12 +66,10 @@ class PracticeModeStateHandler @Inject constructor(
 
                     if (revisionQueue == null || revisionQueue.getSize() == 0) {
                         MoveManager.cancelJobs()
-                        val deckChooser = DeckChooseModeSetter.getInstance()
-                        val nextDeckWithItems = deckChooser.nextDeckWithItems
-                        if (nextDeckWithItems != null) {
-                            revisionQueueStateModel.queue.value = nextDeckWithItems.revisionQueue
-                            CategorySingleton.getInstance().setDeckInfo(nextDeckWithItems)
-                            TtsSpeaker.speak("Great job! Deck done. Loading " + nextDeckWithItems.name)
+                        deckLoadManager.refreshDeckListAndFocusFirstActiveNonemptyQueue()
+                        val focusedQueue = focusedQueueStateModel.queue.value
+                        if (focusedQueue != null) {
+                            TtsSpeaker.speak("Deck done. Loading next")
                         } else {
                             TtsSpeaker.speak("Great job! Deck done. All decks done..")
                         }
@@ -131,7 +130,7 @@ class PracticeModeStateHandler @Inject constructor(
 
 
         activity.lifecycleScope.launch {
-            revisionQueueStateModel.queue.collect {
+            focusedQueueStateModel.queue.collect {
                 val revisionQueue = it ?: return@collect
                 originalSize = revisionQueue.getSize()
                 lastNoteList.clear()

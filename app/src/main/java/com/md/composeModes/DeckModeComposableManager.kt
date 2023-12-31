@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -31,7 +30,6 @@ import com.md.CategorySingleton
 import com.md.DbNoteEditor.Companion.instance
 import com.md.RevisionQueueStateModel
 import com.md.SpacedRepeaterActivity
-import com.md.modesetters.DeckChooseModeSetter.setupCreateMode
 import com.md.modesetters.DeckInfo
 import com.md.modesetters.DeckLoadManager
 import com.md.provider.Deck
@@ -100,7 +98,7 @@ class DeckModeComposableManager @Inject constructor(
                         instance!!.insertDeck(deck)
                         activity.lifecycleScope.launch {
                             deckModeStateModel.modeModel.value = DeckMode.Default
-                            deckLoadManager.refreshDeckList()
+                            deckLoadManager.refreshDeckListAndFocusFirstActiveNonemptyQueue()
                         }
                     }) {
                         Text(text = "Save deck")

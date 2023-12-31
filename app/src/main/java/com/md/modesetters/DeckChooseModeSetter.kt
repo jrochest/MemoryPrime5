@@ -9,7 +9,6 @@ import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
 import com.md.*
-import com.md.RevisionQueue.Companion.currentDeckReviewQueue
 import com.md.modesetters.DeckItemPopulator.populate
 import com.md.modesetters.deckchoose.DeckDeleter
 import com.md.modesetters.deckchoose.DeckNameUpdater
@@ -20,7 +19,6 @@ import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
@@ -38,11 +36,11 @@ class DeckLoadManager @Inject constructor(@ActivityContext val context: Context,
 
     init {
         activity.lifecycleScope.launch {
-            refreshDeckList()
+            refreshDeckListAndFocusFirstActiveNonemptyQueue()
         }
     }
 
-    suspend fun refreshDeckList() {
+    suspend fun refreshDeckListAndFocusFirstActiveNonemptyQueue() {
         withContext(Dispatchers.IO) {
             val resultingDeckList = mutableListOf<DeckInfo>()
             val deckList = mutableListOf<Deck>()
@@ -50,8 +48,7 @@ class DeckLoadManager @Inject constructor(@ActivityContext val context: Context,
             for (deck in queryDeck) {
                 deckList.add(Deck(deck.id, deck.name))
             }
-            val totalNotes = 0
-            val decksCount = deckList.size
+            var hasSetANonEmptyDeck = false
             for (deck in deckList) {
                 val revisionQueue = RevisionQueue()
                 revisionQueue.populate(DbNoteEditor.instance!!, deck.id)
@@ -59,10 +56,13 @@ class DeckLoadManager @Inject constructor(@ActivityContext val context: Context,
                 val deckInfo = DeckInfo(deck, revisionQueue, deckCount)
                 resultingDeckList.add(deckInfo)
                 // Use the first deck that is active.
-                if (currentDeckReviewQueue == null && deckInfo.isActive && deckInfo.revisionQueue.getSize() > 0) {
-                    revisionQueueStateModel.queue.value = deckInfo.revisionQueue
-                    CategorySingleton.getInstance().setDeckInfo(deckInfo)
-                }
+                 if (!hasSetANonEmptyDeck)  {
+                     if (deckInfo.isActive && deckInfo.revisionQueue.getSize() > 0) {
+                         hasSetANonEmptyDeck = true
+                         CategorySingleton.getInstance().setDeckInfo(deckInfo)
+                         revisionQueueStateModel.queue.value = deckInfo.revisionQueue
+                     }
+                 }
             }
             decks.value = resultingDeckList
         }
