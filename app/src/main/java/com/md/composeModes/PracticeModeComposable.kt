@@ -26,6 +26,7 @@ import com.md.composeModes.WorkingMemoryScreen.LARGE_TAP_AREA_LABEL
 import com.md.composeStyles.ButtonStyles
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -92,7 +93,12 @@ class PracticeModeComposerManager @Inject constructor(
     fun compose() {
         PracticeModeComposable(
             onAudioRecorderTripleTap = {
-                practiceModeViewModel.practiceStateFlow.value = PracticeMode.Recording
+                activity.lifecycleScope.launch {
+                    activity.lowVolumeClickTone()
+                    // It's common to receive 4 taps instead of 3 so delay switching.
+                    delay(500)
+                    practiceModeViewModel.practiceStateFlow.value = PracticeMode.Recording
+                }
             },
             onDeleteTap = {
                 stateModel.deleteNote()
@@ -256,6 +262,7 @@ class PracticeModeComposerManager @Inject constructor(
                     onDeleteTap()
                     practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
                 } else {
+                    activity.lowVolumeClickTone()
                     practiceModeViewModel.practiceStateFlow.value = PracticeMode.Deleting
                 }
             },
