@@ -95,7 +95,7 @@ class SpacedRepeaterActivity
 
         // Hiding stops the repeat playback in learning mode.
         instance.pause()
-        MoveManager.cancelJobs()
+        //MoveManager.cancelJobs()
 
         playbackServiceOnPause()
         maybeStopTone()

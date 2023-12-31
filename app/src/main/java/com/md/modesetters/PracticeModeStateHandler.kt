@@ -2,7 +2,9 @@ package com.md.modesetters
 
 import android.content.Context
 import android.os.SystemClock
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.md.*
 import com.md.RevisionQueue.Companion.currentDeckReviewQueue
 import com.md.provider.AbstractRep
@@ -51,70 +53,83 @@ class PracticeModeStateHandler @Inject constructor(
     private var questionMode = true
     fun onSwitchToMode() {
         activity.lifecycleScope.launch {
-            combine(flow = model.modeModel, flow2 = practiceModeViewModel.practiceStateFlow,
-                flow3 = revisionQueueStateModel.queue,
-                flow4 = currentNotePartManager.noteStateFlow) { mode: Mode, practiceMode: PracticeMode, revisionQueue: RevisionQueue?,
-                noteState: CurrentNotePartManager.NoteState? ->
-                if (mode != Mode.Practice || practiceMode != PracticeMode.Practicing) {
-                    MoveManager.cancelJobs()
-                    return@combine
-                }
-
-                if (revisionQueue == null || revisionQueue.getSize() == 0 ) {
-                    MoveManager.cancelJobs()
-                    val deckChooser = DeckChooseModeSetter.getInstance()
-                    val nextDeckWithItems = deckChooser.nextDeckWithItems
-                    if (nextDeckWithItems != null) {
-                        revisionQueueStateModel.queue.value = nextDeckWithItems.revisionQueue
-                        CategorySingleton.getInstance().setDeckInfo(nextDeckWithItems)
-                        TtsSpeaker.speak("Great job! Deck done. Loading " + nextDeckWithItems.name)
-                    } else {
-                        TtsSpeaker.speak("Great job! Deck done. All decks done..")
+            activity.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                combine(
+                    flow = model.modeModel,
+                    flow2 = practiceModeViewModel.practiceStateFlow,
+                    flow3 = revisionQueueStateModel.queue,
+                    flow4 = currentNotePartManager.noteStateFlow
+                ) { mode: Mode, practiceMode: PracticeMode, revisionQueue: RevisionQueue?,
+                    noteState: CurrentNotePartManager.NoteState? ->
+                    if (mode != Mode.Practice || practiceMode != PracticeMode.Practicing) {
+                        MoveManager.cancelJobs()
+                        return@combine
                     }
-                    return@combine
-                }
 
-                if (noteState == null) {
-                    return@combine
-                }
-
-                // Ensure that we don't allow the user to go forward without playing through the
-                // audio file once.
-                practiceModeViewModel.hasPlayedCurrentNotePart.value = false
-                MoveManager.replaceMoveJobWith(activity.lifecycleScope.launch(Dispatchers.Main) {
-                    while (isActive) {
-                        if (!activity.isAtLeastResumed()) {
-                            delay(100)
-                            continue
-                        }
-                        val part = noteState.notePart
-                        val note = checkNotNull(noteState.currentNote)
-                        if (part.partIsAnswer) {
-                            AudioPlayer.instance.suspendPlay(note.answer)
-                            practiceModeViewModel.hasPlayedCurrentNotePart.value = true
-                            AudioPlayer.instance.suspendPlay(note.answer)
-                            delay(8_000)
-                            TtsSpeaker.speak("Auto-proceed soon.", lowVolume = true)
-                            delay(2_000)
-                            if (isActive) {
-                                TtsSpeaker.speak("Auto-proceed.", lowVolume = true)
-                                proceed()
-                                return@launch
-                            }
+                    if (revisionQueue == null || revisionQueue.getSize() == 0) {
+                        MoveManager.cancelJobs()
+                        val deckChooser = DeckChooseModeSetter.getInstance()
+                        val nextDeckWithItems = deckChooser.nextDeckWithItems
+                        if (nextDeckWithItems != null) {
+                            revisionQueueStateModel.queue.value = nextDeckWithItems.revisionQueue
+                            CategorySingleton.getInstance().setDeckInfo(nextDeckWithItems)
+                            TtsSpeaker.speak("Great job! Deck done. Loading " + nextDeckWithItems.name)
                         } else {
-                            // TODOJNOW added next task. Make Play file suspending so that we can
-                            // play multiple times and stop playback on cancelation.
-                            AudioPlayer.instance.suspendPlay(note.question)
-                            practiceModeViewModel.hasPlayedCurrentNotePart.value = true
-                            delay(2_000)
-                            // This tone is mostly helpful to avoid the bluetooth speakers being off during
-                            // replay.
-                            val unused = async { activity.lowVolumePrimeSpeakerTone() }
-                            delay(500)
+                            TtsSpeaker.speak("Great job! Deck done. All decks done..")
                         }
+                        return@combine
                     }
-                })
-            }.collect {}
+
+                    if (noteState == null) {
+                        return@combine
+                    }
+
+                    // Ensure that we don't allow the user to go forward without playing through the
+                    // audio file once.
+                    practiceModeViewModel.hasPlayedCurrentNotePart.value = false
+                    MoveManager.replaceMoveJobWith(activity.lifecycleScope.launch(Dispatchers.Main) {
+                        while (isActive) {
+                            while (!activity.isAtLeastResumed()) {
+                                delay(1000)
+                            }
+                            val part = noteState.notePart
+                            val note = checkNotNull(noteState.currentNote)
+                            if (part.partIsAnswer) {
+                                AudioPlayer.instance.suspendPlay(note.answer)
+                                practiceModeViewModel.hasPlayedCurrentNotePart.value = true
+                                AudioPlayer.instance.suspendPlay(note.answer)
+                                delay(8_000)
+                                while (!activity.isAtLeastResumed()) {
+                                    delay(1000)
+                                }
+                                TtsSpeaker.speak("Auto-proceed soon.", lowVolume = true)
+                                delay(2_000)
+                                while (!activity.isAtLeastResumed()) {
+                                    delay(1000)
+                                }
+                                if (isActive) {
+                                    TtsSpeaker.speak("Auto-proceed.", lowVolume = true)
+                                    proceed()
+                                    return@launch
+                                }
+                            } else {
+                                // TODOJNOW added next task. Make Play file suspending so that we can
+                                // play multiple times and stop playback on cancelation.
+                                AudioPlayer.instance.suspendPlay(note.question)
+                                practiceModeViewModel.hasPlayedCurrentNotePart.value = true
+                                delay(2_000)
+                                while (!activity.isAtLeastResumed()) {
+                                    delay(1000)
+                                }
+                                // This tone is mostly helpful to avoid the bluetooth speakers being off during
+                                // replay.
+                                val unused = async { activity.lowVolumePrimeSpeakerTone() }
+                                delay(500)
+                            }
+                        }
+                    })
+                }.collect {}
+            }
         }
 
 
