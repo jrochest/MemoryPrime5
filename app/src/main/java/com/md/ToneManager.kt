@@ -7,6 +7,8 @@ interface ToneManager {
     fun errorTone()
     fun lowVolumeClickTone()
 
+    fun lowVolumePrimeSpeakerTone()
+
     fun maybeStartTone(context: Context)
     fun maybeStopTone()
 }

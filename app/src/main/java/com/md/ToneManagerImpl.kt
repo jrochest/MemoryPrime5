@@ -30,6 +30,11 @@ class ToneManagerImpl @Inject constructor() : ToneManager {
         tone.startTone(ToneGenerator.TONE_DTMF_0,  /* durationMs = */ 100)
     }
 
+    override fun lowVolumePrimeSpeakerTone() {
+        val tone = keepAliveTone ?: return
+        tone.startTone(ToneGenerator.TONE_DTMF_1,  /* durationMs = */ 100)
+    }
+
     override fun errorTone() {
         // keep the headphones turned on by playing an almost silent sound n seconds.
         ToneGenerator(AudioManager.STREAM_MUSIC, 80).startTone(ToneGenerator.TONE_CDMA_SOFT_ERROR_LITE, 1000)

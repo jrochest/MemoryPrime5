@@ -62,8 +62,8 @@ enum class PracticeMode {
 @ActivityScoped
 class PracticeModeViewModel @Inject constructor() {
     val practiceStateFlow = MutableStateFlow(PracticeMode.Practicing)
+    val hasPlayedCurrentNotePart = MutableStateFlow(false)
 }
-
 
 @ActivityScoped
 class PracticeModeComposerManager @Inject constructor(

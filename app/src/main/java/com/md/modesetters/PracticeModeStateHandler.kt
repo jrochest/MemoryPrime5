@@ -1,6 +1,5 @@
 package com.md.modesetters
 
-import android.app.Activity
 import android.content.Context
 import android.os.SystemClock
 import androidx.lifecycle.lifecycleScope
@@ -19,12 +18,16 @@ import com.md.composeModes.PracticeModeViewModel
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
+
+
+
 
 @ActivityScoped
 class PracticeModeStateHandler @Inject constructor(
@@ -75,6 +78,9 @@ class PracticeModeStateHandler @Inject constructor(
                     return@combine
                 }
 
+                // Ensure that we don't allow the user to go forward without playing through the
+                // audio file once.
+                practiceModeViewModel.hasPlayedCurrentNotePart.value = false
                 MoveManager.replaceMoveJobWith(activity.lifecycleScope.launch(Dispatchers.Main) {
                     while (isActive) {
                         if (!activity.isAtLeastResumed()) {
@@ -85,10 +91,13 @@ class PracticeModeStateHandler @Inject constructor(
                         val note = checkNotNull(noteState.currentNote)
                         if (part.partIsAnswer) {
                             AudioPlayer.instance.suspendPlay(note.answer)
+                            practiceModeViewModel.hasPlayedCurrentNotePart.value = true
                             AudioPlayer.instance.suspendPlay(note.answer)
-                            delay(10_000)
+                            delay(8_000)
+                            TtsSpeaker.speak("Auto-proceed soon.", lowVolume = true)
+                            delay(2_000)
                             if (isActive) {
-                                TtsSpeaker.speak("Auto-proceed from answer.", lowVolume = true)
+                                TtsSpeaker.speak("Auto-proceed.", lowVolume = true)
                                 proceed()
                                 return@launch
                             }
@@ -96,17 +105,16 @@ class PracticeModeStateHandler @Inject constructor(
                             // TODOJNOW added next task. Make Play file suspending so that we can
                             // play multiple times and stop playback on cancelation.
                             AudioPlayer.instance.suspendPlay(note.question)
-                            AudioPlayer.instance.suspendPlay(note.question)
-                            AudioPlayer.instance.suspendPlay(note.question)
-                            delay(10_000)
-                            // This TTS is mostly helpful to avoid the bluetooth speakers being off during
+                            practiceModeViewModel.hasPlayedCurrentNotePart.value = true
+                            delay(2_000)
+                            // This tone is mostly helpful to avoid the bluetooth speakers being off during
                             // replay.
-                            TtsSpeaker.speak("replay", lowVolume = true)
+                            val unused = async { activity.lowVolumePrimeSpeakerTone() }
                             delay(500)
                         }
                     }
                 })
-            }.collect() {}
+            }.collect {}
         }
 
 
@@ -132,13 +140,9 @@ class PracticeModeStateHandler @Inject constructor(
 
      fun undo() {
         if (questionMode) {
-            if (!AudioPlayer.instance.wantsToPlay) {
-                AudioPlayer.instance.playWhenReady()
-            } else {
-                undoFromQuestionToAnswerMode()
-            }
+            undoFromQuestionToAnswerMode()
         } else {
-            undoThisQuestion(activity!!)
+            undoFromAnswerToQuestion()
         }
     }
 
@@ -151,25 +155,23 @@ class PracticeModeStateHandler @Inject constructor(
 
     }
 
-    fun proceedFailure() {
+
+    // Used to indicate a answer was not remembered
+    fun secondaryAction(): String {
+        if (!practiceModeViewModel.hasPlayedCurrentNotePart.value) {
+            return ""
+        }
+
+        val messageToSpeak = if (questionMode) {
+            "secondary action. proceed"
+        } else {
+            "bad bad"
+        }
         if (questionMode) {
             proceedCommon()
         } else {
             updateScoreAndMoveToNext(1)
         }
-    }
-
-    fun secondaryAction(): String {
-        val messageToSpeak = if (questionMode) {
-            if (AudioPlayer.instance.hasPlayedCurrentFile()) {
-                return ""
-            }
-
-            "secondary action. proceed"
-        } else {
-            "bad bad"
-        }
-        proceedFailure()
         return messageToSpeak
     }
 
@@ -198,7 +200,7 @@ class PracticeModeStateHandler @Inject constructor(
 
      fun proceed() {
         //ScreenDimmer.getInstance().keepScreenOn(memoryDroid)
-        if (!AudioPlayer.instance.hasPlayedCurrentFile()) {
+        if (!practiceModeViewModel.hasPlayedCurrentNotePart.value) {
           return
         }
         if (questionMode) {
@@ -324,7 +326,7 @@ class PracticeModeStateHandler @Inject constructor(
         }
     }
 
-    private fun undoThisQuestion(context: Activity) {
+    private fun undoFromAnswerToQuestion() {
         setupQuestionMode(false)
     }
 
