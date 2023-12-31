@@ -57,7 +57,7 @@ class PracticeModeStateHandler @Inject constructor(
                     return@combine
                 }
 
-                if (revisionQueue == null || revisionQueue.getSize() == 0 || noteState == null) {
+                if (revisionQueue == null || revisionQueue.getSize() == 0 ) {
                     MoveManager.cancelJobs()
                     val deckChooser = DeckChooseModeSetter.getInstance()
                     val nextDeckWithItems = deckChooser.nextDeckWithItems
@@ -71,8 +71,11 @@ class PracticeModeStateHandler @Inject constructor(
                     return@combine
                 }
 
+                if (noteState == null) {
+                    return@combine
+                }
+
                 MoveManager.replaceMoveJobWith(activity.lifecycleScope.launch(Dispatchers.Main) {
-                    var shouldPlayTwiceInARow = true
                     while (isActive) {
                         if (!activity.isAtLeastResumed()) {
                             delay(100)
@@ -81,23 +84,21 @@ class PracticeModeStateHandler @Inject constructor(
                         val part = noteState.notePart
                         val note = checkNotNull(noteState.currentNote)
                         if (part.partIsAnswer) {
-                            AudioPlayer.instance.playFile(note.answer, shouldRepeat = false)
-                            delay(30_000)
+                            AudioPlayer.instance.suspendPlay(note.answer)
+                            AudioPlayer.instance.suspendPlay(note.answer)
+                            delay(10_000)
                             if (isActive) {
-                                TtsSpeaker.speak("Auto-proceed from answer.")
+                                TtsSpeaker.speak("Auto-proceed from answer.", lowVolume = true)
                                 proceed()
                                 return@launch
                             }
                         } else {
                             // TODOJNOW added next task. Make Play file suspending so that we can
                             // play multiple times and stop playback on cancelation.
-                            AudioPlayer.instance.playFile(
-                                note.question,
-                                firedOnceCompletionListener = {},
-                                shouldRepeat = shouldPlayTwiceInARow)
-                            // Note this works fine if it replays before the note is done.
-                            shouldPlayTwiceInARow = false
-                            delay(30_000)
+                            AudioPlayer.instance.suspendPlay(note.question)
+                            AudioPlayer.instance.suspendPlay(note.question)
+                            AudioPlayer.instance.suspendPlay(note.question)
+                            delay(10_000)
                             // This TTS is mostly helpful to avoid the bluetooth speakers being off during
                             // replay.
                             TtsSpeaker.speak("replay", lowVolume = true)

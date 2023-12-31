@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package com.md
 
 import android.media.AudioAttributes
@@ -10,9 +12,13 @@ import androidx.lifecycle.LifecycleOwner
 import com.md.modesetters.TtsSpeaker
 import com.md.utils.ToastSingleton
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import java.io.IOException
+import java.lang.Exception
+import kotlin.coroutines.resumeWithException
 
 class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
     private var lifecycleOwner: LifecycleOwner? = null
@@ -103,6 +109,59 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
             mediaPlayer.release()
             loudnessEnhancer.release()
         }
+    }
+
+    suspend fun suspendPlay(
+        audioFileName: String?,
+    ) {
+        if (audioFileName == null) {
+            ToastSingleton.getInstance()
+                .error("Null file path. You should probably delete this note Jacob.")
+            return
+        }
+        var localCurrentPlayer: MediaPlayerForASingleFile? = null
+        try {
+            localCurrentPlayer = preload(audioFileName)
+        } catch (e: IOException) {
+            TtsSpeaker.speak("Error loading audio file. Delete or record again")
+            e.printStackTrace()
+        } catch (e: IllegalStateException) {
+            TtsSpeaker.speak("Error loading audio file. Delete or record again")
+            e.printStackTrace()
+        }
+        if (localCurrentPlayer == null)  {
+            return
+        }
+        focusedPlayer?.mediaPlayer?.pause()
+        focusedPlayer = localCurrentPlayer
+        val mediaPlayer = localCurrentPlayer.mediaPlayer
+        localCurrentPlayer.hasCompletedPlaybackSinceBecomingPrimary = false
+        mediaPlayer.seekTo(0)
+        mediaPlayer.start()
+        suspend fun awaitCompletion(): MediaPlayer? = suspendCancellableCoroutine { continuation ->
+            val callback =
+                OnCompletionListener { mp ->  // Implementation of some callback interface
+                    continuation.resume(mp) {
+                        mediaPlayer.setOnCompletionListener(null)
+                        mediaPlayer.setOnErrorListener(null)
+                    }
+                }
+
+            val errorCallback =
+                MediaPlayer.OnErrorListener { mp, what, extra ->
+                    // Implementation of some callback interface
+                    println("TODOJ on error " + what)
+                    continuation.resumeWithException(Exception("MediaPlayer Error is what = $what"))
+                    mediaPlayer.setOnCompletionListener(null)
+                    mediaPlayer.setOnErrorListener(null)
+                    true
+                }
+            mediaPlayer.setOnErrorListener(errorCallback)
+            mediaPlayer.setOnCompletionListener(callback)
+        }
+
+        awaitCompletion()
+        localCurrentPlayer.hasCompletedPlaybackSinceBecomingPrimary = true
     }
 
     /**

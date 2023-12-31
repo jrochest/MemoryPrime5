@@ -126,11 +126,7 @@ class ExternalClickCounter
         mPressGroupLastPressEventMs = eventTimeMs
         mPressGroupLastPressMs = currentTimeMs
 
-        MoveManager.cancelJobs()
-
         currentJob = activity.lifecycleScope.launch(Dispatchers.Main) {
-
-
             async {
                 @Suppress("DeferredResultUnused")
                 activity.lowVolumeClickTone()
