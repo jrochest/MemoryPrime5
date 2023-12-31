@@ -36,15 +36,6 @@ class ActivityHelper @Inject constructor(
     fun createCommonMenu(menu: Menu, activity: SpacedRepeaterActivity) {
         val inflater = activity.menuInflater
         inflater.inflate(R.menu.menu, menu)
-        val quitMenuItem = menu.findItem(R.id.dimMenuItem)
-        quitMenuItem.setOnMenuItemClickListener {
-            activity.maybeDim()
-            true
-        }
-        menu.findItem(R.id.backup_previous_location).setOnMenuItemClickListener { item: MenuItem? ->
-            BackupToUsbManager.createAndWriteZipBackToPreviousLocation(activity, activity.contentResolver, true)
-            true
-        }
         menu.findItem(R.id.incremental_backup).setOnMenuItemClickListener { item: MenuItem? ->
             createAndWriteZipBackToPreviousLocation(
                 activity,
@@ -76,21 +67,11 @@ class ActivityHelper @Inject constructor(
             )
             true
         }
-        menu.findItem(R.id.restore).setOnMenuItemClickListener { item: MenuItem? ->
-            RestoreFromZipManager.openZipFileDocument(activity)
-            true
-        }
         menu.findItem(R.id.incremental_restore).setOnMenuItemClickListener { item: MenuItem? ->
             RestoreFromIncrementalDirectoryManager.openZipFileDocument(activity)
             true
         }
-        addMenu(menu, R.id.creationModeMenuItem, CreateModeSetter, activity)
-        addMenu(menu, R.id.browseDeckModeMenuItem, BrowsingModeSetter.getInstance(), activity)
-        addMenu(menu, R.id.learningModeMenuItem, learningModeSetter.get(), activity)
-        addMenu(menu, R.id.selectDeckModeMenuItem, DeckChooseModeSetter, activity)
         addMenu(menu, R.id.settings, SettingModeSetter, activity)
-        addMenu(menu, R.id.working_memory, composeModeSetter.get(), activity)
-        addMenu(menu, R.id.clean_up_files, CleanUpAudioFilesModeSetter.getInstance(), activity)
     }
 
     private fun addMenu(menu: Menu, item: Int, ms: ModeSetter,

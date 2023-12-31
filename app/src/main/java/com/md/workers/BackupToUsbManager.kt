@@ -33,23 +33,6 @@ object BackupToUsbManager {
         startActivityForResult(activity, exportIntent, requestCode, null)
     }
 
-    fun createAndWriteZipBackToPreviousLocation(
-            context: Context,
-            contentResolver: ContentResolver,
-            shouldSpeak: Boolean = false
-    ): Boolean {
-        val backupLocations = BackupPreferences.getBackupLocations(context)
-
-        if (backupLocations.isNotEmpty()) {
-            backupToUris(context, contentResolver, backupLocations, shouldSpeak)
-        } else {
-            TtsSpeaker.speak("No backup needed")
-            return false
-        }
-
-        return true
-    }
-
     fun createAndWriteZipBackToNewLocation(
             context: SpacedRepeaterActivity,
             data: Intent,

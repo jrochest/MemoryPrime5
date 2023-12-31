@@ -28,9 +28,6 @@ import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
-
-
-
 @ActivityScoped
 class PracticeModeStateHandler @Inject constructor(
     val currentNotePartManager: CurrentNotePartManager,
@@ -241,6 +238,8 @@ class PracticeModeStateHandler @Inject constructor(
         currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = false)
         if (currentNote != null) {
             repCounter++
+            val metrics = practiceModeViewModel.metricsFlow.value
+            practiceModeViewModel.metricsFlow.value = metrics.copy(notesPracticed = metrics.notesPracticed + 1, remainingInQueue = currentDeckReviewQueue?.getSize() ?: 0)
             if (repCounter % 10 == 9) {
                 markAllStale(activity!!)
             }
@@ -320,7 +319,9 @@ class PracticeModeStateHandler @Inject constructor(
             this.currentNote = currentNote
             currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = true)
 
-            repCounter--
+            val metrics = practiceModeViewModel.metricsFlow.value
+            practiceModeViewModel.metricsFlow.value = metrics.copy(notesPracticed = metrics.notesPracticed - 1, remainingInQueue = currentDeckReviewQueue?.getSize() ?: 0)
+
             val noteEditor = DbNoteEditor.instance
             noteEditor!!.update(currentNote)
             // In case the grade was bad take it out of revision queue.

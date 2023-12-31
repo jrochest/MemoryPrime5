@@ -65,6 +65,11 @@ enum class PracticeMode {
 class PracticeModeViewModel @Inject constructor() {
     val practiceStateFlow = MutableStateFlow(PracticeMode.Practicing)
     val hasPlayedCurrentNotePart = MutableStateFlow(false)
+
+    data class Metrics(val notesPracticed: Int,
+        val remainingInQueue: Int)
+
+    val metricsFlow = MutableStateFlow(Metrics(0,0))
 }
 
 @ActivityScoped
@@ -149,15 +154,20 @@ class PracticeModeComposerManager @Inject constructor(
                         largeButtonModifier, onMiddleButtonTapInPracticeMode,
                         colors = ButtonStyles.ImportantButtonColor()
                     ) {
+                        val metrics = practiceModeViewModel.metricsFlow.collectAsState().value
                         val isAnswer = currentNotePartManager.noteStateFlow.collectAsState().value?.notePart?.partIsAnswer
+                        // TODOJ now
+                        Text(
+                            text = "Reps: ${metrics.notesPracticed}. Remaining: ${metrics.remainingInQueue}",
+                            style = MaterialTheme.typography.headlineSmall
+                        )
                         Text(
                             text = if (isAnswer == true) "Answer" else "Question",
-                            style = MaterialTheme.typography.headlineLarge
+                            style = MaterialTheme.typography.headlineSmall
                         )
-
                         Text(
                             text = LARGE_TAP_AREA_LABEL,
-                            style = MaterialTheme.typography.labelMedium
+                            style = MaterialTheme.typography.labelSmall
                         )
                     }
                 }

@@ -8,45 +8,11 @@
 		app:showAsAction="always"
 		android:title="Incremental backup with extra validation"/>
 	<item
-		android:id="@+id/creationModeMenuItem"
-		android:title="New Note"
-		android:icon="@android:drawable/ic_menu_add"
-		app:showAsAction="always" />
-	<item
-		android:icon="@android:drawable/ic_menu_save"
-		android:id="@+id/backup_previous_location"
-		android:title="Run backup now."/>
-	<item
 		android:id="@+id/incremental_backup"
 		android:title="Fast incremental backup."/>
 	<item
-		android:id="@+id/learningModeMenuItem"
-		android:title="Learning"
-		android:icon="@android:drawable/ic_menu_mapmode" />
-	<item
-		android:id="@+id/selectDeckModeMenuItem"
-		android:title="Decks"
-		android:icon="@android:drawable/ic_menu_slideshow" />
-	<item
-		android:id="@+id/browseDeckModeMenuItem"
-		android:title="Browse"
-		android:icon="@android:drawable/ic_menu_view" />
-	<item
 		android:id="@+id/settings"
 		android:title="Settings" />
-	<item
-		android:id="@+id/working_memory"
-		android:title="Working Memory" />
-	<item
-		android:id="@+id/clean_up_files"
-		android:title="Clean Up" />
-	<item
-		android:id="@+id/dimMenuItem"
-		android:title="Dim Screen"
-		android:icon="@android:drawable/ic_lock_power_off" />
-	<item
-		android:id="@+id/restore"
-		android:title="Restore from single zip. Requires clearing storage first"/>
 	<item
 		android:id="@+id/incremental_restore"
 		android:title="Restore from incremental directory. Requires clearing storage first"/>

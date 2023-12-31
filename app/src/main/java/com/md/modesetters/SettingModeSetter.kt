@@ -28,11 +28,11 @@ object SettingModeSetter : ModeSetter(), ItemDeletedHandler {
         refreshSettings(context)
     }
 
-     fun refreshSettings(activity: Activity) {
+    fun refreshSettings(activity: Activity) {
         val markButton = activity.findViewById<ToggleButton>(R.id.look_ahead) ?: return
 
 
-         val instance = CategorySingleton.getInstance()
+        val instance = CategorySingleton.getInstance()
         markButton.isChecked = instance.lookAheadDays != 0
         markButton.setOnClickListener {
             val checked = markButton.isChecked
@@ -43,44 +43,56 @@ object SettingModeSetter : ModeSetter(), ItemDeletedHandler {
         repeatButton.isChecked = instance.shouldRepeat()
         repeatButton.setOnClickListener { instance.setRepeat(!repeatButton.isChecked) }
 
-        activity.findViewById<Button>(R.id.external_backup_directory).apply {
-            specifyNewBackupLocation("Backup location 1", activity, REQUEST_CODE_FOR_LOCATION_1)
+        activity.findViewById<Button>(R.id.incremental_backup_directory).apply {
+            specifyNewIncrementalBackupLocation(
+                "Incremental Backup location 1",
+                activity,
+                IncrementalBackupPreferences.REQUEST_CODE_FOR_LOCATION_1
+            )
         }
 
-        activity.findViewById<Button>(R.id.external_backup_directory_2).apply {
-            specifyNewBackupLocation("Backup location 2", activity, REQUEST_CODE_FOR_LOCATION_2)
+        activity.findViewById<Button>(R.id.incremental_backup_directory_2).apply {
+            specifyNewIncrementalBackupLocation(
+                "Incremental Backup location 2",
+                activity,
+                IncrementalBackupPreferences.REQUEST_CODE_FOR_LOCATION_2
+            )
         }
 
-        activity.findViewById<Button>(R.id.external_backup_directory_3).apply {
-            specifyNewBackupLocation("Backup location 3", activity, REQUEST_CODE_FOR_LOCATION_3)
+        activity.findViewById<Button>(R.id.incremental_backup_directory_3).apply {
+            specifyNewIncrementalBackupLocation(
+                "Incremental Backup location 3",
+                activity,
+                IncrementalBackupPreferences.REQUEST_CODE_FOR_LOCATION_3
+            )
         }
-        activity.findViewById<Button>(R.id.external_backup_directory_4).apply {
-            specifyNewBackupLocation("Backup location 4", activity, REQUEST_CODE_FOR_LOCATION_4)
+        activity.findViewById<Button>(R.id.incremental_backup_directory_4).apply {
+            specifyNewIncrementalBackupLocation(
+                "Incremental Backup location 4",
+                activity,
+                IncrementalBackupPreferences.REQUEST_CODE_FOR_LOCATION_4
+            )
         }
-
-         activity.findViewById<Button>(R.id.incremental_backup_directory).apply {
-             specifyNewIncrementalBackupLocation("Incremental Backup location 1", activity, IncrementalBackupPreferences.REQUEST_CODE_FOR_LOCATION_1)
-         }
-
-         activity.findViewById<Button>(R.id.incremental_backup_directory_2).apply {
-             specifyNewIncrementalBackupLocation("Incremental Backup location 2", activity, IncrementalBackupPreferences.REQUEST_CODE_FOR_LOCATION_2)
-         }
-
-         activity.findViewById<Button>(R.id.incremental_backup_directory_3).apply {
-             specifyNewIncrementalBackupLocation("Incremental Backup location 3", activity, IncrementalBackupPreferences.REQUEST_CODE_FOR_LOCATION_3)
-         }
-         activity.findViewById<Button>(R.id.incremental_backup_directory_4).apply {
-             specifyNewIncrementalBackupLocation("Incremental Backup location 4", activity, IncrementalBackupPreferences.REQUEST_CODE_FOR_LOCATION_4)
-         }
     }
 
-    private fun Button.specifyNewIncrementalBackupLocation(backupLocationName: String, activity: Activity, requestCode: Int) {
+    private fun Button.specifyNewIncrementalBackupLocation(
+        backupLocationName: String,
+        activity: Activity,
+        requestCode: Int
+    ) {
         val key = IncrementalBackupPreferences.requestCodeToKey[requestCode]
-        val prefFile = context.getSharedPreferences(IncrementalBackupPreferences.BACKUP_LOCATION_FILE, Context.MODE_PRIVATE)
+        val prefFile = context.getSharedPreferences(
+            IncrementalBackupPreferences.BACKUP_LOCATION_FILE,
+            Context.MODE_PRIVATE
+        )
         val backupLocation = prefFile.getString(key, null)
 
         if (backupLocation != null) {
-            setText(backupLocationName + ":\n" + IncrementalBackupPreferences.simplifyName(backupLocation) + "\n")
+            setText(
+                backupLocationName + ":\n" + IncrementalBackupPreferences.simplifyName(
+                    backupLocation
+                ) + "\n"
+            )
         } else {
             setText("$backupLocationName: Tap to set")
         }
@@ -91,25 +103,12 @@ object SettingModeSetter : ModeSetter(), ItemDeletedHandler {
     private fun Button.addLongClickToClear(prefFile: SharedPreferences, key: String?) {
         setOnLongClickListener {
             AlertDialog.Builder(context).setMessage("Stop backing up to this location?")
-                    .setCancelable(true).setPositiveButton("Yes") { dialog, _ ->
-                        prefFile.edit().remove(key).apply()
-                        setText("Cleared!: Tap to set")
-                    }
-                    .setNegativeButton("No") { dialog, _ -> }.create().show()
+                .setCancelable(true).setPositiveButton("Yes") { dialog, _ ->
+                    prefFile.edit().remove(key).apply()
+                    setText("Cleared!: Tap to set")
+                }
+                .setNegativeButton("No") { dialog, _ -> }.create().show()
             true
         }
-    }
-
-    private fun Button.specifyNewBackupLocation(backupLocationName: String, activity: Activity, requestCode: Int) {
-        val key = BackupPreferences.requestCodeToKey[requestCode]
-        val prefFile = context.getSharedPreferences(BackupPreferences.BACKUP_LOCATION_FILE, Context.MODE_PRIVATE)
-        val backupLocation = prefFile.getString(key, null)
-        if (backupLocation != null) {
-            setText(backupLocationName + ":\n" + BackupPreferences.simplifyName(backupLocation) + "\n")
-        } else {
-            setText("$backupLocationName: Tap to set")
-        }
-        setOnClickListener { openZipFileDocument(activity, requestCode) }
-        addLongClickToClear(prefFile, key)
     }
 }
