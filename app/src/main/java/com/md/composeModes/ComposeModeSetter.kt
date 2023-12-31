@@ -2,39 +2,21 @@ package com.md.composeModes
 
 import android.app.Activity
 import android.content.Context
-import android.widget.Toast
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
-import com.md.CategorySingleton
 import com.md.ModeHandler
 import com.md.RevisionQueueStateModel
 import com.md.SpacedRepeaterActivity
-import com.md.modesetters.DeckLoadManager
 import com.md.modesetters.ItemDeletedHandler
 import com.md.modesetters.ModeSetter
 import com.md.uiTheme.AppTheme
@@ -63,7 +45,7 @@ class ComposeModeSetter @Inject constructor(
     private val practiceModeViewModel: PracticeModeViewModel,
     private val currentNotePartManager: CurrentNotePartManager,
     private val modeViewModel: ModeViewModel,
-    private val deckLoadManager: DeckLoadManager,
+    private val deckModeComposableManager: DeckModeComposableManager,
     private val addNoteComposeManager: AddNoteComposeManager,
     private val practiceModeComposerManager: PracticeModeComposerManager,
     private val revisionQueueStateModel: RevisionQueueStateModel,
@@ -102,7 +84,7 @@ class ComposeModeSetter @Inject constructor(
                                         practiceModeComposerManager.compose()
                                     }
                                     Mode.DeckChooser -> {
-                                        DeckModeComposable(context)
+                                        deckModeComposableManager.compose()
                                     }
                                     Mode.NewNote -> {
                                         addNoteComposeManager.compose()
@@ -116,96 +98,15 @@ class ComposeModeSetter @Inject constructor(
             })
         }
     }
+}
 
-    @Composable
-    fun DeckModeComposable(context: Activity) {
-        val decks = deckLoadManager.decks.collectAsState().value
-        if (decks != null) {
-            Row {
-                Button(onClick = { /*TODO*/ }) {
-                    Text(text = "Add deck")
-                }
-            }
-            Column {
-                decks.forEach {
-                    Divider()
-                    Column {
-                        Text(
-                            modifier = Modifier.fillMaxWidth(),
-                            text = it.name,
-                            style = MaterialTheme.typography.headlineMedium
-                        )
-                        Row {
-                            Text(
-                                text = "Queue: " + it.revisionQueue.getSize() + "\nTotal: " + it.deckCount,
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                            VerticalDivider()
-                            TextButton(onClick = {
-                                revisionQueueStateModel.queue.value = it.revisionQueue
-                                CategorySingleton.getInstance().setDeckInfo(it)
-                                modeViewModel.modeModel.value = Mode.Practice
-                            }) {
-                                Text(text = "Practice", style = MaterialTheme.typography.labelLarge)
-                            }
-                            VerticalDivider()
-                            TextButton(onClick = {
-                                revisionQueueStateModel.queue.value = it.revisionQueue
-                                CategorySingleton.getInstance().setDeckInfo(it)
-                                modeViewModel.modeModel.value = Mode.NewNote
-                            }) {
-                                Text(
-                                    text = "Add to deck",
-                                    style = MaterialTheme.typography.labelLarge
-                                )
-                            }
-                            var expanded by remember { mutableStateOf(false) }
-                            IconButton(onClick = { expanded = !expanded }) {
-                                Icon(
-                                    imageVector = Icons.Default.MoreVert,
-                                    contentDescription = "More"
-                                )
-                            }
-                            DropdownMenu(
-                                expanded = expanded,
-                                onDismissRequest = { expanded = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("Rename") },
-                                    onClick = {
-                                        Toast.makeText(
-                                            context,
-                                            "Rename",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Delete") },
-                                    onClick = {
-                                        Toast.makeText(
-                                            context,
-                                            "Delete",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    @Composable
-    private fun VerticalDivider() {
-        Divider(
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .height(48.dp)
-                .padding(4.dp)
-                .width(1.dp)
-        )
-    }
+@Composable
+fun VerticalDivider() {
+    Divider(
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier
+            .height(48.dp)
+            .padding(4.dp)
+            .width(1.dp)
+    )
 }
