@@ -10,6 +10,7 @@ import androidx.documentfile.provider.DocumentFile
 import com.md.MemPrimeManager
 import com.md.NotesProvider
 import com.md.SpacedRepeaterActivity
+import com.md.composeModes.BackupModeStateModel
 import com.md.modesetters.TtsSpeaker
 import com.md.utils.ToastSingleton
 import com.md.workers.BackupToUsbManager.UPDATE_TIME_FILE_NAME
@@ -37,17 +38,19 @@ object IncrementalBackupManager {
     }
 
     fun createAndWriteZipBackToPreviousLocation(
-            context: Context,
-            contentResolver: ContentResolver,
-            shouldSpeak: Boolean,
-            runExtraValidation: Boolean = false,
-            onFinished: ((Boolean) -> Unit)? = null
+        context: Context,
+        contentResolver: ContentResolver,
+        shouldSpeak: Boolean,
+        runExtraValidation: Boolean = false,
+        onFinished: ((Boolean) -> Unit)? = null,
+        backupModeStateModel: BackupModeStateModel? = null
     ) {
         val backupLocations = IncrementalBackupPreferences.getBackupLocations(context)
-
         if (backupLocations.isNotEmpty()) {
-            backupToUris(context, contentResolver, backupLocations, shouldSpeak, runExtraValidation, onFinished)
+            backupToUris(context, contentResolver, backupLocations, shouldSpeak, runExtraValidation, onFinished,
+                backupModeStateModel)
         } else {
+            backupModeStateModel?.summary?.value = "No backup needed"
             TtsSpeaker.speak("No backup needed")
             onFinished?.invoke(false)
         }
@@ -78,12 +81,13 @@ object IncrementalBackupManager {
     }
 
     private fun backupToUris(
-            context: Context,
-            contentResolver: ContentResolver,
-            backupUris: MutableMap<String, Uri>,
-            shouldSpeak: Boolean = false,
-            runExtraValidation: Boolean,
-            onFinished: ((Boolean) -> Unit)?
+        context: Context,
+        contentResolver: ContentResolver,
+        backupUris: MutableMap<String, Uri>,
+        shouldSpeak: Boolean = false,
+        runExtraValidation: Boolean,
+        onFinished: ((Boolean) -> Unit)?,
+        backupModeStateModel: BackupModeStateModel?
     ) {
         GlobalScope.launch(Dispatchers.Main) {
             if (shouldSpeak) TtsSpeaker.speak("starting backup")
@@ -94,7 +98,8 @@ object IncrementalBackupManager {
                     context.filesDir,
                     shouldSpeak,
                     context,
-                    runExtraValidation
+                    runExtraValidation,
+                    backupModeStateModel
                 )
                 launch (Dispatchers.Main) {
                     onFinished?.invoke(result)
@@ -104,18 +109,20 @@ object IncrementalBackupManager {
     }
 
     private suspend fun backupOnBackground(
-            contentResolver: ContentResolver,
-            backupUris: MutableMap<String, Uri>,
-            appStorageRoot: File,
-            shouldSpeak: Boolean,
-            context: Context,
-            runExtraValidation: Boolean
+        contentResolver: ContentResolver,
+        backupUris: MutableMap<String, Uri>,
+        appStorageRoot: File,
+        shouldSpeak: Boolean,
+        context: Context,
+        runExtraValidation: Boolean,
+        backupModeStateModel: BackupModeStateModel?
     ) : Boolean {
         var success = false
         val validBackupUris = backupUris.filter { uri ->
             try {
                 if (DocumentFile.fromTreeUri(context, uri.value)?.isDirectory == true) {
                     TtsSpeaker.speak("Backup needed for" + (uri.value.lastPathSegment))
+                    backupModeStateModel?.summary?.value = "Backup needed for" + (uri.value.lastPathSegment)
                     return@filter true
                 }
             } catch (e: FileNotFoundException) {
@@ -134,6 +141,7 @@ object IncrementalBackupManager {
         val allFiles = appStorageRoot.listFiles()
         if (allFiles == null || allFiles.isEmpty()) {
             TtsSpeaker.error("All files empty")
+            backupModeStateModel?.errorMessage?.value = "All files empty"
             return false
         }
 
@@ -148,6 +156,7 @@ object IncrementalBackupManager {
                 var databaseFileOrNull: File? = null
                 val databaseOrAudioDirectoryList = it.listFiles()
                 if (databaseOrAudioDirectoryList == null || databaseOrAudioDirectoryList.isEmpty()) {
+                    backupModeStateModel?.errorMessage?.value = "no data base or audio directory"
                     TtsSpeaker.error("no data base or audio directory")
                     return false
                 }
@@ -160,9 +169,10 @@ object IncrementalBackupManager {
                         // com.md.MemoryPrime/AudioMemo/2
                         if (audioDirectoryList == null || audioDirectoryList.isEmpty()) {
                             TtsSpeaker.error("numbered audio directory empty")
+                            backupModeStateModel?.errorMessage?.value = "numbered audio directory empty"
                             return false
                         }
-                        audioDirectoryList.forEach { numberedAudioDir ->
+                        audioDirectoryList.forEachIndexed { index, numberedAudioDir ->
                             if (numberedAudioDir.isDirectory) {
                                 val updateTimeFile = File(numberedAudioDir, UPDATE_TIME_FILE_NAME)
                                 if (updateTimeFile.exists()) {
@@ -179,6 +189,7 @@ object IncrementalBackupManager {
                             } else {
                                 TtsSpeaker.error("Audio directory contained unknown file")
                             }
+                            backupModeStateModel?.remainingItems?.value = "Analyzing audio directory $index"
                         }
                     } else { // Else it's the database.
                         // Files only. No directories

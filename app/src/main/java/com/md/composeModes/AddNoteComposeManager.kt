@@ -1,5 +1,6 @@
 package com.md.composeModes
 
+import android.content.Context
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Column
@@ -26,13 +27,19 @@ import com.md.composeStyles.ButtonStyles.ImportantButtonColor
 import com.md.composeStyles.ButtonStyles.MediumImportanceButtonColor
 import com.md.modesetters.TtsSpeaker
 import com.md.provider.Note
+import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import javax.inject.Inject
 
+
 @ActivityScoped
 class AddNoteComposeManager @Inject constructor(
-    val activity: SpacedRepeaterActivity
+    @ActivityContext val context: Context,
 ) {
+    val activity: SpacedRepeaterActivity by lazy {
+        context as SpacedRepeaterActivity
+    }
+
     @Stable
     class State(
         val hasQuestion: MutableState<Boolean> = mutableStateOf(false),

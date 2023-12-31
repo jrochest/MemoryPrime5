@@ -20,6 +20,7 @@ import com.md.SpacedRepeaterActivity
 import com.md.modesetters.ItemDeletedHandler
 import com.md.modesetters.ModeSetter
 import com.md.uiTheme.AppTheme
+import com.md.workers.IncrementalBackupManager
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,6 +48,7 @@ class ComposeModeSetter @Inject constructor(
     private val modeViewModel: ModeViewModel,
     private val deckModeComposableManager: DeckModeComposableManager,
     private val addNoteComposeManager: AddNoteComposeManager,
+    private val backupModeComposeManager: BackupModeComposeManager,
     private val practiceModeComposerManager: PracticeModeComposerManager,
     private val revisionQueueStateModel: RevisionQueueStateModel,
 ) : ModeSetter(), ItemDeletedHandler {
@@ -88,6 +90,9 @@ class ComposeModeSetter @Inject constructor(
                                     }
                                     Mode.NewNote -> {
                                         addNoteComposeManager.compose()
+                                    }
+                                    Mode.Backup -> {
+                                        backupModeComposeManager.compose()
                                     }
                                     else -> {}
                                 }

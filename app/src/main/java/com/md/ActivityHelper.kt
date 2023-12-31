@@ -47,7 +47,10 @@ class ActivityHelper @Inject constructor(
         }
         menu.findItem(R.id.incremental_backup).setOnMenuItemClickListener { item: MenuItem? ->
             createAndWriteZipBackToPreviousLocation(
-                    activity, activity.contentResolver, shouldSpeak = true, runExtraValidation = false
+                activity,
+                activity.contentResolver,
+                shouldSpeak = true,
+                runExtraValidation = false,
             )
             true
         }
@@ -59,17 +62,18 @@ class ActivityHelper @Inject constructor(
             item.setIcon(R.drawable.greysave)
             activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             createAndWriteZipBackToPreviousLocation(
-                    activity, activity.contentResolver, true, true) { success ->
-                // This works while only one features needs a screen lock.
-                activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                if (success) {
-                    item.setIcon(android.R.drawable.ic_menu_save)
-                } else {
-                    item.setIcon(android.R.drawable.ic_popup_sync)
-                }
+                activity, activity.contentResolver, true, true, { success ->
+                    // This works while only one features needs a screen lock.
+                    activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    if (success) {
+                        item.setIcon(android.R.drawable.ic_menu_save)
+                    } else {
+                        item.setIcon(android.R.drawable.ic_popup_sync)
+                    }
 
-                item.isEnabled = true
-            }
+                    item.isEnabled = true
+                },
+            )
             true
         }
         menu.findItem(R.id.restore).setOnMenuItemClickListener { item: MenuItem? ->

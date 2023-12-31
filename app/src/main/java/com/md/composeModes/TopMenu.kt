@@ -83,13 +83,6 @@ fun TopMenu(
             myMode = Mode.Backup,
             onClick = {
                 modeViewModel.modeModel.value = Mode.Backup
-            IncrementalBackupManager.createAndWriteZipBackToPreviousLocation(
-                activity,
-                activity.contentResolver,
-                shouldSpeak = true,
-                runExtraValidation = false
-            )
-
         }) {
             Text(text = "Backup", style = MaterialTheme.typography.labelLarge)
         }
