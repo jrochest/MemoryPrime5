@@ -68,7 +68,7 @@ class ComposeModeSetter @Inject constructor(
             context.setContentView(ComposeView(context).apply {
                 setContent  @Composable {
                     AppTheme {
-                        Surface {
+                        Surface (color = MaterialTheme.colorScheme.background) {
                             Column {
                                 val mode = modeViewModel.modeModel.collectAsState()
                                 TopMenu(onPracticeMode = {
