@@ -19,13 +19,15 @@
 	    <item name="android:background">@drawable/btn_custom</item>
     </style>
 
-    <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
+
+    <!-- Base application theme.
+     Disable the action bar / toolbar -->
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
         <!-- Customize your theme here. -->
-        <item name="colorPrimary">#222222</item>
-        <item name="colorPrimaryDark">#444444</item>
+        <item name="colorPrimary">#000000</item>
+        <item name="colorPrimaryDark">#000000</item>
         <item name="colorAccent">#BBDEFB</item>
-        <item name="colorControlNormal">#444444</item>
+        <item name="colorControlNormal">#000000</item>
     </style>
     
     <style name="learn_button_style">
