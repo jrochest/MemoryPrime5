@@ -60,6 +60,8 @@ class ModeViewModel @Inject constructor() {
 class ComposeModeSetter @Inject constructor(
     @ActivityContext val context: Context,
     private val modeHandler: ModeHandler,
+    private val practiceModeViewModel: PracticeModeViewModel,
+    private val currentNotePartManager: CurrentNotePartManager,
     private val modeViewModel: ModeViewModel,
     private val deckLoadManager: DeckLoadManager,
     private val addNoteComposeManager: AddNoteComposeManager,
@@ -85,8 +87,11 @@ class ComposeModeSetter @Inject constructor(
                         Surface {
                             Column {
                                 val mode = modeViewModel.modeModel.collectAsState()
-                                TopMenu(onLearningMode = {
+                                TopMenu(onPracticeMode = {
                                     modeViewModel.modeModel.value = Mode.Practice
+                                    // This initially leaves the recording or deleting state
+                                    practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
+                                    currentNotePartManager.clearPending()
                                     this@ComposeModeSetter.switchMode(context = activity)
                                 }, onDeckChooseMode = {
                                     modeViewModel.modeModel.value = Mode.DeckChooser

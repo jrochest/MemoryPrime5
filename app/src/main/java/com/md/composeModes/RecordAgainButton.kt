@@ -82,6 +82,11 @@ class CurrentNotePartManager @Inject constructor(
         hasSavable.value = false
     }
 
+    fun clearPending() {
+        notePart.clearRecordings()
+        hasSavable.value = false
+    }
+
     fun changeCurrentNotePart(note: Note?, partIsAnswer: Boolean?) {
         if (note == null || partIsAnswer == null) {
             notePart.clearRecordings()

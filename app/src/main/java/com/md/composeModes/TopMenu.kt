@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -31,7 +30,7 @@ import com.md.workers.IncrementalBackupManager
 
 @Composable
 fun TopMenu(
-    onLearningMode: () -> Unit,
+    onPracticeMode: () -> Unit,
     onDeckChooseMode: () -> Unit,
     modeViewModel: ModeViewModel
 ) {
@@ -69,7 +68,7 @@ fun TopMenu(
         MenuButton(
             myMode = Mode.Practice,
             onClick = {
-            onLearningMode()
+            onPracticeMode()
         }) {
             Text(text = "Practice", style = MaterialTheme.typography.labelLarge)
         }
