@@ -149,7 +149,9 @@ class ExternalClickCounter
                 }
                 // This takes a different action based on whether it is a question or answer.
                 2 -> {
-                    message = handler.secondaryAction()
+                   handler.secondaryAction()
+                    // Let the secondary action handle the appropriate speech
+                    message = null
                 }
                 3, 4 -> {
                     message = "undo"

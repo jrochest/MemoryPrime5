@@ -2,7 +2,7 @@ package com.md.composeModes
 
 import com.md.AudioRecorder
 
-class NotePart(
+data class NotePart(
     var partIsAnswer: Boolean = true,
     val updateHasPart: (Boolean) -> Unit,
 ) {

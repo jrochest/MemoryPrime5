@@ -28,6 +28,13 @@ import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
+enum class PracticeNoteState {
+    NoNote,
+    Question,
+    Answer
+}
+
+
 @ActivityScoped
 class PracticeModeStateHandler @Inject constructor(
     val currentNotePartManager: CurrentNotePartManager,
@@ -151,73 +158,95 @@ class PracticeModeStateHandler @Inject constructor(
         }
     }
 
-    // Used to indicate a answer was not remembered
-    fun secondaryAction(): String {
-        if (!practiceModeViewModel.hasPlayedCurrentNotePartOrIgnoredAProceed.value) {
-            return ""
-        }
-
+    // Used to indicate an answer was not remembered or proceed for a question.
+    fun secondaryAction() {
         KeepScreenOn.getInstance().keepScreenOn(activity)
-
-        val messageToSpeak = if (questionMode) {
-            "secondary action. proceed"
-        } else {
-            "bad bad"
-        }
-        if (questionMode) {
-            proceedToAnswerIfNoteExistsElseNextDeck()
-        } else {
-            updateScoreAndMoveToNext(1)
-        }
-        return messageToSpeak
+        handlePracticeNoteState(noFocusedNoteHandler = {
+            setupFirstReviewableDeckInQuestionMode()
+        }, focusedNoteExistsHandler = { noteState ->
+            if (shouldProceed()) return@handlePracticeNoteState
+            if (noteState.notePart.partIsAnswer) {
+                TtsSpeaker.speak("bad bad")
+                updateScoreAndMoveToNext(1, noteState.currentNote)
+            } else {
+                setupAnswerMode()
+            }
+        })
     }
 
     /** Moves this note to the end of the queue.  */
     fun postponeNote(shouldQueue: Boolean) {
-        val currentNote = currentNotePartManager.currentNote ?: return
-
-        if (shouldQueue) {
-            // Place at end of queue.
-            currentDeckReviewQueue!!.updateNote(currentNote, false)
-        } else {
-            val editor = DbNoteEditor.instance
-            if (editor != null) {
-                currentNote.decreasePriority()
-                editor.update(currentNote)
+        KeepScreenOn.getInstance().keepScreenOn(activity)
+        handlePracticeNoteState(noFocusedNoteHandler = {
+            // Do nothing.
+        }, focusedNoteExistsHandler = { noteState ->
+            val currentNote = noteState.currentNote
+            if (shouldQueue) {
+                // Place at end of queue.
+                currentDeckReviewQueue!!.updateNote(currentNote, false)
             } else {
-                TtsSpeaker.speak("Error decreasing priority")
+                val editor = DbNoteEditor.instance
+                if (editor != null) {
+                    currentNote.decreasePriority()
+                    editor.update(currentNote)
+                } else {
+                    TtsSpeaker.speak("Error decreasing priority")
+                }
+                currentDeckReviewQueue!!.hardPostpone(currentNote)
             }
+            // Prepare the next note in the queue.
+            setupQuestionMode()
+        })
+    }
 
-            currentDeckReviewQueue!!.hardPostpone(currentNote)
+    private fun handlePracticeNoteState(
+        noFocusedNoteHandler: () -> Unit = {},
+        focusedNoteExistsHandler: (noteState: CurrentNotePartManager.NoteState) -> Unit) {
+        val noteState = currentNotePartManager.noteStateFlow.value
+        if (noteState == null) {
+            noFocusedNoteHandler()
+            return
         }
-        // Prepare the next note in the queue.
-        setupQuestionMode()
+
+        focusedNoteExistsHandler(noteState)
     }
 
     fun proceed() {
         KeepScreenOn.getInstance().keepScreenOn(activity)
+        handlePracticeNoteState(noFocusedNoteHandler = {
+            setupFirstReviewableDeckInQuestionMode()
+        }, focusedNoteExistsHandler = { noteState ->
+            if (shouldProceed()) return@handlePracticeNoteState
+            if (noteState.notePart.partIsAnswer) {
+                updateScoreAndMoveToNext(4, noteState.currentNote)
+            } else {
+                setupAnswerMode()
+            }
+        })
+    }
+
+    private fun shouldProceed(): Boolean {
         if (!practiceModeViewModel.hasPlayedCurrentNotePartOrIgnoredAProceed.value) {
             // Only ignore a single proceed request. To allow the user to override the proceed block
             // or a really long note.
             practiceModeViewModel.hasPlayedCurrentNotePartOrIgnoredAProceed.value = true
-            return
+            return true
         }
-        if (questionMode) {
-            proceedToAnswerIfNoteExistsElseNextDeck()
-        } else {
-            updateScoreAndMoveToNext(4)
-        }
+        return false
     }
 
     private fun setupQuestionMode(
         shouldUpdateQuestion: Boolean = true
     ) {
-        val focusedNote = currentNotePartManager.currentNote
-        if (focusedNote == null || shouldUpdateQuestion) {
+        handlePracticeNoteState (noFocusedNoteHandler = {
             updateStartingInQuestionMode()
+        }) {
+            if (shouldUpdateQuestion) {
+                updateStartingInQuestionMode()
+            }
+            questionMode = true
+            currentNotePartManager.changeToQuestionForCurrent()
         }
-        questionMode = true
-        currentNotePartManager.changeToQuestionForCurrent()
     }
 
     private val lastOrNull: Note?
@@ -244,14 +273,11 @@ class PracticeModeStateHandler @Inject constructor(
         }
     }
 
-    private fun updateScoreAndMoveToNext(newGrade: Int) {
-        val currentNote = currentNotePartManager.currentNote
-        if (currentNote != null) {
-            applyGradeStatic(newGrade, currentNote)
-            ToastSingleton.getInstance()
-                .msg("Easiness: " + currentNote.easiness + " Interval " + currentNote!!.interval)
-            setupQuestionMode()
-        }
+    private fun updateScoreAndMoveToNext(newGrade: Int, currentNote: Note) {
+        applyGradeStatic(newGrade, currentNote)
+        ToastSingleton.getInstance()
+            .msg("Easiness: " + currentNote.easiness + " Interval " + currentNote!!.interval)
+        setupQuestionMode()
     }
 
     private fun applyGradeStatic(
@@ -282,29 +308,29 @@ class PracticeModeStateHandler @Inject constructor(
     }
 
     fun deleteNote() {
-        val noteEditor = DbNoteEditor.instance
-        val note = currentNotePartManager.currentNote
-        if (note != null) {
+        handlePracticeNoteState {
+            noteState ->
+            val noteEditor = DbNoteEditor.instance
+            val note = noteState.currentNote
             noteEditor!!.deleteCurrent(activity, note)
             currentDeckReviewQueue!!.removeNote(note.id)
             currentNotePartManager.onDelete()
+            setupQuestionMode()
         }
-        setupQuestionMode()
+    }
+
+    private fun setupFirstReviewableDeckInQuestionMode() {
+        // focused note being null typically means there's nothing left in the deck.
+        // Proceeding should go to the next reviewable deck with note that are wanting ready
+        // to review.
+        activity.lifecycleScope.launch {
+            deckLoadManager.refreshDeckListAndFocusFirstActiveNonemptyQueue()
+            setupQuestionMode(shouldUpdateQuestion = false)
+        }
     }
 
     private fun proceedToAnswerIfNoteExistsElseNextDeck() {
-        val focusedNote = currentNotePartManager.currentNote
-        if (focusedNote == null) {
-            // focused note being null typically means there's nothing left in the deck.
-            // Proceeding should go to the next reviewable deck with note that are wanting ready
-            // to review.
-            activity.lifecycleScope.launch {
-                deckLoadManager.refreshDeckListAndFocusFirstActiveNonemptyQueue()
-                setupQuestionMode(shouldUpdateQuestion = false)
-            }
-        } else {
-            setupAnswerMode()
-        }
+        setupAnswerMode()
     }
 
     private fun undoFromQuestionToAnswerMode() {
@@ -339,13 +365,12 @@ class PracticeModeStateHandler @Inject constructor(
     }
 
     fun mark() {
-        val currentNote = currentNotePartManager.currentNote
-        if (currentNote != null) {
+        handlePracticeNoteState { noteState ->
+            val currentNote = noteState.currentNote
             currentNote.isMarked = true
             val noteEditor = DbNoteEditor.instance
             noteEditor!!.update(currentNote)
             ToastSingleton.getInstance().msg("Marked note")
         }
     }
-
 }
