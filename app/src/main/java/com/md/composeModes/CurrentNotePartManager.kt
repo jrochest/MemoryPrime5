@@ -28,7 +28,6 @@ class CurrentNotePartManager @Inject constructor(
     // TODOJ this should be the source of true!
     val noteStateFlow = MutableStateFlow<NoteState?>(null)
 
-    private var partIsAnswer: Boolean? = null
     val hasNote = MutableStateFlow(false)
     val hasSavable = mutableStateOf(false)
     val notePart = NotePart(updateHasPart = { value: Boolean -> hasSavable.value = value })
