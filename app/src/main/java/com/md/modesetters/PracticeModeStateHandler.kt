@@ -1,7 +1,11 @@
 package com.md.modesetters
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.SystemClock
+import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -56,7 +60,7 @@ class PracticeModeStateHandler @Inject constructor(
 
     // TODOJSOON delete this upon switching to currentNotePartManager
     private var questionMode = true
-    //
+
     fun onSwitchToMode() {
         activity.lifecycleScope.launch {
             activity.repeatOnLifecycle(Lifecycle.State.RESUMED) {
@@ -239,7 +243,7 @@ class PracticeModeStateHandler @Inject constructor(
         shouldUpdateQuestion: Boolean = true
     ) {
         handlePracticeNoteState (noFocusedNoteHandler = {
-            updateStartingInQuestionMode()
+            setupFirstReviewableDeckInQuestionMode()
         }) {
             if (shouldUpdateQuestion) {
                 updateStartingInQuestionMode()

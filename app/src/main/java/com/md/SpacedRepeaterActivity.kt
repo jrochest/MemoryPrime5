@@ -2,6 +2,7 @@ package com.md
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
@@ -9,6 +10,8 @@ import android.media.AudioManager
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.Menu
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.md.AudioPlayer.Companion.instance
 import com.md.modesetters.*
@@ -83,9 +86,12 @@ class SpacedRepeaterActivity
         TtsSpeaker.setup(this.applicationContext)
 
         deckLoadManager.get()
+
+        checkPermission()
     }
 
-    override fun onResume() {
+    public override fun onResume() {
+        // THis doesn't seem to be called?? TODOJNOW
         super.onResume()
 
         playbackServiceOnResume()
@@ -93,6 +99,16 @@ class SpacedRepeaterActivity
         val modeSetter = modeBackStack.whoseOnTop() ?: return
         // Take back media session focus if we lost it.
         modeSetter.handleReplay()
+
+    }
+
+    // Function to check and request permission.
+    private fun checkPermission() {
+        val recordAudioPermissionString = "android.permission.RECORD_AUDIO"
+        if (ContextCompat.checkSelfPermission(this, recordAudioPermissionString) == PackageManager.PERMISSION_DENIED) {
+            // Requesting the permission
+            ActivityCompat.requestPermissions(this, arrayOf(recordAudioPermissionString), REQUEST_CODE_MIC_PERMISSION)
+        }
     }
 
     override fun onPause() {
@@ -285,6 +301,20 @@ class SpacedRepeaterActivity
         const val PRESS_GROUP_MAX_GAP_MS_BLUETOOTH = 700L
         const val PRESS_GROUP_MAX_GAP_MS_INSTANT = 2L
         const val PRESS_GROUP_MAX_GAP_MS_SCREEN = 400L
+
+
+        const val REQUEST_CODE_MIC_PERMISSION = 11235
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int,
+                                            permissions: Array<String>,
+                                            grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_CODE_MIC_PERMISSION) {
+            if (grantResults.isEmpty() || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                TtsSpeaker.error("Microphone permission not granted.")
+            }
+        }
     }
 
     @Deprecated("Deprecated in Java")
