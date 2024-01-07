@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -64,7 +63,7 @@ enum class PracticeMode {
 @ActivityScoped
 class PracticeModeViewModel @Inject constructor() {
     val practiceStateFlow = MutableStateFlow(PracticeMode.Practicing)
-    val hasPlayedCurrentNotePart = MutableStateFlow(false)
+    val hasPlayedCurrentNotePartOrIgnoredAProceed = MutableStateFlow(false)
 
     data class Metrics(val notesPracticed: Int,
         val remainingInQueue: Int)

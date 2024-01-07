@@ -82,7 +82,7 @@ class PracticeModeStateHandler @Inject constructor(
 
                     // Ensure that we don't allow the user to go forward without playing through the
                     // audio file once.
-                    practiceModeViewModel.hasPlayedCurrentNotePart.value = false
+                    practiceModeViewModel.hasPlayedCurrentNotePartOrIgnoredAProceed.value = false
                     MoveManager.replaceMoveJobWith(activity.lifecycleScope.launch(Dispatchers.Main) {
                         while (isActive) {
                             while (!activity.isAtLeastResumed()) {
@@ -92,7 +92,7 @@ class PracticeModeStateHandler @Inject constructor(
                             val note = checkNotNull(noteState.currentNote)
                             if (part.partIsAnswer) {
                                 AudioPlayer.instance.suspendPlay(note.answer)
-                                practiceModeViewModel.hasPlayedCurrentNotePart.value = true
+                                practiceModeViewModel.hasPlayedCurrentNotePartOrIgnoredAProceed.value = true
                                 AudioPlayer.instance.suspendPlay(note.answer)
                                 delay(8_000)
                                 while (!activity.isAtLeastResumed()) {
@@ -112,7 +112,7 @@ class PracticeModeStateHandler @Inject constructor(
                                 // TODOJNOW added next task. Make Play file suspending so that we can
                                 // play multiple times and stop playback on cancelation.
                                 AudioPlayer.instance.suspendPlay(note.question)
-                                practiceModeViewModel.hasPlayedCurrentNotePart.value = true
+                                practiceModeViewModel.hasPlayedCurrentNotePartOrIgnoredAProceed.value = true
                                 delay(2_000)
                                 while (!activity.isAtLeastResumed()) {
                                     delay(1000)
@@ -158,7 +158,7 @@ class PracticeModeStateHandler @Inject constructor(
 
     // Used to indicate a answer was not remembered
     fun secondaryAction(): String {
-        if (!practiceModeViewModel.hasPlayedCurrentNotePart.value) {
+        if (!practiceModeViewModel.hasPlayedCurrentNotePartOrIgnoredAProceed.value) {
             return ""
         }
 
@@ -202,8 +202,11 @@ class PracticeModeStateHandler @Inject constructor(
 
      fun proceed() {
          KeepScreenOn.getInstance().keepScreenOn(activity)
-        if (!practiceModeViewModel.hasPlayedCurrentNotePart.value) {
-          return
+        if (!practiceModeViewModel.hasPlayedCurrentNotePartOrIgnoredAProceed.value) {
+            // Only ignore a single proceed request. To allow the user to override the proceed block
+            // or a really long note.
+            practiceModeViewModel.hasPlayedCurrentNotePartOrIgnoredAProceed.value = true
+            return
         }
         if (questionMode) {
             proceedCommon()
