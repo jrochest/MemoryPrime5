@@ -76,7 +76,7 @@ class PracticeModeComposerManager @Inject constructor(
     @ActivityContext val context: Context,
     val practiceModeViewModel: PracticeModeViewModel,
     val stateModel: PracticeModeStateHandler,
-    val model: ModeViewModel,
+    val model: TopModeViewModel,
     val currentNotePartManager: CurrentNotePartManager,
 ) {
 

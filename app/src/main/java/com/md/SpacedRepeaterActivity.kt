@@ -18,7 +18,7 @@ import com.md.workers.IncrementalBackupManager
 import com.md.workers.IncrementalBackupPreferences
 import com.md.composeModes.ComposeModeSetter
 import com.md.composeModes.Mode
-import com.md.composeModes.ModeViewModel
+import com.md.composeModes.TopModeViewModel
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.scopes.ActivityScoped
@@ -50,7 +50,7 @@ class SpacedRepeaterActivity
     @Inject lateinit var toneManager: Lazy<ToneManagerImpl>
 
     @Inject
-    lateinit var model: ModeViewModel
+    lateinit var model: TopModeViewModel
 
     /** Called when the activity is first created.  */
     public override fun onCreate(savedInstanceState: Bundle?) {

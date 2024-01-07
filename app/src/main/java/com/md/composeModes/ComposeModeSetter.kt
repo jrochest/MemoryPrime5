@@ -20,7 +20,6 @@ import com.md.SpacedRepeaterActivity
 import com.md.modesetters.ItemDeletedHandler
 import com.md.modesetters.ModeSetter
 import com.md.uiTheme.AppTheme
-import com.md.workers.IncrementalBackupManager
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,7 +34,7 @@ enum class Mode {
 }
 
 @ActivityScoped
-class ModeViewModel @Inject constructor() {
+class TopModeViewModel @Inject constructor() {
     val modeModel = MutableStateFlow(Mode.Practice)
 }
 
@@ -45,7 +44,7 @@ class ComposeModeSetter @Inject constructor(
     private val modeHandler: ModeHandler,
     private val practiceModeViewModel: PracticeModeViewModel,
     private val currentNotePartManager: CurrentNotePartManager,
-    private val modeViewModel: ModeViewModel,
+    private val topModeViewModel: TopModeViewModel,
     private val deckModeComposableManager: DeckModeComposableManager,
     private val addNoteComposeManager: AddNoteComposeManager,
     private val backupModeComposeManager: BackupModeComposeManager,
@@ -70,17 +69,17 @@ class ComposeModeSetter @Inject constructor(
                     AppTheme {
                         Surface (color = MaterialTheme.colorScheme.background) {
                             Column {
-                                val mode = modeViewModel.modeModel.collectAsState()
+                                val mode = topModeViewModel.modeModel.collectAsState()
                                 TopMenu(onPracticeMode = {
-                                    modeViewModel.modeModel.value = Mode.Practice
+                                    topModeViewModel.modeModel.value = Mode.Practice
                                     // This initially leaves the recording or deleting state
                                     practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
                                     currentNotePartManager.clearPending()
                                     this@ComposeModeSetter.switchMode(context = activity)
                                 }, onDeckChooseMode = {
-                                    modeViewModel.modeModel.value = Mode.DeckChooser
+                                    topModeViewModel.modeModel.value = Mode.DeckChooser
                                     this@ComposeModeSetter.switchMode(context = activity)
-                                }, modeViewModel)
+                                }, topModeViewModel)
                                 when (mode.value) {
                                     Mode.Practice -> {
                                         practiceModeComposerManager.compose()

@@ -14,7 +14,7 @@ import com.md.utils.ToastSingleton
 import com.md.workers.BackupPreferences.markAllStale
 import com.md.composeModes.CurrentNotePartManager
 import com.md.composeModes.Mode
-import com.md.composeModes.ModeViewModel
+import com.md.composeModes.TopModeViewModel
 import com.md.composeModes.PracticeMode
 import com.md.composeModes.PracticeModeViewModel
 import dagger.hilt.android.qualifiers.ActivityContext
@@ -41,7 +41,7 @@ class PracticeModeStateHandler @Inject constructor(
     @ActivityContext val context: Context,
     private val focusedQueueStateModel: RevisionQueueStateModel,
     // TODOJNOW use theses.
-    private val model: ModeViewModel,
+    private val model: TopModeViewModel,
     private val practiceModeViewModel: PracticeModeViewModel,
     private val deckLoadManager: DeckLoadManager,
 ) {

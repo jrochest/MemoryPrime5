@@ -9,6 +9,10 @@ import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
 import com.md.*
+import com.md.composeModes.DeckMode
+import com.md.composeModes.DeckModeStateModel
+import com.md.composeModes.Mode
+import com.md.composeModes.TopModeViewModel
 import com.md.modesetters.DeckItemPopulator.populate
 import com.md.modesetters.deckchoose.DeckDeleter
 import com.md.modesetters.deckchoose.DeckNameUpdater
@@ -26,8 +30,11 @@ import javax.inject.Inject
 
 
 @ActivityScoped
-class DeckLoadManager @Inject constructor(@ActivityContext val context: Context,
-                                          private val revisionQueueStateModel: RevisionQueueStateModel,) {
+class DeckLoadManager @Inject constructor(
+    private val topModeViewModel: TopModeViewModel,
+    private val deckModeStateModel: DeckModeStateModel,
+    @ActivityContext val context: Context,
+    private val revisionQueueStateModel: RevisionQueueStateModel,) {
     val decks = MutableStateFlow<List<DeckInfo>?>(null)
 
     val activity: SpacedRepeaterActivity by lazy {
@@ -48,6 +55,16 @@ class DeckLoadManager @Inject constructor(@ActivityContext val context: Context,
             for (deck in queryDeck) {
                 deckList.add(Deck(deck.id, deck.name))
             }
+
+            if (deckList.isEmpty()) {
+                withContext(Dispatchers.Main) {
+                    // Go to Deck Chooser to add a deck.
+                    topModeViewModel.modeModel.value = Mode.DeckChooser
+                    deckModeStateModel.modeModel.value = DeckMode.AddingDeck
+                }
+                return@withContext
+            }
+
             var hasSetANonEmptyDeck = false
             for (deck in deckList) {
                 val revisionQueue = RevisionQueue()
@@ -64,6 +81,8 @@ class DeckLoadManager @Inject constructor(@ActivityContext val context: Context,
                      }
                  }
             }
+
+
             decks.value = resultingDeckList
         }
 

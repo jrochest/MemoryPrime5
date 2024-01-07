@@ -37,9 +37,9 @@ import com.md.modesetters.SettingModeSetter
 fun TopMenu(
     onPracticeMode: () -> Unit,
     onDeckChooseMode: () -> Unit,
-    modeViewModel: ModeViewModel
+    topModeViewModel: TopModeViewModel
 ) {
-    val mode = modeViewModel.modeModel.collectAsState()
+    val mode = topModeViewModel.modeModel.collectAsState()
     var showMenu by remember { mutableStateOf(false) }
 
     @Composable
@@ -87,7 +87,7 @@ fun TopMenu(
             label = "Create\nnote",
             myMode = Mode.NewNote,
             onClick = {
-            modeViewModel.modeModel.value = Mode.NewNote
+            topModeViewModel.modeModel.value = Mode.NewNote
         })
         MenuButton(
             myMode = Mode.Practice,
@@ -105,7 +105,7 @@ fun TopMenu(
             myMode = Mode.Backup,
             label = "Backup",
             onClick = {
-                modeViewModel.modeModel.value = Mode.Backup
+                topModeViewModel.modeModel.value = Mode.Backup
         })
         MenuButton(
             label = "More",

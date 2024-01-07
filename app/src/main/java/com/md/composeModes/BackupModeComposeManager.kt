@@ -25,7 +25,7 @@ class BackupModeStateModel @Inject constructor() {
 @ActivityScoped
 class BackupModeComposeManager @Inject constructor(
     @ActivityContext val context: Context,
-    private val modeViewModel: ModeViewModel,
+    private val topModeViewModel: TopModeViewModel,
     private val backupModeStateModel: BackupModeStateModel
 
 ) {
@@ -35,7 +35,7 @@ class BackupModeComposeManager @Inject constructor(
 
     init {
         activity.lifecycleScope.launch {
-            modeViewModel.modeModel.collect() { mode ->
+            topModeViewModel.modeModel.collect() { mode ->
                 if (mode == Mode.Backup && !backupModeStateModel.backupInProgress.value) {
                     backupModeStateModel.backupInProgress.value = true
                     IncrementalBackupManager.createAndWriteZipBackToPreviousLocation(

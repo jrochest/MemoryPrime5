@@ -44,6 +44,7 @@ enum class DeckMode {
     Default,
     AddingDeck
 }
+
 @ActivityScoped
 class DeckModeStateModel @Inject constructor() {
     val modeModel = MutableStateFlow(DeckMode.Default)
@@ -54,7 +55,7 @@ class DeckModeComposableManager @Inject constructor(
     @ActivityContext val context: Context,
     private val deckLoadManager: DeckLoadManager,
     private val revisionQueueStateModel: RevisionQueueStateModel,
-    private val modeViewModel: ModeViewModel,
+    private val topModeViewModel: TopModeViewModel,
     private val deckModeStateModel: DeckModeStateModel,
 ) {
 
@@ -71,38 +72,40 @@ class DeckModeComposableManager @Inject constructor(
     fun DeckModeComposable() {
         val decks = deckLoadManager.decks.collectAsState().value
         val deckMode = deckModeStateModel.modeModel.collectAsState().value
-        if (decks != null) {
-            Row {
-                OutlinedButton(onClick = {
-                    deckModeStateModel.modeModel.value = DeckMode.AddingDeck
-                }) {
-                    Text(text = "Add deck")
-                }
+
+        Row {
+            OutlinedButton(onClick = {
+                deckModeStateModel.modeModel.value = DeckMode.AddingDeck
+            }) {
+                Text(text = "Add deck")
             }
-            when (deckMode) {
-                DeckMode.Default -> {
+        }
+        when (deckMode) {
+            DeckMode.Default -> {
+                if (decks != null) {
                     DeckList(decks)
                 }
-                DeckMode.AddingDeck -> {
-                    var textValue by remember { mutableStateOf(TextFieldValue("")) }
-                    TextField(
-                        value = textValue,
-                        onValueChange = { newText ->
-                            textValue = newText
-                        },
-                        label = { Text(text = "Deck name") },
-                        placeholder = { Text(text = "My deck (active)") },
-                    )
-                    OutlinedButton(onClick = {
-                        val deck = Deck(/* name= */ textValue.text)
-                        instance!!.insertDeck(deck)
-                        activity.lifecycleScope.launch {
-                            deckModeStateModel.modeModel.value = DeckMode.Default
-                            deckLoadManager.refreshDeckListAndFocusFirstActiveNonemptyQueue()
-                        }
-                    }) {
-                        Text(text = "Save deck")
+            }
+
+            DeckMode.AddingDeck -> {
+                var textValue by remember { mutableStateOf(TextFieldValue("")) }
+                TextField(
+                    value = textValue,
+                    onValueChange = { newText ->
+                        textValue = newText
+                    },
+                    label = { Text(text = "Deck name") },
+                    placeholder = { Text(text = "My deck (active)") },
+                )
+                OutlinedButton(onClick = {
+                    val deck = Deck(/* name= */ textValue.text)
+                    instance!!.insertDeck(deck)
+                    activity.lifecycleScope.launch {
+                        deckModeStateModel.modeModel.value = DeckMode.Default
+                        deckLoadManager.refreshDeckListAndFocusFirstActiveNonemptyQueue()
                     }
+                }) {
+                    Text(text = "Save deck")
                 }
             }
         }
@@ -128,7 +131,7 @@ class DeckModeComposableManager @Inject constructor(
                         TextButton(onClick = {
                             revisionQueueStateModel.queue.value = it.revisionQueue
                             CategorySingleton.getInstance().setDeckInfo(it)
-                            modeViewModel.modeModel.value = Mode.Practice
+                            topModeViewModel.modeModel.value = Mode.Practice
                         }) {
                             Text(text = "Practice", style = MaterialTheme.typography.labelLarge)
                         }
@@ -136,7 +139,7 @@ class DeckModeComposableManager @Inject constructor(
                         TextButton(onClick = {
                             revisionQueueStateModel.queue.value = it.revisionQueue
                             CategorySingleton.getInstance().setDeckInfo(it)
-                            modeViewModel.modeModel.value = Mode.NewNote
+                            topModeViewModel.modeModel.value = Mode.NewNote
                         }) {
                             Text(
                                 text = "Add to deck",
