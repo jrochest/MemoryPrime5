@@ -111,13 +111,13 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
         }
     }
 
-    suspend fun suspendPlay(
+    suspend fun suspendPlayReturningTrueIfLoadedFileChanged(
         audioFileName: String?,
-    ) {
+    ) : Boolean {
         if (audioFileName == null) {
             ToastSingleton.getInstance()
                 .error("Null file path. You should probably delete this note Jacob.")
-            return
+            return false
         }
         var localCurrentPlayer: MediaPlayerForASingleFile? = null
         try {
@@ -130,12 +130,18 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
             e.printStackTrace()
         }
         if (localCurrentPlayer == null)  {
-            return
+            return false
         }
-        focusedPlayer?.mediaPlayer?.pause()
-        focusedPlayer = localCurrentPlayer
+        val fileNeededToBeFreshlyLoaded: Boolean
+        if (localCurrentPlayer != focusedPlayer) {
+            fileNeededToBeFreshlyLoaded = true
+            focusedPlayer?.mediaPlayer?.pause()
+            focusedPlayer = localCurrentPlayer
+            localCurrentPlayer.hasCompletedPlaybackSinceBecomingPrimary = false
+        } else {
+            fileNeededToBeFreshlyLoaded = false
+        }
         val mediaPlayer = localCurrentPlayer.mediaPlayer
-        localCurrentPlayer.hasCompletedPlaybackSinceBecomingPrimary = false
         mediaPlayer.seekTo(0)
         mediaPlayer.start()
         suspend fun awaitCompletion(): MediaPlayer? = suspendCancellableCoroutine { continuation ->
@@ -162,6 +168,7 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
 
         awaitCompletion()
         localCurrentPlayer.hasCompletedPlaybackSinceBecomingPrimary = true
+        return fileNeededToBeFreshlyLoaded
     }
 
     /**

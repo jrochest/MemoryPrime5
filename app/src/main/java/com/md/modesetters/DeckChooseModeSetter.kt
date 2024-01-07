@@ -55,7 +55,7 @@ class DeckLoadManager @Inject constructor(@ActivityContext val context: Context,
                 val deckCount = DbNoteEditor.instance!!.getDeckCount(deck.id)
                 val deckInfo = DeckInfo(deck, revisionQueue, deckCount)
                 resultingDeckList.add(deckInfo)
-                // Use the first deck that is active.
+                // Use the first deck that is active and has items revision queue.
                  if (!hasSetANonEmptyDeck)  {
                      if (deckInfo.isActive && deckInfo.revisionQueue.getSize() > 0) {
                          hasSetANonEmptyDeck = true

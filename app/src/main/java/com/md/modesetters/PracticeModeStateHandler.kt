@@ -42,13 +42,14 @@ class PracticeModeStateHandler @Inject constructor(
 
     private val lastNoteList: Deque<Note> = ArrayDeque()
     private var lastNoteRep: AbstractRep? = null
-    // TODOJSOONNOW delete this
-    private var currentNote: Note? = null
+
     private var originalSize = 0
     var repCounter = 0
     private var missCounter = 0
-    // TODOJSOONNOW delete this
+
+    // TODOJSOON delete this upon switching to currentNotePartManager
     private var questionMode = true
+    //
     fun onSwitchToMode() {
         activity.lifecycleScope.launch {
             activity.repeatOnLifecycle(Lifecycle.State.RESUMED) {
@@ -91,37 +92,31 @@ class PracticeModeStateHandler @Inject constructor(
                             val part = noteState.notePart
                             val note = checkNotNull(noteState.currentNote)
                             if (part.partIsAnswer) {
-                                AudioPlayer.instance.suspendPlay(note.answer)
-                                practiceModeViewModel.hasPlayedCurrentNotePartOrIgnoredAProceed.value = true
-                                AudioPlayer.instance.suspendPlay(note.answer)
-                                delay(8_000)
-                                while (!activity.isAtLeastResumed()) {
-                                    delay(1000)
-                                }
-                                TtsSpeaker.speak("Auto-proceed soon.", lowVolume = true)
-                                delay(2_000)
-                                while (!activity.isAtLeastResumed()) {
-                                    delay(1000)
-                                }
-                                if (isActive) {
-                                    TtsSpeaker.speak("Auto-proceed.", lowVolume = true)
-                                    proceed()
-                                    return@launch
-                                }
+                                AudioPlayer.instance.suspendPlayReturningTrueIfLoadedFileChanged(
+                                    note.answer
+                                )
                             } else {
-                                // TODOJNOW added next task. Make Play file suspending so that we can
-                                // play multiple times and stop playback on cancelation.
-                                AudioPlayer.instance.suspendPlay(note.question)
-                                practiceModeViewModel.hasPlayedCurrentNotePartOrIgnoredAProceed.value = true
-                                delay(2_000)
-                                while (!activity.isAtLeastResumed()) {
-                                    delay(1000)
+                                val firstPlay =
+                                    AudioPlayer.instance.suspendPlayReturningTrueIfLoadedFileChanged(
+                                        note.question
+                                    )
+                                if (firstPlay) {
+                                    // Play twice without a break the first time.
+                                    AudioPlayer.instance.suspendPlayReturningTrueIfLoadedFileChanged(
+                                        note.question
+                                    )
                                 }
-                                // This tone is mostly helpful to avoid the bluetooth speakers being off during
-                                // replay.
-                                val unused = async { activity.lowVolumePrimeSpeakerTone() }
-                                delay(500)
                             }
+                            practiceModeViewModel.hasPlayedCurrentNotePartOrIgnoredAProceed.value =
+                                true
+                            delay(2_000)
+                            while (!activity.isAtLeastResumed()) {
+                                delay(1000)
+                            }
+                            // This tone is mostly helpful to avoid the bluetooth speakers being off during
+                            // replay.
+                            val unused = async { activity.lowVolumePrimeSpeakerTone() }
+                            delay(500)
                         }
                     })
                 }.collect {}
@@ -148,7 +143,7 @@ class PracticeModeStateHandler @Inject constructor(
         )
     }
 
-     fun undo() {
+    fun undo() {
         if (questionMode) {
             undoFromQuestionToAnswerMode()
         } else {
@@ -170,7 +165,7 @@ class PracticeModeStateHandler @Inject constructor(
             "bad bad"
         }
         if (questionMode) {
-            proceedCommon()
+            proceedToAnswerIfNoteExistsElseNextDeck()
         } else {
             updateScoreAndMoveToNext(1)
         }
@@ -178,15 +173,14 @@ class PracticeModeStateHandler @Inject constructor(
     }
 
     /** Moves this note to the end of the queue.  */
-     fun postponeNote(shouldQueue: Boolean) {
-        val currentNote = currentNote ?: return
+    fun postponeNote(shouldQueue: Boolean) {
+        val currentNote = currentNotePartManager.currentNote ?: return
 
         if (shouldQueue) {
             // Place at end of queue.
             currentDeckReviewQueue!!.updateNote(currentNote, false)
         } else {
             val editor = DbNoteEditor.instance
-            val context = activity
             if (editor != null) {
                 currentNote.decreasePriority()
                 editor.update(currentNote)
@@ -200,8 +194,8 @@ class PracticeModeStateHandler @Inject constructor(
         setupQuestionMode()
     }
 
-     fun proceed() {
-         KeepScreenOn.getInstance().keepScreenOn(activity)
+    fun proceed() {
+        KeepScreenOn.getInstance().keepScreenOn(activity)
         if (!practiceModeViewModel.hasPlayedCurrentNotePartOrIgnoredAProceed.value) {
             // Only ignore a single proceed request. To allow the user to override the proceed block
             // or a really long note.
@@ -209,7 +203,7 @@ class PracticeModeStateHandler @Inject constructor(
             return
         }
         if (questionMode) {
-            proceedCommon()
+            proceedToAnswerIfNoteExistsElseNextDeck()
         } else {
             updateScoreAndMoveToNext(4)
         }
@@ -218,12 +212,12 @@ class PracticeModeStateHandler @Inject constructor(
     private fun setupQuestionMode(
         shouldUpdateQuestion: Boolean = true
     ) {
-        if (shouldUpdateQuestion) {
+        val focusedNote = currentNotePartManager.currentNote
+        if (focusedNote == null || shouldUpdateQuestion) {
             updateStartingInQuestionMode()
         }
         questionMode = true
-        val currentNote = currentNote
-        currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = false)
+        currentNotePartManager.changeToQuestionForCurrent()
     }
 
     private val lastOrNull: Note?
@@ -231,28 +225,31 @@ class PracticeModeStateHandler @Inject constructor(
 
     private fun setupAnswerMode() {
         questionMode = false
-        val currentNote = currentNote
-        currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = true)
+        currentNotePartManager.changeToAnswerForCurrent()
     }
 
     private fun updateStartingInQuestionMode() {
-        currentNote = currentDeckReviewQueue!!.peekQueue()
+        val currentNote = currentDeckReviewQueue!!.peekQueue()
         currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = false)
         if (currentNote != null) {
             repCounter++
             val metrics = practiceModeViewModel.metricsFlow.value
-            practiceModeViewModel.metricsFlow.value = metrics.copy(notesPracticed = metrics.notesPracticed + 1, remainingInQueue = currentDeckReviewQueue?.getSize() ?: 0)
+            practiceModeViewModel.metricsFlow.value = metrics.copy(
+                notesPracticed = metrics.notesPracticed + 1,
+                remainingInQueue = currentDeckReviewQueue?.getSize() ?: 0
+            )
             if (repCounter % 10 == 9) {
-                markAllStale(activity!!)
+                markAllStale(activity)
             }
         }
     }
 
     private fun updateScoreAndMoveToNext(newGrade: Int) {
+        val currentNote = currentNotePartManager.currentNote
         if (currentNote != null) {
-            applyGradeStatic(newGrade, currentNote!!)
+            applyGradeStatic(newGrade, currentNote)
             ToastSingleton.getInstance()
-                .msg("Easiness: " + currentNote!!.easiness + " Interval " + currentNote!!.interval)
+                .msg("Easiness: " + currentNote.easiness + " Interval " + currentNote!!.interval)
             setupQuestionMode()
         }
     }
@@ -286,31 +283,26 @@ class PracticeModeStateHandler @Inject constructor(
 
     fun deleteNote() {
         val noteEditor = DbNoteEditor.instance
-        val note = currentNote
+        val note = currentNotePartManager.currentNote
         if (note != null) {
-            noteEditor!!.deleteCurrent(activity!!, note)
+            noteEditor!!.deleteCurrent(activity, note)
             currentDeckReviewQueue!!.removeNote(note.id)
             currentNotePartManager.onDelete()
         }
         setupQuestionMode()
     }
 
-    private fun replayA() {
-        KeepScreenOn.getInstance().keepScreenOn(activity)
-        if (currentNote != null) {
-            AudioPlayer.instance.playFile(currentNote!!.answer, null, true)
-        }
-    }
-
-    private fun replay() {
-        KeepScreenOn.getInstance().keepScreenOn(activity)
-        if (currentNote != null) {
-            AudioPlayer.instance.playFile(currentNote!!.question, null, true)
-        }
-    }
-
-    private fun proceedCommon() {
-        if (currentNote != null) {
+    private fun proceedToAnswerIfNoteExistsElseNextDeck() {
+        val focusedNote = currentNotePartManager.currentNote
+        if (focusedNote == null) {
+            // focused note being null typically means there's nothing left in the deck.
+            // Proceeding should go to the next reviewable deck with note that are wanting ready
+            // to review.
+            activity.lifecycleScope.launch {
+                deckLoadManager.refreshDeckListAndFocusFirstActiveNonemptyQueue()
+                setupQuestionMode(shouldUpdateQuestion = false)
+            }
+        } else {
             setupAnswerMode()
         }
     }
@@ -318,11 +310,13 @@ class PracticeModeStateHandler @Inject constructor(
     private fun undoFromQuestionToAnswerMode() {
         if (!lastNoteList.isEmpty()) {
             val currentNote = lastNoteList.removeLast()
-            this.currentNote = currentNote
             currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = true)
 
             val metrics = practiceModeViewModel.metricsFlow.value
-            practiceModeViewModel.metricsFlow.value = metrics.copy(notesPracticed = metrics.notesPracticed - 1, remainingInQueue = currentDeckReviewQueue?.getSize() ?: 0)
+            practiceModeViewModel.metricsFlow.value = metrics.copy(
+                notesPracticed = metrics.notesPracticed - 1,
+                remainingInQueue = currentDeckReviewQueue?.getSize() ?: 0
+            )
 
             val noteEditor = DbNoteEditor.instance
             noteEditor!!.update(currentNote)
@@ -339,16 +333,17 @@ class PracticeModeStateHandler @Inject constructor(
         setupQuestionMode(false)
     }
 
-     fun adjustScreenLock() {
+    fun adjustScreenLock() {
         KeepScreenOn.getInstance().keepScreenOn(activity)
-       // hideSystemUi()
+        // hideSystemUi()
     }
 
-     fun mark() {
+    fun mark() {
+        val currentNote = currentNotePartManager.currentNote
         if (currentNote != null) {
-            currentNote!!.isMarked = true
+            currentNote.isMarked = true
             val noteEditor = DbNoteEditor.instance
-            noteEditor!!.update(currentNote!!)
+            noteEditor!!.update(currentNote)
             ToastSingleton.getInstance().msg("Marked note")
         }
     }
