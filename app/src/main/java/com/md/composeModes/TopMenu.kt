@@ -26,8 +26,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.md.FocusedQueueStateModel
 import com.md.RestoreFromIncrementalDirectoryManager
 import com.md.composeStyles.ButtonStyles.ImportantButtonColor
 import com.md.composeStyles.ButtonStyles.MediumImportanceButtonColor
@@ -37,8 +40,9 @@ import com.md.modesetters.SettingModeSetter
 fun TopMenu(
     onPracticeMode: () -> Unit,
     onDeckChooseMode: () -> Unit,
-    topModeViewModel: TopModeViewModel
-) {
+    topModeViewModel: TopModeViewModel,
+    focusedQueueStateModel: FocusedQueueStateModel,
+    ) {
     val mode = topModeViewModel.modeModel.collectAsState()
     var showMenu by remember { mutableStateOf(false) }
 
@@ -50,7 +54,12 @@ fun TopMenu(
         sentContent: @Composable() (() -> Unit) = {},
     ) {
         OutlinedButton(
-            modifier = Modifier.heightIn(min = 120.dp).widthIn(max = 100.dp),
+            modifier = Modifier
+                .heightIn(min = 120.dp)
+                .widthIn(max = 100.dp)
+                .semantics {
+                    this.contentDescription = label ?: "overflow"
+                },
             colors = if (myMode != null && myMode == mode.value) {
                 ImportantButtonColor()
             } else {
@@ -139,4 +148,9 @@ fun TopMenu(
             }
         }
     }
+    val deck = focusedQueueStateModel.deck.collectAsState()
+    Text(
+        text = "Deck:" + deck.value?.name,
+        style = MaterialTheme.typography.headlineSmall
+    )
 }

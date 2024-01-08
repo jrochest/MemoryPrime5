@@ -1,11 +1,7 @@
 package com.md.modesetters
 
 import android.content.Context
-import android.content.pm.PackageManager
 import android.os.SystemClock
-import android.widget.Toast
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -43,7 +39,7 @@ enum class PracticeNoteState {
 class PracticeModeStateHandler @Inject constructor(
     val currentNotePartManager: CurrentNotePartManager,
     @ActivityContext val context: Context,
-    private val focusedQueueStateModel: RevisionQueueStateModel,
+    private val focusedQueueStateModel: FocusedQueueStateModel,
     // TODOJNOW use theses.
     private val model: TopModeViewModel,
     private val practiceModeViewModel: PracticeModeViewModel,
@@ -67,20 +63,21 @@ class PracticeModeStateHandler @Inject constructor(
                 combine(
                     flow = model.modeModel,
                     flow2 = practiceModeViewModel.practiceStateFlow,
-                    flow3 = focusedQueueStateModel.queue,
+                    flow3 = focusedQueueStateModel.deck,
                     flow4 = currentNotePartManager.noteStateFlow
-                ) { mode: Mode, practiceMode: PracticeMode, revisionQueue: RevisionQueue?,
+                ) { mode: Mode, practiceMode: PracticeMode, deckInfo: DeckInfo?,
                     noteState: CurrentNotePartManager.NoteState? ->
                     if (mode != Mode.Practice || practiceMode != PracticeMode.Practicing) {
                         MoveManager.cancelJobs()
                         return@combine
                     }
 
-                    if (revisionQueue == null || revisionQueue.getSize() == 0) {
+                    if (deckInfo == null || deckInfo.revisionQueue.isEmpty()) {
                         MoveManager.cancelJobs()
                         deckLoadManager.refreshDeckListAndFocusFirstActiveNonemptyQueue()
-                        val focusedQueue = focusedQueueStateModel.queue.value
-                        if (focusedQueue != null) {
+                        val focusedQueue = focusedQueueStateModel.deck.value?.revisionQueue
+
+                        if (focusedQueue == null || !focusedQueue.isEmpty()) {
                             TtsSpeaker.speak("Deck done. Loading next")
                         } else {
                             TtsSpeaker.speak("Great job! Deck done. All decks done..")
@@ -89,6 +86,9 @@ class PracticeModeStateHandler @Inject constructor(
                     }
 
                     if (noteState == null) {
+                        val focusedQueue = focusedQueueStateModel.deck.value?.revisionQueue
+                       val note = focusedQueue?.peekQueue()
+                        currentNotePartManager.changeCurrentNotePart(note, partIsAnswer = false)
                         return@combine
                     }
 
@@ -136,9 +136,9 @@ class PracticeModeStateHandler @Inject constructor(
 
 
         activity.lifecycleScope.launch {
-            focusedQueueStateModel.queue.collect {
-                val revisionQueue = it ?: return@collect
-                originalSize = revisionQueue.getSize()
+            focusedQueueStateModel.deck.collect {
+                val deck = it ?: return@collect
+                originalSize = deck.revisionQueue.getSize()
                 lastNoteList.clear()
                 // Let's just load up the learn question also to get it ready.
                 setupQuestionMode()
@@ -329,7 +329,7 @@ class PracticeModeStateHandler @Inject constructor(
         // to review.
         activity.lifecycleScope.launch {
             deckLoadManager.refreshDeckListAndFocusFirstActiveNonemptyQueue()
-            setupQuestionMode(shouldUpdateQuestion = false)
+            //setupQuestionMode(shouldUpdateQuestion = true)
         }
     }
 

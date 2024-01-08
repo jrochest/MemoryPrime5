@@ -24,11 +24,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.lifecycleScope
 import com.md.CategorySingleton
 import com.md.DbNoteEditor.Companion.instance
-import com.md.RevisionQueueStateModel
+import com.md.FocusedQueueStateModel
 import com.md.SpacedRepeaterActivity
 import com.md.modesetters.DeckInfo
 import com.md.modesetters.DeckLoadManager
@@ -54,7 +56,7 @@ class DeckModeStateModel @Inject constructor() {
 class DeckModeComposableManager @Inject constructor(
     @ActivityContext val context: Context,
     private val deckLoadManager: DeckLoadManager,
-    private val revisionQueueStateModel: RevisionQueueStateModel,
+    private val focusedQueueStateModel: FocusedQueueStateModel,
     private val topModeViewModel: TopModeViewModel,
     private val deckModeStateModel: DeckModeStateModel,
 ) {
@@ -90,6 +92,9 @@ class DeckModeComposableManager @Inject constructor(
             DeckMode.AddingDeck -> {
                 var textValue by remember { mutableStateOf(TextFieldValue("")) }
                 TextField(
+                    modifier = Modifier.semantics {
+                        this.contentDescription = "Deck name"
+                    },
                     value = textValue,
                     onValueChange = { newText ->
                         textValue = newText
@@ -97,7 +102,11 @@ class DeckModeComposableManager @Inject constructor(
                     label = { Text(text = "Deck name") },
                     placeholder = { Text(text = "My deck (active)") },
                 )
-                OutlinedButton(onClick = {
+                OutlinedButton(
+                    modifier = Modifier.semantics {
+                        this.contentDescription = "Save deck"
+                    },
+                    onClick = {
                     val deck = Deck(/* name= */ textValue.text)
                     instance!!.insertDeck(deck)
                     activity.lifecycleScope.launch {
@@ -129,7 +138,7 @@ class DeckModeComposableManager @Inject constructor(
                         )
                         VerticalDivider()
                         TextButton(onClick = {
-                            revisionQueueStateModel.queue.value = it.revisionQueue
+                            focusedQueueStateModel.deck.value = it
                             CategorySingleton.getInstance().setDeckInfo(it)
                             topModeViewModel.modeModel.value = Mode.Practice
                         }) {
@@ -137,7 +146,9 @@ class DeckModeComposableManager @Inject constructor(
                         }
                         VerticalDivider()
                         TextButton(onClick = {
-                            revisionQueueStateModel.queue.value = it.revisionQueue
+
+                            focusedQueueStateModel.deck.value = it
+
                             CategorySingleton.getInstance().setDeckInfo(it)
                             topModeViewModel.modeModel.value = Mode.NewNote
                         }) {

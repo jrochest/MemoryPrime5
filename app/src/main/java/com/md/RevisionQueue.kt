@@ -1,10 +1,10 @@
 package com.md
 
 import android.util.Log
+import com.md.modesetters.DeckInfo
 import com.md.provider.Note
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
 class RevisionQueue {
@@ -54,6 +54,8 @@ class RevisionQueue {
 
     fun getSize(): Int = notesToReview.size
 
+    fun isEmpty(): Boolean = notesToReview.isEmpty()
+
     fun updateNote(currentNote: Note, keepQueueLocation: Boolean) {
         if (keepQueueLocation) {
             val originalIndex = notesToReview.indexOfFirst { it.id == currentNote.id }
@@ -90,7 +92,8 @@ class RevisionQueue {
 }
 
 @ActivityScoped
-class RevisionQueueStateModel
+class FocusedQueueStateModel
     @Inject constructor() {
-        val queue: MutableStateFlow<RevisionQueue?> = MutableStateFlow(null)
+
+    val deck: MutableStateFlow<DeckInfo?> = MutableStateFlow(null)
 }

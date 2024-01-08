@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import com.md.FocusedQueueStateModel
 import com.md.SpacedRepeaterActivity
 import com.md.modesetters.PracticeModeStateHandler
 import com.md.composeModes.WorkingMemoryScreen.LARGE_TAP_AREA_LABEL
@@ -78,6 +79,7 @@ class PracticeModeComposerManager @Inject constructor(
     val stateModel: PracticeModeStateHandler,
     val model: TopModeViewModel,
     val currentNotePartManager: CurrentNotePartManager,
+    val focusedQueueStateModel: FocusedQueueStateModel,
 ) {
 
     val activity: SpacedRepeaterActivity by lazy {
@@ -129,13 +131,8 @@ class PracticeModeComposerManager @Inject constructor(
         practiceMode: PracticeMode,
         currentNotePartManager: CurrentNotePartManager
     ) {
-        val hasNote = currentNotePartManager.hasNote.collectAsState()
-
-        if (!hasNote.value) {
-            Text(text = "Nothing more to study")
-            return
-        }
-        val notePart = checkNotNull(currentNotePartManager.notePart)
+        val noteState = currentNotePartManager.noteStateFlow.collectAsState()
+        val notePart = noteState.value?.notePart
 
         Column(
             verticalArrangement = Arrangement.Top,
@@ -147,22 +144,43 @@ class PracticeModeComposerManager @Inject constructor(
                 .heightIn(min = 48.dp)
                 .padding(4.dp)
             // LARGE BUTTON.
+            @Composable
+            fun showRepState() {
+                val metrics = practiceModeViewModel.metricsFlow.collectAsState().value
+                Text(
+                    text = "Reps: ${metrics.notesPracticed}",
+                    style = MaterialTheme.typography.displayMedium
+                )
+                Text(
+                    text = "Remaining: ${metrics.remainingInQueue}",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            }
+
+            if (notePart == null) {
+                MiddlePracticeButton(
+                    largeButtonModifier, onMiddleButtonTapInPracticeMode,
+                    colors = ButtonStyles.MediumImportanceButtonColor()
+                ) {
+                    showRepState()
+                    Text(
+                        text = "Tap for next deck",
+                        style = MaterialTheme.typography.displayLarge
+                    )
+                }
+
+                return
+            }
+
+
             when (practiceMode) {
                 PracticeMode.Practicing -> {
                     MiddlePracticeButton(
                         largeButtonModifier, onMiddleButtonTapInPracticeMode,
                         colors = ButtonStyles.MediumImportanceButtonColor()
                     ) {
-                        val metrics = practiceModeViewModel.metricsFlow.collectAsState().value
+                        showRepState()
                         val isAnswer = currentNotePartManager.noteStateFlow.collectAsState().value?.notePart?.partIsAnswer
-                        Text(
-                            text = "Reps: ${metrics.notesPracticed}",
-                            style = MaterialTheme.typography.displayMedium
-                        )
-                        Text(
-                            text = "Remaining: ${metrics.remainingInQueue}",
-                            style = MaterialTheme.typography.headlineSmall
-                        )
                         Text(
                             text = if (isAnswer == true) "Answer" else "Question",
                             style = MaterialTheme.typography.headlineSmall

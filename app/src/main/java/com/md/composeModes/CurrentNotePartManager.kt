@@ -29,21 +29,20 @@ class CurrentNotePartManager @Inject constructor(
     val noteStateFlow = MutableStateFlow<NoteState?>(null)
 
     val hasNote = MutableStateFlow(false)
+    // Perhaps delete?
     val hasSavable = mutableStateOf(false)
-    val notePart = NotePart(updateHasPart = { value: Boolean -> hasSavable.value = value })
-    init {
+     init {
         changeCurrentNotePart(null, null)
     }
 
     fun onDelete() {
+        noteStateFlow.value?.notePart?.clearRecordings()
         noteStateFlow.value = null
-        notePart.clearRecordings()
-        hasNote.value = false
         hasSavable.value = false
     }
 
     fun clearPending() {
-        notePart.clearRecordings()
+        noteStateFlow.value?.notePart?.clearRecordings()
         hasSavable.value = false
     }
 
@@ -59,18 +58,17 @@ class CurrentNotePartManager @Inject constructor(
 
     fun changeCurrentNotePart(note: Note?, partIsAnswer: Boolean?) {
         if (note == null || partIsAnswer == null) {
-            notePart.clearRecordings()
-            hasNote.value = false
+            noteStateFlow.value?.notePart?.clearRecordings()
+            noteStateFlow.value = null
             hasSavable.value = false
             return
         }
         // Create a note part that has all the parts already.
-        notePart.partIsAnswer = partIsAnswer
-        hasNote.value = true
-        noteStateFlow.value = NoteState(note, notePart)
+        noteStateFlow.value = NoteState(note, NotePart(partIsAnswer, { value: Boolean -> hasSavable.value = value }))
     }
 
     fun saveNewAudio() {
+       val notePart = noteStateFlow.value?.notePart
        val savableRecorder = checkNotNull(checkNotNull(notePart, {"note part null"}).consumeSavableRecorder())
         updateAudioFilename(savableRecorder.originalFile)
         notePart.clearRecordings()
@@ -79,7 +77,7 @@ class CurrentNotePartManager @Inject constructor(
     fun updateAudioFilename(filename: String) {
         val noteState = checkNotNull(noteStateFlow.value)
         val note = checkNotNull(noteState.currentNote)
-       val partIsAnswer = checkNotNull(notePart.partIsAnswer)
+       val partIsAnswer = checkNotNull(noteState.notePart.partIsAnswer)
         if (partIsAnswer) {
             note.answer = filename
         } else {

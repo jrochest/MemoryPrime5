@@ -9,6 +9,7 @@ import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
 import com.md.*
+import com.md.composeModes.CurrentNotePartManager
 import com.md.composeModes.DeckMode
 import com.md.composeModes.DeckModeStateModel
 import com.md.composeModes.Mode
@@ -22,6 +23,7 @@ import com.md.utils.ToastSingleton
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,8 +36,10 @@ class DeckLoadManager @Inject constructor(
     private val topModeViewModel: TopModeViewModel,
     private val deckModeStateModel: DeckModeStateModel,
     @ActivityContext val context: Context,
-    private val revisionQueueStateModel: RevisionQueueStateModel,) {
+    val currentNotePartManager: CurrentNotePartManager,
+    private val focusedQueueStateModel: FocusedQueueStateModel,) {
     val decks = MutableStateFlow<List<DeckInfo>?>(null)
+    private var startedPopulatingDecks = false
 
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
@@ -48,44 +52,53 @@ class DeckLoadManager @Inject constructor(
     }
 
     suspend fun refreshDeckListAndFocusFirstActiveNonemptyQueue() {
-        withContext(Dispatchers.IO) {
-            val resultingDeckList = mutableListOf<DeckInfo>()
-            val deckList = mutableListOf<Deck>()
-            val queryDeck = DbNoteEditor.instance!!.queryDeck()
-            for (deck in queryDeck) {
-                deckList.add(Deck(deck.id, deck.name))
-            }
+        withContext(Dispatchers.Main) {
+            // Only run this refresh once.
+            if (!startedPopulatingDecks) {
+                startedPopulatingDecks = true
+                val resultingDeckList = withContext(Dispatchers.IO) {
+                    val resultingDeckList = mutableListOf<DeckInfo>()
+                    val deckList = mutableListOf<Deck>()
+                    val queryDeck = DbNoteEditor.instance!!.queryDeck()
+                    for (deck in queryDeck) {
+                        deckList.add(Deck(deck.id, deck.name))
+                    }
 
-            if (deckList.isEmpty()) {
-                withContext(Dispatchers.Main) {
-                    // Go to Deck Chooser to add a deck.
-                    topModeViewModel.modeModel.value = Mode.DeckChooser
-                    deckModeStateModel.modeModel.value = DeckMode.AddingDeck
+                    for (deck in deckList) {
+                        val revisionQueue = RevisionQueue()
+                        revisionQueue.populate(DbNoteEditor.instance!!, deck.id)
+                        val deckCount = DbNoteEditor.instance!!.getDeckCount(deck.id)
+                        val deckInfo = DeckInfo(deck, revisionQueue, deckCount)
+                        resultingDeckList.add(deckInfo)
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        decks.value = resultingDeckList
+                    }
+                    resultingDeckList
                 }
-                return@withContext
+
+                val decks = resultingDeckList
+                if (decks.isEmpty()) {
+                    withContext(Dispatchers.Main) {
+                        // Go to Deck Chooser to add a deck.
+                        topModeViewModel.modeModel.value = Mode.DeckChooser
+                        deckModeStateModel.modeModel.value = DeckMode.AddingDeck
+                    }
+                    return@withContext
+                }
+
+                for (deckInfo in decks) {
+                    if (deckInfo.isActive && !deckInfo.revisionQueue.isEmpty()) {
+                        CategorySingleton.getInstance().setDeckInfo(deckInfo)
+                        focusedQueueStateModel.deck.value = deckInfo
+                        val note = deckInfo.revisionQueue.peekQueue()
+                        currentNotePartManager.changeCurrentNotePart(note, partIsAnswer = false)
+                        break
+                    }
+                }
             }
-
-            var hasSetANonEmptyDeck = false
-            for (deck in deckList) {
-                val revisionQueue = RevisionQueue()
-                revisionQueue.populate(DbNoteEditor.instance!!, deck.id)
-                val deckCount = DbNoteEditor.instance!!.getDeckCount(deck.id)
-                val deckInfo = DeckInfo(deck, revisionQueue, deckCount)
-                resultingDeckList.add(deckInfo)
-                // Use the first deck that is active and has items revision queue.
-                 if (!hasSetANonEmptyDeck)  {
-                     if (deckInfo.isActive && deckInfo.revisionQueue.getSize() > 0) {
-                         hasSetANonEmptyDeck = true
-                         CategorySingleton.getInstance().setDeckInfo(deckInfo)
-                         revisionQueueStateModel.queue.value = deckInfo.revisionQueue
-                     }
-                 }
-            }
-
-
-            decks.value = resultingDeckList
         }
-
     }
 }
 //TODOJNOW hook up the proceed button.

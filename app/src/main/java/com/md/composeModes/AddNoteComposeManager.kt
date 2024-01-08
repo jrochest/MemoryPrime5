@@ -19,6 +19,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.google.firebase.inappmessaging.model.Button
 import com.md.AudioRecorder
 import com.md.DbNoteEditor
@@ -177,7 +179,9 @@ fun AudioRecordAndPlayButtonForPart(
         }
     }
 
-    OutlinedButton(modifier = firstButtonModifier,
+    OutlinedButton(modifier = firstButtonModifier.semantics {
+        contentDescription = "Record ${notePart.name}"
+    },
         interactionSource = interactionSource,
         onClick = {}) {
         RecorderButtonText(
@@ -257,7 +261,8 @@ fun AudioRecordButton(
             }
         }
     }
-    OutlinedButton(modifier = modifier,
+    OutlinedButton(
+        modifier = modifier,
         interactionSource = interactionSource,
         onClick = {},
         colors = if (hasSavable.value) MediumImportanceButtonColor() else ImportantButtonColor()

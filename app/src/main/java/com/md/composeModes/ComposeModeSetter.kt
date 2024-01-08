@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
 import com.md.ModeHandler
-import com.md.RevisionQueueStateModel
+import com.md.FocusedQueueStateModel
 import com.md.SpacedRepeaterActivity
 import com.md.modesetters.ItemDeletedHandler
 import com.md.modesetters.ModeSetter
@@ -49,7 +49,7 @@ class ComposeModeSetter @Inject constructor(
     private val addNoteComposeManager: AddNoteComposeManager,
     private val backupModeComposeManager: BackupModeComposeManager,
     private val practiceModeComposerManager: PracticeModeComposerManager,
-    private val revisionQueueStateModel: RevisionQueueStateModel,
+    private val focusedQueueStateModel: FocusedQueueStateModel,
 ) : ModeSetter(), ItemDeletedHandler {
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
@@ -79,7 +79,7 @@ class ComposeModeSetter @Inject constructor(
                                 }, onDeckChooseMode = {
                                     topModeViewModel.modeModel.value = Mode.DeckChooser
                                     this@ComposeModeSetter.switchMode(context = activity)
-                                }, topModeViewModel)
+                                }, topModeViewModel, focusedQueueStateModel)
                                 when (mode.value) {
                                     Mode.Practice -> {
                                         practiceModeComposerManager.compose()
