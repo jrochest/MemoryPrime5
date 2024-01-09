@@ -111,6 +111,7 @@ class DeckModeComposableManager @Inject constructor(
                     instance!!.insertDeck(deck)
                     activity.lifecycleScope.launch {
                         deckModeStateModel.modeModel.value = DeckMode.Default
+                        deckLoadManager.deckRefreshNeeded = true
                         deckLoadManager.refreshDeckListAndFocusFirstActiveNonemptyQueue()
                     }
                 }) {

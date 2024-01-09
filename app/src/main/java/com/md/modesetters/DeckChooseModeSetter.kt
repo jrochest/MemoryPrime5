@@ -23,7 +23,6 @@ import com.md.utils.ToastSingleton
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -39,7 +38,7 @@ class DeckLoadManager @Inject constructor(
     val currentNotePartManager: CurrentNotePartManager,
     private val focusedQueueStateModel: FocusedQueueStateModel,) {
     val decks = MutableStateFlow<List<DeckInfo>?>(null)
-    private var startedPopulatingDecks = false
+    var deckRefreshNeeded = true
 
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
@@ -49,13 +48,47 @@ class DeckLoadManager @Inject constructor(
         activity.lifecycleScope.launch {
             refreshDeckListAndFocusFirstActiveNonemptyQueue()
         }
+
+        activity.lifecycleScope.launch {
+            decks.collect { decks ->
+                if (decks.isNullOrEmpty()) {
+                    return@collect
+                }
+                chooseDeck(decks)
+            }
+        }
+    }
+
+    fun chooseDeck() {
+        val decks = decks.value ?: return
+        for (deckInfo in decks) {
+            if (deckInfo.isActive && !deckInfo.revisionQueue.isEmpty()) {
+                CategorySingleton.getInstance().setDeckInfo(deckInfo)
+                focusedQueueStateModel.deck.value = deckInfo
+                val note = deckInfo.revisionQueue.peekQueue()
+                currentNotePartManager.changeCurrentNotePart(note, partIsAnswer = false)
+                break
+            }
+        }
+    }
+
+    fun chooseDeck(decks: List<DeckInfo>) {
+        for (deckInfo in decks) {
+            if (deckInfo.isActive && !deckInfo.revisionQueue.isEmpty()) {
+                CategorySingleton.getInstance().setDeckInfo(deckInfo)
+                focusedQueueStateModel.deck.value = deckInfo
+                val note = deckInfo.revisionQueue.peekQueue()
+                currentNotePartManager.changeCurrentNotePart(note, partIsAnswer = false)
+                break
+            }
+        }
     }
 
     suspend fun refreshDeckListAndFocusFirstActiveNonemptyQueue() {
         withContext(Dispatchers.Main) {
             // Only run this refresh once.
-            if (!startedPopulatingDecks) {
-                startedPopulatingDecks = true
+            if (deckRefreshNeeded) {
+                deckRefreshNeeded = false
                 val resultingDeckList = withContext(Dispatchers.IO) {
                     val resultingDeckList = mutableListOf<DeckInfo>()
                     val deckList = mutableListOf<Deck>()
@@ -86,16 +119,6 @@ class DeckLoadManager @Inject constructor(
                         deckModeStateModel.modeModel.value = DeckMode.AddingDeck
                     }
                     return@withContext
-                }
-
-                for (deckInfo in decks) {
-                    if (deckInfo.isActive && !deckInfo.revisionQueue.isEmpty()) {
-                        CategorySingleton.getInstance().setDeckInfo(deckInfo)
-                        focusedQueueStateModel.deck.value = deckInfo
-                        val note = deckInfo.revisionQueue.peekQueue()
-                        currentNotePartManager.changeCurrentNotePart(note, partIsAnswer = false)
-                        break
-                    }
                 }
             }
         }

@@ -74,16 +74,21 @@ class PracticeModeStateHandler @Inject constructor(
 
                     if (deckInfo == null || deckInfo.revisionQueue.isEmpty()) {
                         MoveManager.cancelJobs()
-                        deckLoadManager.refreshDeckListAndFocusFirstActiveNonemptyQueue()
+                        deckLoadManager.chooseDeck()
                         val focusedQueue = focusedQueueStateModel.deck.value?.revisionQueue
-
-                        if (focusedQueue == null || !focusedQueue.isEmpty()) {
+                        if (focusedQueue != null && !focusedQueue.isEmpty()) {
+                            val metrics = practiceModeViewModel.metricsFlow.value
+                            practiceModeViewModel.metricsFlow.value = metrics.copy(
+                                remainingInQueue = focusedQueue.getSize()
+                            )
                             TtsSpeaker.speak("Deck done. Loading next")
                         } else {
                             TtsSpeaker.speak("Great job! Deck done. All decks done..")
                         }
                         return@combine
                     }
+
+
 
                     if (noteState == null) {
                         val focusedQueue = focusedQueueStateModel.deck.value?.revisionQueue
