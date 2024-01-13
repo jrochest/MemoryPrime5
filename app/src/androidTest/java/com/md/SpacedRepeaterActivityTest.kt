@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performGesture
@@ -47,24 +48,21 @@ class SpacedRepeaterActivityTest {
 
         composeTestRule.onNodeWithContentDescription("Create\nnote").performClick()
 
-        composeTestRule.onNodeWithContentDescription("Record question").run {
-            performTouchInput {
-                down(pointerId = 0, Offset(1f,1f))
-                move(10000)
-                Thread.sleep(1000)
-                up(pointerId = 0)
-            }
-        }
+        composeTestRule.onNodeWithContentDescription("Tap to record question").performClick()
 
-        composeTestRule.onNodeWithContentDescription("Record answer").run {
-            performTouchInput {
-                down(pointerId = 0, Offset(0f,0f))
-                move(10000)
-                up(pointerId = 0)
-            }
+        Thread.sleep(1000)
+        composeTestRule.onNodeWithContentDescription("Tap to stop recording question").performClick()
+        Thread.sleep(100)
 
-        }
+        composeTestRule.onNodeWithContentDescription("Tap to record answer").performClick()
+
+        Thread.sleep(1000)
+        composeTestRule.onNodeWithContentDescription("Tap to stop recording answer").performClick()
+        Thread.sleep(1000)
+
+        composeTestRule.onNodeWithContentDescription("Save note").performClick()
 
 
+        Thread.sleep(10000)
     }
 }

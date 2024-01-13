@@ -46,7 +46,7 @@ class DeckLoadManager @Inject constructor(
 
     init {
         activity.lifecycleScope.launch {
-            refreshDeckListAndFocusFirstActiveNonemptyQueue()
+            refreshDeckListAndFocusFirstActiveNonemptyQueue(true)
         }
 
         activity.lifecycleScope.launch {
@@ -61,12 +61,20 @@ class DeckLoadManager @Inject constructor(
 
     fun chooseDeck() {
         val decks = decks.value ?: return
+        var foundNonEmptyDeck = false
         for (deckInfo in decks) {
             if (deckInfo.isActive && !deckInfo.revisionQueue.isEmpty()) {
-                CategorySingleton.getInstance().setDeckInfo(deckInfo)
-                focusedQueueStateModel.deck.value = deckInfo
-                val note = deckInfo.revisionQueue.peekQueue()
-                currentNotePartManager.changeCurrentNotePart(note, partIsAnswer = false)
+                setDeck(deckInfo)
+                foundNonEmptyDeck = true
+                break
+            }
+        }
+        if (foundNonEmptyDeck) {
+            return
+        } // else use an empty deck.
+        for (deckInfo in decks) {
+            if (deckInfo.isActive) {
+                setDeck(deckInfo)
                 break
             }
         }
@@ -75,20 +83,25 @@ class DeckLoadManager @Inject constructor(
     fun chooseDeck(decks: List<DeckInfo>) {
         for (deckInfo in decks) {
             if (deckInfo.isActive && !deckInfo.revisionQueue.isEmpty()) {
-                CategorySingleton.getInstance().setDeckInfo(deckInfo)
-                focusedQueueStateModel.deck.value = deckInfo
-                val note = deckInfo.revisionQueue.peekQueue()
-                currentNotePartManager.changeCurrentNotePart(note, partIsAnswer = false)
+                setDeck(deckInfo)
                 break
             }
         }
     }
 
-    suspend fun refreshDeckListAndFocusFirstActiveNonemptyQueue() {
+    private fun setDeck(deckInfo: DeckInfo) {
+        CategorySingleton.getInstance().setDeckInfo(deckInfo)
+        focusedQueueStateModel.deck.value = deckInfo
+        val note = deckInfo.revisionQueue.peekQueue()
+        currentNotePartManager.changeCurrentNotePart(note, partIsAnswer = false)
+    }
+
+    suspend fun refreshDeckListAndFocusFirstActiveNonemptyQueue(deckRefreshNeeded: Boolean? = null) {
+        deckRefreshNeeded?.let { this.deckRefreshNeeded = it }
         withContext(Dispatchers.Main) {
             // Only run this refresh once.
-            if (deckRefreshNeeded) {
-                deckRefreshNeeded = false
+            if (this@DeckLoadManager.deckRefreshNeeded) {
+                this@DeckLoadManager.deckRefreshNeeded = false
                 val resultingDeckList = withContext(Dispatchers.IO) {
                     val resultingDeckList = mutableListOf<DeckInfo>()
                     val deckList = mutableListOf<Deck>()
@@ -119,6 +132,10 @@ class DeckLoadManager @Inject constructor(
                         deckModeStateModel.modeModel.value = DeckMode.AddingDeck
                     }
                     return@withContext
+                } else {
+                    withContext(Dispatchers.Main) {
+                        chooseDeck()
+                    }
                 }
             }
         }

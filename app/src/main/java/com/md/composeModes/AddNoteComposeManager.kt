@@ -1,6 +1,9 @@
 package com.md.composeModes
 
 import android.content.Context
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Column
@@ -19,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.google.firebase.inappmessaging.model.Button
@@ -102,7 +106,10 @@ class AddNoteComposeManager @Inject constructor(
                     RecorderButtonText(text = "Reset")
                 }
                 if (state.hasAnswer.value && state.hasQuestion.value) {
-                    OutlinedButton(modifier = secondButtonModifier,
+                    val text = "Save note"
+                    OutlinedButton(modifier = secondButtonModifier.semantics {
+                                                                             contentDescription = text
+                    },
                         onClick = {
                             val currentDeckReviewQueue = RevisionQueue.currentDeckReviewQueue
                             if (currentDeckReviewQueue == null) {
@@ -123,7 +130,7 @@ class AddNoteComposeManager @Inject constructor(
                             notePartAnswer.pendingRecorder = null
                             notePartAnswer.savableRecorder = null
                         }) {
-                        RecorderButtonText(text = "Save note")
+                        RecorderButtonText(text = text)
                     }
 
                 }
@@ -133,6 +140,7 @@ class AddNoteComposeManager @Inject constructor(
 }
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AudioRecordAndPlayButtonForPart(
     firstButtonModifier: Modifier,
@@ -140,31 +148,48 @@ fun AudioRecordAndPlayButtonForPart(
     notePart: NotePart,
     hasSavable: MutableState<Boolean> = mutableStateOf(false)
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    if (isPressed) {
-        if (notePart.pendingRecorder == null) {
-            notePart.pendingRecorder = AudioRecorder().apply { start() }
+    val isRecording = remember { mutableStateOf(false) }
+
+    if (!isRecording.value) {
+        val text = "Tap to record ${notePart.name}"
+        OutlinedButton(modifier = firstButtonModifier.semantics(mergeDescendants = true) {
+            contentDescription = text
+        },
+            onClick = {
+                if (notePart.pendingRecorder == null) {
+                    notePart.pendingRecorder = AudioRecorder().apply { start() }
+                }
+                isRecording.value = true
+            }) {
+            RecorderButtonText(
+                text =
+                "Tap to record ${notePart.name}"
+            )
         }
-        DisposableEffect(Unit) {
-            onDispose {
+    } else {
+        val text = "Tap to stop recording ${notePart.name}"
+        OutlinedButton(modifier = firstButtonModifier
+            .semantics(mergeDescendants = true) {
+                                                contentDescription = text
+            },
+            onClick = {
                 fun handleFailedPendingRecording() {
                     val recorder = checkNotNull(notePart.pendingRecorder)
                     notePart.pendingRecorder = null
                     recorder.deleteFile()
                 }
 
-                val pendingRecorder = notePart.pendingRecorder
-                if (pendingRecorder != null) {
+                val recorder = notePart.pendingRecorder
+                if (recorder != null) {
                     try {
-                        pendingRecorder.stop()
-                        if (pendingRecorder.isRecorded) {
+                        recorder.stop()
+                        if (recorder.isRecorded) {
                             val oldRecording = notePart.savableRecorder
                             if (oldRecording != null) {
                                 oldRecording.stop()
                                 oldRecording.deleteFile()
                             }
-                            notePart.savableRecorder = pendingRecorder
+                            notePart.savableRecorder = recorder
                         } else {
                             TtsSpeaker.speak("Recording failed")
                             handleFailedPendingRecording()
@@ -175,23 +200,14 @@ fun AudioRecordAndPlayButtonForPart(
                         handleFailedPendingRecording()
                     }
                 }
-            }
+                isRecording.value = false
+            }) {
+            RecorderButtonText(
+                text = text
+            )
         }
     }
 
-    OutlinedButton(modifier = firstButtonModifier.semantics {
-        contentDescription = "Record ${notePart.name}"
-    },
-        interactionSource = interactionSource,
-        onClick = {}) {
-        RecorderButtonText(
-            text = if (isPressed) {
-                "Recording ${notePart.name}"
-            } else {
-                "Record ${notePart.name} "
-            }
-        )
-    }
     if (hasSavable.value) {
         OutlinedButton(modifier = secondButtonModifier,
             onClick = {
