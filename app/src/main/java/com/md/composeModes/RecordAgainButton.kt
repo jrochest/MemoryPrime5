@@ -47,9 +47,9 @@ fun UnlockRecordButton(
     modifier: Modifier,
     unlock: () -> Unit,
 ) {
-        TripleTapButton(
+        NTapButton(
             modifier = modifier,
-            onTripleTap = unlock
+            onNTap = unlock
 
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {

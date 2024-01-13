@@ -289,9 +289,9 @@ class PracticeModeComposerManager @Inject constructor(
         onDeleteTap: () -> Unit,
         mode: PracticeMode
     ) {
-        TripleTapButton(
+        NTapButton(
             modifier = bottomRightButtonModifier,
-            onTripleTap = {
+            onNTap = {
                 if (mode == PracticeMode.Deleting) {
                     onDeleteTap()
                     practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
@@ -340,8 +340,9 @@ private fun MiddlePracticeButton(
 
 
 @Composable
-fun TripleTapButton(
-    onTripleTap: () -> Unit,
+fun NTapButton(
+    requiredTaps: Int = 2,
+    onNTap: () -> Unit,
     modifier: Modifier = Modifier,
     colors: ButtonColors = ButtonStyles.MediumImportanceButtonColor(),
     content: @Composable RowScope.() -> Unit
@@ -353,13 +354,13 @@ fun TripleTapButton(
         modifier = modifier, onClick = {
             val currentTime = SystemClock.uptimeMillis()
             if (currentTime - previousTapTimeMillis <= maxTimeBetweenTapsMillis) {
-                if (tapCount >= 2) {
-                    onTripleTap()
+                tapCount++
+                if (tapCount >= requiredTaps) {
+                    onNTap()
                     tapCount = 0
-                } else {
-                    tapCount++
                 }
             } else {
+                // Else fresh set of taps.
                 tapCount = 1
             }
             previousTapTimeMillis = currentTime
