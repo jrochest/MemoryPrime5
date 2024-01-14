@@ -45,20 +45,20 @@ class RecordButtonController @Inject constructor(
 @Composable
 fun UnlockRecordButton(
     modifier: Modifier,
-    unlock: () -> Unit,
+    modeDescription: String,
+    onModeChange: () -> Unit,
 ) {
         NTapButton(
             modifier = modifier,
-            onNTap = unlock
-
+            onNTap = onModeChange
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Record",
+                    text = "Record mode",
                     style = MaterialTheme.typography.titleLarge
                 )
                 Text(
-                    text = "(Locked) - Triple Tap and then tap hold to record",
+                    text = modeDescription,
                     style = MaterialTheme.typography.labelSmall
                 )
             }

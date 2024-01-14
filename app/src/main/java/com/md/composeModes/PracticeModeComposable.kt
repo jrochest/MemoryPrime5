@@ -99,12 +99,16 @@ class PracticeModeComposerManager @Inject constructor(
     @Composable
     fun compose() {
         PracticeModeComposable(
-            onAudioRecorderTripleTap = {
+            onEnableRecordMode = {
                 activity.lifecycleScope.launch {
                     activity.lowVolumeClickTone()
-                    // It's common to receive 4 taps instead of 3 so delay switching.
-                    delay(500)
                     practiceModeViewModel.practiceStateFlow.value = PracticeMode.Recording
+                }
+            },
+            onDisabledRecordMode = {
+                activity.lifecycleScope.launch {
+                    activity.lowVolumeClickTone()
+                    practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
                 }
             },
             onDeleteTap = {
@@ -125,7 +129,8 @@ class PracticeModeComposerManager @Inject constructor(
 
     @Composable
     fun PracticeModeComposable(
-        onAudioRecorderTripleTap: () -> Unit = { },
+        onEnableRecordMode: () -> Unit = { },
+        onDisabledRecordMode: () -> Unit = { },
         onDeleteTap: () -> Unit = {},
         onMiddleButtonTapInPracticeMode: () -> Unit = {},
         practiceMode: PracticeMode,
@@ -141,6 +146,7 @@ class PracticeModeComposerManager @Inject constructor(
 
             val largeButtonModifier = Modifier
                 .fillMaxHeight(fraction = .85f)
+                .fillMaxWidth()
                 .heightIn(min = 48.dp)
                 .padding(4.dp)
             // LARGE BUTTON.
@@ -194,23 +200,8 @@ class PracticeModeComposerManager @Inject constructor(
 
                 PracticeMode.Recording -> {
                     var modifier = largeButtonModifier
-                    val text =
-                        if (currentNotePartManager.hasSavable.value) {
-                            "Play pending recording"
-                        } else {
-                            "Waiting..."
-                        }
-                    MiddlePracticeButton(modifier,
-                        onMiddleButtonTap = {
-                            notePart.savableRecorder?.playFile()
-                        }) {
-                        Text(
-                            text = text,
-                            style = MaterialTheme.typography.labelLarge
-                        )
-                    }
+                    AudioRecordForPart(modifier = modifier, notePart = notePart)
                 }
-
                 PracticeMode.Deleting ->  {
                     MiddlePracticeButton(
                         largeButtonModifier,
@@ -239,12 +230,6 @@ class PracticeModeComposerManager @Inject constructor(
                 // BOTTOM LEFT BUTTON
                 val bottomLeftButtonModifier = bottomButtonModifier.fillMaxWidth(fraction = .5f)
                 when (practiceMode) {
-                    PracticeMode.Recording -> {
-                        AudioRecordButton(
-                            bottomLeftButtonModifier, notePart,
-                            hasSavable = currentNotePartManager.hasSavable
-                        )
-                    }
                     PracticeMode.Deleting -> {
                         OutlinedButton(modifier = bottomLeftButtonModifier,
                             colors = ButtonStyles.MediumImportanceButtonColor(),
@@ -254,10 +239,23 @@ class PracticeModeComposerManager @Inject constructor(
                             Text(text = "Exit delete mode")
                         }
                     }
+                    PracticeMode.Recording -> {
+                        UnlockRecordButton(
+                            modifier = bottomLeftButtonModifier,
+                            onModeChange = {
+                                notePart.pendingRecorder?.stop()
+                                notePart.pendingRecorder?.deleteFile()
+                                notePart.pendingRecorder = null
+                                onDisabledRecordMode()
+                            },
+                            modeDescription = "(Unlocked) - Double tap to disable",
+                        )
+                    }
                     PracticeMode.Practicing -> {
                         UnlockRecordButton(
                             modifier = bottomLeftButtonModifier,
-                            unlock = onAudioRecorderTripleTap
+                            onModeChange = onEnableRecordMode,
+                            modeDescription = "(Locked) - Double tap to record",
                         )
                     }
                 }
@@ -308,7 +306,7 @@ class PracticeModeComposerManager @Inject constructor(
                     style = MaterialTheme.typography.titleLarge
                 )
                 Text(
-                    text = "Triple tap quickly",
+                    text = if (mode == PracticeMode.Deleting) "Double tap for delete mode" else "Double tap to delete!" ,
                     style = MaterialTheme.typography.labelSmall
                 )
             }
