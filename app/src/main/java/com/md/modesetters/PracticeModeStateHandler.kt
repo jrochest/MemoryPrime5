@@ -75,15 +75,8 @@ class PracticeModeStateHandler @Inject constructor(
                         TtsSpeaker.speak("Deck done")
                     }
 
-                    val focusedNonEmptyQueue = deckInfo.revisionQueue
                     if (noteState == null) {
-                        val note = focusedNonEmptyQueue.peekQueue()
-                        if (note == null) {
-                            TtsSpeaker.error("focusedNonEmptyQueue peeked note is null")
-                            return@combine
-                        }
-                        // TODOJ now move state changes to be part of the UI.
-                        currentNotePartManager.changeCurrentNotePart(note, partIsAnswer = false)
+                        // The user tapping proceed will load the next deck and note.
                         return@combine
                     }
 
@@ -153,7 +146,7 @@ class PracticeModeStateHandler @Inject constructor(
     fun secondaryAction() {
         KeepScreenOn.getInstance().keepScreenOn(activity)
         handlePracticeNoteState(noFocusedNoteHandler = {
-            setupFirstReviewableDeckInQuestionMode()
+            TtsSpeaker.speak("single tap to proceed")
         }, focusedNoteExistsHandler = { noteState ->
             if (shouldProceed()) return@handlePracticeNoteState
             if (noteState.notePart.partIsAnswer) {
@@ -206,7 +199,9 @@ class PracticeModeStateHandler @Inject constructor(
         KeepScreenOn.getInstance().keepScreenOn(activity)
         activity.lifecycleScope.launch {
             val focusedDeck = focusedQueueStateModel.deck.value
-            if (focusedDeck != null && !focusedDeck.revisionQueue.isEmpty()) {
+            val noteState = currentNotePartManager.noteStateFlow.value
+            // Note state is null after a delete.
+            if (focusedDeck != null && !focusedDeck.revisionQueue.isEmpty() && noteState != null) {
                 handlePracticeNoteState(noFocusedNoteHandler = {
                     setupFirstReviewableDeckInQuestionMode()
                 }, focusedNoteExistsHandler = { noteState ->
@@ -218,13 +213,19 @@ class PracticeModeStateHandler @Inject constructor(
                     }
                 })
             } else {
-                val decks = deckLoadManager.decks.value ?: return@launch
-                val nonEmptyDeck = decks.firstOrNull { deck ->
-                    deck.isActive && !deck.revisionQueue.isEmpty()
-                }
-                if (nonEmptyDeck == null) {
-                    TtsSpeaker.speak("All decks done.")
-                    return@launch
+                val nonEmptyDeck = if (focusedDeck == null || focusedDeck.revisionQueue.isEmpty()) {
+                    val decks = deckLoadManager.decks.value ?: return@launch
+                    val nonEmptyDeckLocal = decks.firstOrNull { deck ->
+                        deck.isActive && !deck.revisionQueue.isEmpty()
+                    }
+                    if (nonEmptyDeckLocal == null) {
+                        TtsSpeaker.speak("All decks done.")
+                        return@launch
+                    }
+                    TtsSpeaker.speak("Loading deck " + nonEmptyDeckLocal.name + " items to study " + nonEmptyDeckLocal.revisionQueue.getSize())
+                    nonEmptyDeckLocal
+                } else {
+                    focusedDeck
                 }
 
                 val metrics = practiceModeViewModel.metricsFlow.value
@@ -233,10 +234,10 @@ class PracticeModeStateHandler @Inject constructor(
                 practiceModeViewModel.metricsFlow.value = metrics.copy(
                     remainingInQueue = nonEmptyDeck.revisionQueue.getSize()
                 )
-
-                TtsSpeaker.speak("Loading deck " + nonEmptyDeck.name + " items to study " + nonEmptyDeck.revisionQueue.getSize())
+                val note = nonEmptyDeck.revisionQueue.peekQueue()
                 focusedQueueStateModel.deck.value = nonEmptyDeck
                 CategorySingleton.getInstance().setDeckInfo(nonEmptyDeck)
+                currentNotePartManager.changeCurrentNotePart(note, partIsAnswer = false)
             }
         }
     }
