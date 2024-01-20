@@ -26,6 +26,7 @@ import com.md.modesetters.PracticeModeStateHandler
 import com.md.composeModes.WorkingMemoryScreen.LARGE_TAP_AREA_LABEL
 import com.md.composeStyles.ButtonStyles
 import com.md.modesetters.DeckLoadManager
+import com.md.modesetters.TtsSpeaker
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -292,9 +293,11 @@ class PracticeModeComposerManager @Inject constructor(
             modifier = bottomRightButtonModifier,
             onNTap = {
                 if (mode == PracticeMode.Deleting) {
+                    TtsSpeaker.speak("Deleted", lowVolume = true)
                     onDeleteTap()
                     practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
                 } else {
+                    TtsSpeaker.speak("Delete mode", lowVolume = true)
                     activity.lowVolumeClickTone()
                     practiceModeViewModel.practiceStateFlow.value = PracticeMode.Deleting
                 }
