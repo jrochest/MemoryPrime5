@@ -16,17 +16,6 @@ abstract class ModeSetter {
     @JvmField
     var modeHand: ModeHandler? = null
     fun switchMode(context: Activity) {
-        if (this !is DeckChooseModeSetter &&
-                !CategorySingleton.getInstance().hasCategory()) {
-            ToastSingleton.getInstance().msg("No deck selected. \nUsing default")
-            val deckChooser = DeckChooseModeSetter.getInstance()
-            val defaultDeck = deckChooser.nextDeckWithItems
-            if (defaultDeck != null) {
-                deckChooser.loadDeck(defaultDeck)
-            }
-        }
-        // Switching away from learning mode should stop playback.
-        AudioPlayer.instance.pause()
         onSwitchToMode(context)
     }
 

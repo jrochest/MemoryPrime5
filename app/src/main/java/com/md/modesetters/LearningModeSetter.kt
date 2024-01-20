@@ -297,15 +297,7 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
                 mActivity!!.maybeChangeAudioFocus(false)
             }
             TtsSpeaker.speak("Great job! Deck done.")
-            val deckChooser = DeckChooseModeSetter.getInstance()
-            val nextDeckWithItems = deckChooser.nextDeckWithItems
-            if (nextDeckWithItems != null) {
-                deckChooser.loadDeck(nextDeckWithItems)
-                this.switchMode(mActivity!!)
-                TtsSpeaker.speak("Loading " + nextDeckWithItems.name)
-            } else {
-                TtsSpeaker.speak("All decks done..")
-            }
+
         }
         commonLayoutSetup()
         memoryDroid!!.findViewById<View>(R.id.rerecord)
