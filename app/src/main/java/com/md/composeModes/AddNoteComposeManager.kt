@@ -110,7 +110,7 @@ class AddNoteComposeManager @Inject constructor(
                                                                              contentDescription = text
                     },
                         onClick = {
-                            val currentDeckReviewQueue = RevisionQueue.currentDeckReviewQueue
+                            val currentDeckReviewQueue = RevisionQueue.currentDeckReviewQueueDeleteThisTODO
                             if (currentDeckReviewQueue == null) {
                                 TtsSpeaker.error("No revision queue. Make and or select a deck.")
                                 return@OutlinedButton

@@ -9,7 +9,7 @@ import android.view.View
 import android.view.View.OnTouchListener
 import android.widget.Button
 import com.md.*
-import com.md.RevisionQueue.Companion.currentDeckReviewQueue
+import com.md.RevisionQueue.Companion.currentDeckReviewQueueDeleteThisTODO
 import com.md.provider.Note
 import java.io.IOException
 
@@ -187,7 +187,7 @@ object CreateModeSetter : ModeSetter() {
         saveButton: Button?
     ) {
         saveButton!!.setOnClickListener {
-            val currentDeckReviewQueue = currentDeckReviewQueue
+            val currentDeckReviewQueue = currentDeckReviewQueueDeleteThisTODO
             if (currentDeckReviewQueue == null) {
                 TtsSpeaker.error("No revision queue. Make and or select a deck.")
                 return@setOnClickListener

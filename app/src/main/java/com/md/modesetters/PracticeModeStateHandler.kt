@@ -1,12 +1,11 @@
 package com.md.modesetters
 
 import android.content.Context
-import android.os.SystemClock
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.md.*
-import com.md.RevisionQueue.Companion.currentDeckReviewQueue
+import com.md.RevisionQueue.Companion.currentDeckReviewQueueDeleteThisTODO
 import com.md.provider.AbstractRep
 import com.md.provider.Note
 import com.md.utils.KeepScreenOn
@@ -27,12 +26,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
-
-enum class PracticeNoteState {
-    NoNote,
-    Question,
-    Answer
-}
 
 
 @ActivityScoped
@@ -72,26 +65,24 @@ class PracticeModeStateHandler @Inject constructor(
                         return@combine
                     }
 
-                    if (deckInfo == null || deckInfo.revisionQueue.isEmpty()) {
-                        MoveManager.cancelJobs()
-                        val focusedQueue = focusedQueueStateModel.deck.value?.revisionQueue
-                        if (focusedQueue != null && !focusedQueue.isEmpty()) {
-                            val metrics = practiceModeViewModel.metricsFlow.value
-                            practiceModeViewModel.metricsFlow.value = metrics.copy(
-                                remainingInQueue = focusedQueue.getSize()
-                            )
-                            TtsSpeaker.speak("Deck done. Loading next")
-                        } else {
-                            TtsSpeaker.speak("Great job! Deck done. All decks done..")
-                        }
+
+                    if (deckInfo == null) {
+                        // Do nothing until a new deck is loaded, and only upon user action.
                         return@combine
                     }
 
+                    if (deckInfo.revisionQueue.isEmpty()) {
+                        TtsSpeaker.speak("Deck done")
+                    }
 
-
+                    val focusedNonEmptyQueue = deckInfo.revisionQueue
                     if (noteState == null) {
-                        val focusedQueue = focusedQueueStateModel.deck.value?.revisionQueue
-                       val note = focusedQueue?.peekQueue()
+                        val note = focusedNonEmptyQueue.peekQueue()
+                        if (note == null) {
+                            TtsSpeaker.error("focusedNonEmptyQueue peeked note is null")
+                            return@combine
+                        }
+                        // TODOJ now move state changes to be part of the UI.
                         currentNotePartManager.changeCurrentNotePart(note, partIsAnswer = false)
                         return@combine
                     }
@@ -150,14 +141,6 @@ class PracticeModeStateHandler @Inject constructor(
         }
     }
 
-    fun handleTapCount(count: Int) {
-        activity.handleRhythmUiTaps(
-            SystemClock.uptimeMillis(),
-            SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_INSTANT,
-            count
-        )
-    }
-
     fun undo() {
         if (questionMode) {
             undoFromQuestionToAnswerMode()
@@ -191,7 +174,7 @@ class PracticeModeStateHandler @Inject constructor(
             val currentNote = noteState.currentNote
             if (shouldQueue) {
                 // Place at end of queue.
-                currentDeckReviewQueue!!.updateNote(currentNote, false)
+                currentDeckReviewQueueDeleteThisTODO!!.updateNote(currentNote, false)
             } else {
                 val editor = DbNoteEditor.instance
                 if (editor != null) {
@@ -200,7 +183,7 @@ class PracticeModeStateHandler @Inject constructor(
                 } else {
                     TtsSpeaker.speak("Error decreasing priority")
                 }
-                currentDeckReviewQueue!!.hardPostpone(currentNote)
+                currentDeckReviewQueueDeleteThisTODO!!.hardPostpone(currentNote)
             }
             // Prepare the next note in the queue.
             setupQuestionMode()
@@ -221,16 +204,41 @@ class PracticeModeStateHandler @Inject constructor(
 
     fun proceed() {
         KeepScreenOn.getInstance().keepScreenOn(activity)
-        handlePracticeNoteState(noFocusedNoteHandler = {
-            setupFirstReviewableDeckInQuestionMode()
-        }, focusedNoteExistsHandler = { noteState ->
-            if (shouldProceed()) return@handlePracticeNoteState
-            if (noteState.notePart.partIsAnswer) {
-                updateScoreAndMoveToNext(4, noteState.currentNote)
+        activity.lifecycleScope.launch {
+            val focusedDeck = focusedQueueStateModel.deck.value
+            if (focusedDeck != null && !focusedDeck.revisionQueue.isEmpty()) {
+                handlePracticeNoteState(noFocusedNoteHandler = {
+                    setupFirstReviewableDeckInQuestionMode()
+                }, focusedNoteExistsHandler = { noteState ->
+                    if (shouldProceed()) return@handlePracticeNoteState
+                    if (noteState.notePart.partIsAnswer) {
+                        updateScoreAndMoveToNext(4, noteState.currentNote)
+                    } else {
+                        setupAnswerMode()
+                    }
+                })
             } else {
-                setupAnswerMode()
+                val decks = deckLoadManager.decks.value ?: return@launch
+                val nonEmptyDeck = decks.firstOrNull { deck ->
+                    deck.isActive && !deck.revisionQueue.isEmpty()
+                }
+                if (nonEmptyDeck == null) {
+                    TtsSpeaker.speak("All decks done.")
+                    return@launch
+                }
+
+                val metrics = practiceModeViewModel.metricsFlow.value
+                // TODOJSOON Deprecated the size copy and instead use the focused queue
+                // as the single source of truth.
+                practiceModeViewModel.metricsFlow.value = metrics.copy(
+                    remainingInQueue = nonEmptyDeck.revisionQueue.getSize()
+                )
+
+                TtsSpeaker.speak("Loading deck " + nonEmptyDeck.name + " items to study " + nonEmptyDeck.revisionQueue.getSize())
+                focusedQueueStateModel.deck.value = nonEmptyDeck
+                CategorySingleton.getInstance().setDeckInfo(nonEmptyDeck)
             }
-        })
+        }
     }
 
     private fun shouldProceed(): Boolean {
@@ -266,14 +274,14 @@ class PracticeModeStateHandler @Inject constructor(
     }
 
     private fun updateStartingInQuestionMode() {
-        val currentNote = currentDeckReviewQueue!!.peekQueue()
+        val currentNote = currentDeckReviewQueueDeleteThisTODO!!.peekQueue()
         currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = false)
         if (currentNote != null) {
             repCounter++
             val metrics = practiceModeViewModel.metricsFlow.value
             practiceModeViewModel.metricsFlow.value = metrics.copy(
                 notesPracticed = metrics.notesPracticed + 1,
-                remainingInQueue = currentDeckReviewQueue?.getSize() ?: 0
+                remainingInQueue = currentDeckReviewQueueDeleteThisTODO?.getSize() ?: 0
             )
             if (repCounter % 10 == 9) {
                 markAllStale(activity)
@@ -308,10 +316,10 @@ class PracticeModeStateHandler @Inject constructor(
 
         // If you scored too low review it again, at the end.
         if (currentNote.is_due_for_acquisition_rep) {
-            currentDeckReviewQueue!!.updateNote(currentNote, false)
+            currentDeckReviewQueueDeleteThisTODO!!.updateNote(currentNote, false)
             missCounter++
         } else {
-            currentDeckReviewQueue!!.removeNote(currentNote.id)
+            currentDeckReviewQueueDeleteThisTODO!!.removeNote(currentNote.id)
         }
     }
 
@@ -321,7 +329,7 @@ class PracticeModeStateHandler @Inject constructor(
             val noteEditor = DbNoteEditor.instance
             val note = noteState.currentNote
             noteEditor!!.deleteCurrent(activity, note)
-            currentDeckReviewQueue!!.removeNote(note.id)
+            currentDeckReviewQueueDeleteThisTODO!!.removeNote(note.id)
             currentNotePartManager.onDelete()
             setupQuestionMode()
         }
@@ -348,14 +356,14 @@ class PracticeModeStateHandler @Inject constructor(
             val metrics = practiceModeViewModel.metricsFlow.value
             practiceModeViewModel.metricsFlow.value = metrics.copy(
                 notesPracticed = metrics.notesPracticed - 1,
-                remainingInQueue = currentDeckReviewQueue?.getSize() ?: 0
+                remainingInQueue = currentDeckReviewQueueDeleteThisTODO?.getSize() ?: 0
             )
 
             val noteEditor = DbNoteEditor.instance
             noteEditor!!.update(currentNote)
             // In case the grade was bad take it out of revision queue.
-            currentDeckReviewQueue!!.removeNote(currentNote.id)
-            currentDeckReviewQueue!!.addToFront(currentNote)
+            currentDeckReviewQueueDeleteThisTODO!!.removeNote(currentNote.id)
+            currentDeckReviewQueueDeleteThisTODO!!.addToFront(currentNote)
             setupAnswerMode()
         } else {
             TtsSpeaker.speak("Nothing to undo")

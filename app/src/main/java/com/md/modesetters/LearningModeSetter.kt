@@ -8,7 +8,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import com.md.*
-import com.md.RevisionQueue.Companion.currentDeckReviewQueue
+import com.md.RevisionQueue.Companion.currentDeckReviewQueueDeleteThisTODO
 import com.md.provider.AbstractRep
 import com.md.provider.Note
 import com.md.utils.KeepScreenOn
@@ -43,7 +43,7 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
     private var missCounter = 0
     private var questionMode = true
     override fun onSwitchToMode(context: Activity) {
-        originalSize = currentDeckReviewQueue!!.getSize()
+        originalSize = currentDeckReviewQueueDeleteThisTODO!!.getSize()
         lastNoteList.clear()
         commonSetup(context, R.layout.learnquestion)
 
@@ -80,7 +80,7 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
         var secondLine = "\nItems Missed: $missCounter"
         secondLine += """
             
-            Remaining: ${currentDeckReviewQueue!!.getSize()}
+            Remaining: ${currentDeckReviewQueueDeleteThisTODO!!.getSize()}
             """.trimIndent()
         if (currentNote != null) {
             secondLine += """
@@ -204,7 +204,7 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
 
         if (shouldQueue) {
             // Place at end of queue.
-            currentDeckReviewQueue!!.updateNote(currentNote, false)
+            currentDeckReviewQueueDeleteThisTODO!!.updateNote(currentNote, false)
         } else {
             val editor = DbNoteEditor.instance
             val context = mActivity
@@ -215,7 +215,7 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
                 TtsSpeaker.speak("Error decreasing priority")
             }
 
-            currentDeckReviewQueue!!.hardPostpone(currentNote)
+            currentDeckReviewQueueDeleteThisTODO!!.hardPostpone(currentNote)
         }
         // Prepare the next note in the queue.
         setupQuestionMode(mActivity!!)
@@ -274,7 +274,7 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
                     delay(1_000)
                     // ... then preload a file that is likely to be used soon.
                     try {
-                        currentDeckReviewQueue!!.preload()
+                        currentDeckReviewQueueDeleteThisTODO!!.preload()
                     } catch (e: IllegalStateException) {
                         TtsSpeaker.speak("preload failed", lowVolume = true)
                         e.printStackTrace()
@@ -341,7 +341,7 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
 
 
     private fun updateVal() {
-        currentNote = currentDeckReviewQueue!!.peekQueue()
+        currentNote = currentDeckReviewQueueDeleteThisTODO!!.peekQueue()
         if (currentNote != null) {
             repCounter++
             if (repCounter % 10 == 9) {
@@ -380,10 +380,10 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
 
         // If you scored too low review it again, at the end.
         if (currentNote.is_due_for_acquisition_rep) {
-            currentDeckReviewQueue!!.updateNote(currentNote, false)
+            currentDeckReviewQueueDeleteThisTODO!!.updateNote(currentNote, false)
             missCounter++
         } else {
-            currentDeckReviewQueue!!.removeNote(currentNote.id)
+            currentDeckReviewQueueDeleteThisTODO!!.removeNote(currentNote.id)
         }
     }
 
@@ -392,7 +392,7 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
         val note = currentNote
         if (note != null) {
             noteEditor!!.deleteCurrent(mActivity!!, note)
-            currentDeckReviewQueue!!.removeNote(note.id)
+            currentDeckReviewQueueDeleteThisTODO!!.removeNote(note.id)
         }
         setupQuestionMode(mActivity!!)
     }
@@ -425,8 +425,8 @@ class LearningModeSetter @Inject constructor() : ModeSetter(), ItemDeletedHandle
             val noteEditor = DbNoteEditor.instance
             noteEditor!!.update(currentNote)
             // In case the grade was bad take it out of revision queue.
-            currentDeckReviewQueue!!.removeNote(currentNote.id)
-            currentDeckReviewQueue!!.addToFront(currentNote)
+            currentDeckReviewQueueDeleteThisTODO!!.removeNote(currentNote.id)
+            currentDeckReviewQueueDeleteThisTODO!!.addToFront(currentNote)
             setupAnswerMode(context)
         } else {
             TtsSpeaker.speak("Nothing to undo")

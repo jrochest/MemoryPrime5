@@ -25,9 +25,9 @@ import com.md.SpacedRepeaterActivity
 import com.md.modesetters.PracticeModeStateHandler
 import com.md.composeModes.WorkingMemoryScreen.LARGE_TAP_AREA_LABEL
 import com.md.composeStyles.ButtonStyles
+import com.md.modesetters.DeckLoadManager
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -80,6 +80,7 @@ class PracticeModeComposerManager @Inject constructor(
     val model: TopModeViewModel,
     val currentNotePartManager: CurrentNotePartManager,
     val focusedQueueStateModel: FocusedQueueStateModel,
+    private val deckLoadManager: DeckLoadManager,
 ) {
 
     val activity: SpacedRepeaterActivity by lazy {
@@ -121,6 +122,7 @@ class PracticeModeComposerManager @Inject constructor(
                 )
             },
             practiceMode = practiceModeViewModel.practiceStateFlow.collectAsState().value,
+
             currentNotePartManager = currentNotePartManager
         )
     }
@@ -174,7 +176,6 @@ class PracticeModeComposerManager @Inject constructor(
                         style = MaterialTheme.typography.displayLarge
                     )
                 }
-
                 return
             }
 

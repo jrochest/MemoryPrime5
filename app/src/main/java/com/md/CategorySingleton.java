@@ -54,7 +54,7 @@ public class CategorySingleton {
 	public void setDeckInfo(DeckInfo deckInfo) {
 		this.mCurrentDeck = deckInfo.getId();
 		this.deck = deckInfo.getDeck();
-		RevisionQueue.Companion.setCurrentDeckReviewQueue(deckInfo.getRevisionQueue());
+		RevisionQueue.Companion.setCurrentDeckReviewQueueDeleteThisTODO(deckInfo.getRevisionQueue());
 	}
 
 	public boolean shouldRepeat() {

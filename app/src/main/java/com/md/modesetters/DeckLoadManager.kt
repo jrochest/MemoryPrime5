@@ -32,20 +32,6 @@ class DeckLoadManager @Inject constructor(
         activity.lifecycleScope.launch {
             refreshDeckListAndFocusFirstActiveNonemptyQueue()
         }
-
-        activity.lifecycleScope.launch {
-            decks.collect { decks ->
-                if (decks.isNullOrEmpty()) {
-                    return@collect
-                }
-                for (deckInfo in decks) {
-                    if (deckInfo.isActive && !deckInfo.revisionQueue.isEmpty()) {
-                        setDeck(deckInfo)
-                        break
-                    }
-                }
-            }
-        }
     }
 
     private fun setDeck(deckInfo: DeckInfo) {

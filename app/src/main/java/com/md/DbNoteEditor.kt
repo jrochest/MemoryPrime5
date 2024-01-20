@@ -5,7 +5,7 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
-import com.md.RevisionQueue.Companion.currentDeckReviewQueue
+import com.md.RevisionQueue.Companion.currentDeckReviewQueueDeleteThisTODO
 import com.md.provider.AbstractDeck
 import com.md.provider.AbstractNote
 import com.md.provider.Deck
@@ -20,7 +20,7 @@ import java.util.*
  * [Intent.ACTION_EDIT], or create a new note [Intent.ACTION_INSERT]
  * .
  */
-class DbNoteEditor constructor() {
+class DbNoteEditor {
     // TODO: This global out of context note ID should be refactored away eventually.
     private var currentNoteId: String? = null
 
@@ -45,7 +45,7 @@ class DbNoteEditor constructor() {
 
     fun update(note: AbstractNote) {
         // If it's in there update it.
-        currentDeckReviewQueue!!.updateNote((note as Note), true)
+        currentDeckReviewQueueDeleteThisTODO!!.updateNote((note as Note), true)
         val values = ContentValues()
 
         // Bump the modification time to now.
@@ -403,7 +403,8 @@ class DbNoteEditor constructor() {
         }
         if (currentNoteId != null) {
             val intCurrentId = currentNoteId!!.toInt()
-            currentDeckReviewQueue!!.removeNote(intCurrentId)
+
+            currentDeckReviewQueueDeleteThisTODO!!.removeNote(intCurrentId)
         }
         if (this.note == note) {
             returnVal = next
@@ -427,7 +428,7 @@ class DbNoteEditor constructor() {
                 null)
         if (currentNoteId != null) {
             val intCurrentId = currentNoteId!!.toInt()
-            currentDeckReviewQueue!!.removeNote(intCurrentId)
+            currentDeckReviewQueueDeleteThisTODO!!.removeNote(intCurrentId)
         }
     }
 
