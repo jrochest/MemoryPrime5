@@ -3,7 +3,7 @@ package com.md.composeModes
 import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
-import android.widget.Toast
+import android.widget.EditText
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,10 +36,12 @@ import com.md.FocusedQueueStateModel
 import com.md.SpacedRepeaterActivity
 import com.md.modesetters.DeckInfo
 import com.md.modesetters.DeckLoadManager
+import com.md.modesetters.TtsSpeaker
 import com.md.provider.Deck
 import com.md.utils.ToastSingleton
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -76,7 +78,17 @@ class DeckModeComposableManager @Inject constructor(
     @Composable
     fun DeckModeComposable() {
         val decks = deckLoadManager.decks.collectAsState().value
-        val deckMode = deckModeStateModel.modeModel.collectAsState().value
+        
+        if (decks == null) {
+            Text(text = "Waiting for decks...")
+            return
+        }
+        val deckMode  = if (decks.isEmpty()) {
+            // Force adding mode to guide the user to a place where decks can be added.
+            DeckMode.AddingDeck
+        } else {
+            deckModeStateModel.modeModel.collectAsState().value
+        }
 
         Row {
             OutlinedButton(onClick = {
@@ -87,11 +99,8 @@ class DeckModeComposableManager @Inject constructor(
         }
         when (deckMode) {
             DeckMode.Default -> {
-                if (decks != null) {
-                    DeckList(decks)
-                }
+                DeckList(decks)
             }
-
             DeckMode.AddingDeck -> {
                 var textValue by remember { mutableStateOf(TextFieldValue("")) }
                 TextField(
@@ -112,12 +121,7 @@ class DeckModeComposableManager @Inject constructor(
                     onClick = {
                         val deck = Deck(/* name= */ textValue.text)
                         instance!!.insertDeck(deck)
-                        activity.lifecycleScope.launch {
-                            deckModeStateModel.modeModel.value = DeckMode.Default
-                            deckLoadManager.refreshDeckListAndFocusFirstActiveNonemptyQueue(
-                                deckRefreshNeeded = true
-                            )
-                        }
+                        deckUpdateActivityReload()
                     }) {
                     Text(text = "Save deck")
                 }
@@ -177,42 +181,94 @@ class DeckModeComposableManager @Inject constructor(
                             DropdownMenuItem(
                                 text = { Text("Rename") },
                                 onClick = {
-                                    Toast.makeText(
-                                        context,
-                                        "Rename",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
+                                        handleDeckRename(deckInfo)
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text("Delete deck: $name") },
                                 onClick = {
-                                    if (name.contains("saved") || name.contains("protected")) {
-                                        val message = "Cannot delete saved or protected deck."
-                                        ToastSingleton.getInstance().speakAndShow(message)
-                                        return@DropdownMenuItem
-                                    }
-
-                                    val alert = AlertDialog.Builder(activity)
-                                    alert.setTitle(
-                                        "Are you sure you want the delete: '${name}'?"
-                                    )
-
-                                    alert.setPositiveButton("Yes, Delete") { _, _ ->
-                                        instance!!.deleteDeck(deckInfo.deck)
-                                    }
-
-                                    alert.setNegativeButton(
-                                        "Cancel"
-                                    ) { _, _ ->
-                                        // Do nothing.
-                                    }
+                                    handleDeckDelete(deckInfo)
                                 }
                             )
                         }
                     }
                 }
             }
+        }
+    }
+
+    private fun handleDeckRename(deckInfo: DeckInfo) {
+        val name = deckInfo.name
+        val alert = AlertDialog.Builder(activity)
+        alert.setTitle(
+            "Please Enter a new Deck Name for: $name"
+        )
+        // Set an EditText view to get user input
+
+        // Set an EditText view to get user input
+        val input = EditText(activity)
+        input.setText(name)
+
+        alert.setView(input)
+
+        alert.setPositiveButton(
+            "Ok"
+        ) { _: DialogInterface?, _: Int ->
+            val value = input.text
+            val newName = value.toString()
+            if (newName.isBlank()) {
+                ToastSingleton.getInstance().speakAndShow("The input is blank")
+                return@setPositiveButton
+            }
+
+            val deck = Deck(deckInfo.category, newName)
+            deckInfo.deck = deck
+            instance!!.updateDeck(deck)
+
+
+        }
+
+
+        alert.setNegativeButton(
+            "Cancel"
+        ) { _, _ ->
+            // Do nothing.
+        }
+
+        alert.create().show()
+
+    }
+
+
+    private fun handleDeckDelete(deckInfo: DeckInfo) {
+        val name = deckInfo.name
+        if (name.contains("saved") || name.contains("protected")) {
+            val message = "Cannot delete saved or protected deck."
+            ToastSingleton.getInstance().speakAndShow(message)
+            return
+        }
+
+        val alert = AlertDialog.Builder(activity)
+        alert.setTitle(
+            "Are you sure you want the delete: '${name}'?"
+        )
+
+        alert.setPositiveButton("Yes, Delete") { _, _ ->
+            instance!!.deleteDeck(deckInfo.deck)
+            deckUpdateActivityReload()
+        }
+
+        alert.setNegativeButton(
+            "Cancel"
+        ) { _, _ ->
+            // Do nothing.
+        }
+        alert.create().show()
+    }
+
+    private fun deckUpdateActivityReload() {
+        activity.lifecycleScope.launch {
+            activity.recreate()
         }
     }
 }

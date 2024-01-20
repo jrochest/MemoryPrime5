@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.md.ModeHandler
 import com.md.FocusedQueueStateModel
 import com.md.SpacedRepeaterActivity
+import com.md.modesetters.DeckLoadManager
 import com.md.modesetters.ItemDeletedHandler
 import com.md.modesetters.ModeSetter
 import com.md.uiTheme.AppTheme
@@ -50,6 +52,7 @@ class ComposeModeSetter @Inject constructor(
     private val backupModeComposeManager: BackupModeComposeManager,
     private val practiceModeComposerManager: PracticeModeComposerManager,
     private val focusedQueueStateModel: FocusedQueueStateModel,
+    private val deckLoadManager: DeckLoadManager
 ) : ModeSetter(), ItemDeletedHandler {
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
@@ -69,7 +72,22 @@ class ComposeModeSetter @Inject constructor(
                     AppTheme {
                         Surface (color = MaterialTheme.colorScheme.background) {
                             Column {
-                                val mode = topModeViewModel.modeModel.collectAsState()
+                                val decks = deckLoadManager.decks.collectAsState().value
+
+                                if (decks == null) {
+                                    Text(text = "Loading decks...")
+                                    return@Surface
+                                }
+
+                                val mode = if (decks.isEmpty()) {
+                                    // For the mode to deck chooser to ensure the user
+                                    // is guided to a place where a deck can be added.
+                                    Mode.DeckChooser
+                                } else {
+                                    topModeViewModel.modeModel.collectAsState().value
+                                }
+
+
                                 TopMenu(onPracticeMode = {
                                     topModeViewModel.modeModel.value = Mode.Practice
                                     // This initially leaves the recording or deleting state
@@ -80,7 +98,10 @@ class ComposeModeSetter @Inject constructor(
                                     topModeViewModel.modeModel.value = Mode.DeckChooser
                                     this@ComposeModeSetter.switchMode(context = activity)
                                 }, topModeViewModel, focusedQueueStateModel)
-                                when (mode.value) {
+
+
+
+                                when (mode) {
                                     Mode.Practice -> {
                                         practiceModeComposerManager.compose()
                                     }

@@ -10,7 +10,7 @@ public class DeckDb extends DbContants {
 	public static final String DECKS_TABLE_NAME = "decks";
 
 	public static void deckToContentValues(Deck deck, ContentValues values) {
-		values.put(AbstractDeck.NAME, deck.getName());
+		values.put(AbstractDeck.NAME, deck.name);
 	}
 
 }

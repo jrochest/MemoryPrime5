@@ -10,15 +10,10 @@ import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
 import com.md.*
 import com.md.composeModes.CurrentNotePartManager
-import com.md.composeModes.DeckMode
 import com.md.composeModes.DeckModeStateModel
-import com.md.composeModes.Mode
-import com.md.composeModes.TopModeViewModel
 import com.md.modesetters.DeckItemPopulator.populate
-import com.md.modesetters.deckchoose.DeckNameUpdater
 import com.md.modesetters.deckchoose.InsertNewHandler
 import com.md.provider.Deck
-import com.md.utils.ToastSingleton
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.Dispatchers
@@ -31,13 +26,13 @@ import javax.inject.Inject
 
 @ActivityScoped
 class DeckLoadManager @Inject constructor(
-    private val topModeViewModel: TopModeViewModel,
-    private val deckModeStateModel: DeckModeStateModel,
     @ActivityContext val context: Context,
     val currentNotePartManager: CurrentNotePartManager,
     private val focusedQueueStateModel: FocusedQueueStateModel,) {
     val decks = MutableStateFlow<List<DeckInfo>?>(null)
-    var deckRefreshNeeded = true
+    val deckIdToDeckSize = MutableStateFlow<Map<Int, Int>?>(null)
+
+    private var needsToLoadDecksFromDatabase = true
 
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
@@ -45,7 +40,7 @@ class DeckLoadManager @Inject constructor(
 
     init {
         activity.lifecycleScope.launch {
-            refreshDeckListAndFocusFirstActiveNonemptyQueue(true)
+            refreshDeckListAndFocusFirstActiveNonemptyQueue()
         }
 
         activity.lifecycleScope.launch {
@@ -53,37 +48,12 @@ class DeckLoadManager @Inject constructor(
                 if (decks.isNullOrEmpty()) {
                     return@collect
                 }
-                chooseDeck(decks)
-            }
-        }
-    }
-
-    fun chooseDeck() {
-        val decks = decks.value ?: return
-        var foundNonEmptyDeck = false
-        for (deckInfo in decks) {
-            if (deckInfo.isActive && !deckInfo.revisionQueue.isEmpty()) {
-                setDeck(deckInfo)
-                foundNonEmptyDeck = true
-                break
-            }
-        }
-        if (foundNonEmptyDeck) {
-            return
-        } // else use an empty deck.
-        for (deckInfo in decks) {
-            if (deckInfo.isActive) {
-                setDeck(deckInfo)
-                break
-            }
-        }
-    }
-
-    fun chooseDeck(decks: List<DeckInfo>) {
-        for (deckInfo in decks) {
-            if (deckInfo.isActive && !deckInfo.revisionQueue.isEmpty()) {
-                setDeck(deckInfo)
-                break
+                for (deckInfo in decks) {
+                    if (deckInfo.isActive && !deckInfo.revisionQueue.isEmpty()) {
+                        setDeck(deckInfo)
+                        break
+                    }
+                }
             }
         }
     }
@@ -95,16 +65,16 @@ class DeckLoadManager @Inject constructor(
         currentNotePartManager.changeCurrentNotePart(note, partIsAnswer = false)
     }
 
-    suspend fun refreshDeckListAndFocusFirstActiveNonemptyQueue(deckRefreshNeeded: Boolean? = null) {
-        deckRefreshNeeded?.let { this.deckRefreshNeeded = it }
+    suspend fun refreshDeckListAndFocusFirstActiveNonemptyQueue() {
         withContext(Dispatchers.Main) {
-            // Only run this refresh once.
-            if (this@DeckLoadManager.deckRefreshNeeded) {
-                this@DeckLoadManager.deckRefreshNeeded = false
-                val resultingDeckList = withContext(Dispatchers.IO) {
-                    val resultingDeckList = mutableListOf<DeckInfo>()
+            // Load deck just once and afterward make the in memory the source of truth and keep
+            // DB up to date manually.
+            if (this@DeckLoadManager.needsToLoadDecksFromDatabase) {
+                this@DeckLoadManager.needsToLoadDecksFromDatabase = false
+                val queryDeck = DbNoteEditor.instance!!.queryDeck()
+                 withContext(Dispatchers.IO) {
+                    val deckInfoList = mutableListOf<DeckInfo>()
                     val deckList = mutableListOf<Deck>()
-                    val queryDeck = DbNoteEditor.instance!!.queryDeck()
                     for (deck in queryDeck) {
                         deckList.add(Deck(deck.id, deck.name))
                     }
@@ -113,28 +83,26 @@ class DeckLoadManager @Inject constructor(
                         val revisionQueue = RevisionQueue()
                         revisionQueue.populate(DbNoteEditor.instance!!, deck.id)
                         val deckCount = DbNoteEditor.instance!!.getDeckCount(deck.id)
-                        val deckInfo = DeckInfo(deck, revisionQueue, deckCount)
-                        resultingDeckList.add(deckInfo)
+                        // TODOJNOW provide alternative to deck count.
+                        val deckInfo = DeckInfo(deck, revisionQueue, 0)
+                        deckInfoList.add(deckInfo)
                     }
 
                     withContext(Dispatchers.Main) {
-                        decks.value = resultingDeckList
+                        decks.value = deckInfoList
                     }
-                    resultingDeckList
-                }
 
-                val decks = resultingDeckList
-                if (decks.isEmpty()) {
-                    withContext(Dispatchers.Main) {
-                        // Go to Deck Chooser to add a deck.
-                        topModeViewModel.modeModel.value = Mode.DeckChooser
-                        deckModeStateModel.modeModel.value = DeckMode.AddingDeck
+                    val noteEditor = checkNotNull(DbNoteEditor.instance)
+                    val localDeckIdToDeckSize = mutableMapOf<Int, Int>()
+                    for (deck in deckList) {
+                        val itemsInDeck = noteEditor.getDeckCount(deck.id)
+                        localDeckIdToDeckSize[deck.id] = itemsInDeck
+
                     }
-                    return@withContext
-                } else {
                     withContext(Dispatchers.Main) {
-                        chooseDeck()
+                        deckIdToDeckSize.value = localDeckIdToDeckSize
                     }
+                    deckInfoList
                 }
             }
         }
@@ -217,7 +185,6 @@ object DeckChooseModeSetter : ModeSetter() {
                 val info = deckIdToInfo[deck.id] ?: return@setOnLongClickListener true
                 val alert = AlertDialog.Builder(memoryDroid!!)
                 alert.setTitle("Choose action or press off screen")
-                alert.setPositiveButton("Rename") { _, _ -> DeckNameUpdater(memoryDroid, info, getInstance()).onClick(v) }
                 //alert.setNegativeButton("Delete") { _, _ -> DeckDeleter(memoryDroid, info, getInstance()).onClick(v) }
                 alert.show()
                 true
@@ -235,38 +202,6 @@ object DeckChooseModeSetter : ModeSetter() {
             }
 
             return view
-        }
-    }
-
-    fun onComplete() {
-        val activity = checkNotNull(memoryDroid)
-        val deckLoadManager = activity.deckLoadManager()
-
-        activity.lifecycleScope.launch {
-
-
-        }
-
-        val loadingOrSelect = memoryDroid?.findViewById<View>(R.id.loadingOrSelect) as TextView
-        loadingOrSelect.text = "Press or Long Press a Deck"
-        loadComplete = true
-        ToastSingleton.getInstance().msgCommon("$mTotalNotes notes!")
-    }
-
-    fun applyDeckInfoToExistingUiElement(state: DeckInfo) {
-        progressBar!!.progress = progressBar!!.progress + 1
-        for (idx in deckList.indices) {
-            val elementAt = deckList.elementAt(idx)
-            if (elementAt.id == state.category) {
-                elementAt.setSize(state.deckCount)
-                elementAt.setTodayReview(state.revisionQueue.getSize())
-                deckIdToInfo[elementAt.id] = state
-                // TODO(jrochest) Why is the necessary. It only needs it when returning from
-                // a different mode, but it is not needed initially.
-                if (listView!!.childCount - 1 >= idx) {
-                    populate(listView!!.getChildAt(idx), state)
-                }
-            }
         }
     }
 

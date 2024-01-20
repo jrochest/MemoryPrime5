@@ -28,7 +28,6 @@ public final class DeckNameUpdater implements View.OnClickListener {
 	@Override
 	public void onClick(View v) {
 		AlertDialog.Builder alert = new AlertDialog.Builder(memoryDroid);
-
 		alert.setTitle("Please Enter a new Deck Name for: "
 				+ this.deckInfo.getName());
 
@@ -39,21 +38,18 @@ public final class DeckNameUpdater implements View.OnClickListener {
 		alert.setView(input);
 
 		alert.setPositiveButton("Ok",
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog,
-										int whichButton) {
-						Editable value = input.getText();
+				(dialog, whichButton) -> {
+					Editable value = input.getText();
 
-						String val = value.toString();
+					String val = value.toString();
 
-						Deck deck = new Deck(deckInfo.getCategory(), val);
+					Deck deck = new Deck(deckInfo.getCategory(), val);
 
-						deckInfo.setDeck(deck);
+					deckInfo.setDeck(deck);
 
-						DbNoteEditor.getInstance().updateDeck(deck);
-						modeSetter.setupCreateMode();
+					DbNoteEditor.getInstance().updateDeck(deck);
+					modeSetter.setupCreateMode();
 
-					}
 				});
 
 		alert.setNegativeButton("Cancel",

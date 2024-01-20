@@ -74,7 +74,6 @@ class PracticeModeStateHandler @Inject constructor(
 
                     if (deckInfo == null || deckInfo.revisionQueue.isEmpty()) {
                         MoveManager.cancelJobs()
-                        deckLoadManager.chooseDeck()
                         val focusedQueue = focusedQueueStateModel.deck.value?.revisionQueue
                         if (focusedQueue != null && !focusedQueue.isEmpty()) {
                             val metrics = practiceModeViewModel.metricsFlow.value
@@ -334,7 +333,6 @@ class PracticeModeStateHandler @Inject constructor(
         // to review.
         activity.lifecycleScope.launch {
             deckLoadManager.refreshDeckListAndFocusFirstActiveNonemptyQueue()
-            //setupQuestionMode(shouldUpdateQuestion = true)
         }
     }
 

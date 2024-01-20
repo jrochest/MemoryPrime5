@@ -29,11 +29,11 @@ public class DeckInfo {
 	}
 
 	public String getName() {
-		return deck.getName();
+		return deck.name;
 	}
 
 	public int getCategory() {
-		return deck.getId();
+		return deck.id;
 	}
 
 	public RevisionQueue getRevisionQueue() {
@@ -41,6 +41,6 @@ public class DeckInfo {
 	}
 
 	public boolean isActive()  {
-		return !deck.getName().contains("inactive");
+		return !deck.name.contains("inactive");
 	}
 }
