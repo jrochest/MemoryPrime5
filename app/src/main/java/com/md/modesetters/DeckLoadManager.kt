@@ -1,16 +1,9 @@
 package com.md.modesetters
 
-import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Context
-import android.view.View
-import android.view.ViewGroup
-import android.widget.*
-import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
 import com.md.*
 import com.md.composeModes.CurrentNotePartManager
-import com.md.modesetters.DeckItemPopulator.populate
 import com.md.provider.Deck
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
@@ -18,7 +11,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.*
 import javax.inject.Inject
 
 

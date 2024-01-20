@@ -32,7 +32,7 @@ public class DeckInfo {
 		return deck.name;
 	}
 
-	public int getCategory() {
+	public int getId() {
 		return deck.id;
 	}
 

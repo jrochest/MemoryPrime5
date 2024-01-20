@@ -52,7 +52,7 @@ public class CategorySingleton {
 
 
 	public void setDeckInfo(DeckInfo deckInfo) {
-		this.mCurrentDeck = deckInfo.getCategory();
+		this.mCurrentDeck = deckInfo.getId();
 		this.deck = deckInfo.getDeck();
 		RevisionQueue.Companion.setCurrentDeckReviewQueue(deckInfo.getRevisionQueue());
 	}

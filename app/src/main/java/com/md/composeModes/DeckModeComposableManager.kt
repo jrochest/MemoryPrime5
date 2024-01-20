@@ -36,12 +36,10 @@ import com.md.FocusedQueueStateModel
 import com.md.SpacedRepeaterActivity
 import com.md.modesetters.DeckInfo
 import com.md.modesetters.DeckLoadManager
-import com.md.modesetters.TtsSpeaker
 import com.md.provider.Deck
 import com.md.utils.ToastSingleton
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -141,10 +139,17 @@ class DeckModeComposableManager @Inject constructor(
                         style = MaterialTheme.typography.headlineMedium
                     )
                     Row {
+
+                        val deckIdToDeckSize = deckLoadManager.deckIdToDeckSize.collectAsState().value
+                        var description = "Queue: " + deckInfo.revisionQueue.getSize()
+                        if (deckIdToDeckSize != null) {
+                            description += "\nTotal: " + deckIdToDeckSize[deckInfo.id]
+                        }
                         Text(
-                            text = "Queue: " + deckInfo.revisionQueue.getSize() + "\nTotal: " + deckInfo.deckCount,
+                            text = description,
                             style = MaterialTheme.typography.labelLarge
                         )
+
                         VerticalDivider()
                         TextButton(onClick = {
                             focusedQueueStateModel.deck.value = deckInfo
@@ -155,9 +160,7 @@ class DeckModeComposableManager @Inject constructor(
                         }
                         VerticalDivider()
                         TextButton(onClick = {
-
                             focusedQueueStateModel.deck.value = deckInfo
-
                             CategorySingleton.getInstance().setDeckInfo(deckInfo)
                             topModeViewModel.modeModel.value = Mode.NewNote
                         }) {
@@ -221,7 +224,7 @@ class DeckModeComposableManager @Inject constructor(
                 return@setPositiveButton
             }
 
-            val deck = Deck(deckInfo.category, newName)
+            val deck = Deck(deckInfo.id, newName)
             deckInfo.deck = deck
             instance!!.updateDeck(deck)
 
