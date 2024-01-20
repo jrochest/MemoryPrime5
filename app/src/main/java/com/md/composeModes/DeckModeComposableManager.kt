@@ -1,6 +1,8 @@
 package com.md.composeModes
 
+import android.app.AlertDialog
 import android.content.Context
+import android.content.DialogInterface
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,6 +37,7 @@ import com.md.SpacedRepeaterActivity
 import com.md.modesetters.DeckInfo
 import com.md.modesetters.DeckLoadManager
 import com.md.provider.Deck
+import com.md.utils.ToastSingleton
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -107,13 +110,15 @@ class DeckModeComposableManager @Inject constructor(
                         this.contentDescription = "Save deck"
                     },
                     onClick = {
-                    val deck = Deck(/* name= */ textValue.text)
-                    instance!!.insertDeck(deck)
-                    activity.lifecycleScope.launch {
-                        deckModeStateModel.modeModel.value = DeckMode.Default
-                        deckLoadManager.refreshDeckListAndFocusFirstActiveNonemptyQueue(deckRefreshNeeded = true)
-                    }
-                }) {
+                        val deck = Deck(/* name= */ textValue.text)
+                        instance!!.insertDeck(deck)
+                        activity.lifecycleScope.launch {
+                            deckModeStateModel.modeModel.value = DeckMode.Default
+                            deckLoadManager.refreshDeckListAndFocusFirstActiveNonemptyQueue(
+                                deckRefreshNeeded = true
+                            )
+                        }
+                    }) {
                     Text(text = "Save deck")
                 }
             }
@@ -123,23 +128,23 @@ class DeckModeComposableManager @Inject constructor(
     @Composable
     private fun DeckList(decks: List<DeckInfo>) {
         Column {
-            decks.forEach {
+            decks.forEach { deckInfo: DeckInfo ->
                 Divider()
                 Column {
                     Text(
                         modifier = Modifier.fillMaxWidth(),
-                        text = it.name,
+                        text = deckInfo.name,
                         style = MaterialTheme.typography.headlineMedium
                     )
                     Row {
                         Text(
-                            text = "Queue: " + it.revisionQueue.getSize() + "\nTotal: " + it.deckCount,
+                            text = "Queue: " + deckInfo.revisionQueue.getSize() + "\nTotal: " + deckInfo.deckCount,
                             style = MaterialTheme.typography.labelLarge
                         )
                         VerticalDivider()
                         TextButton(onClick = {
-                            focusedQueueStateModel.deck.value = it
-                            CategorySingleton.getInstance().setDeckInfo(it)
+                            focusedQueueStateModel.deck.value = deckInfo
+                            CategorySingleton.getInstance().setDeckInfo(deckInfo)
                             topModeViewModel.modeModel.value = Mode.Practice
                         }) {
                             Text(text = "Practice", style = MaterialTheme.typography.labelLarge)
@@ -147,9 +152,9 @@ class DeckModeComposableManager @Inject constructor(
                         VerticalDivider()
                         TextButton(onClick = {
 
-                            focusedQueueStateModel.deck.value = it
+                            focusedQueueStateModel.deck.value = deckInfo
 
-                            CategorySingleton.getInstance().setDeckInfo(it)
+                            CategorySingleton.getInstance().setDeckInfo(deckInfo)
                             topModeViewModel.modeModel.value = Mode.NewNote
                         }) {
                             Text(
@@ -164,6 +169,7 @@ class DeckModeComposableManager @Inject constructor(
                                 contentDescription = "More"
                             )
                         }
+                        val name = deckInfo.name
                         DropdownMenu(
                             expanded = expanded,
                             onDismissRequest = { expanded = false }
@@ -179,13 +185,28 @@ class DeckModeComposableManager @Inject constructor(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Delete") },
+                                text = { Text("Delete deck: $name") },
                                 onClick = {
-                                    Toast.makeText(
-                                        context,
-                                        "Delete",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
+                                    if (name.contains("saved") || name.contains("protected")) {
+                                        val message = "Cannot delete saved or protected deck."
+                                        ToastSingleton.getInstance().speakAndShow(message)
+                                        return@DropdownMenuItem
+                                    }
+
+                                    val alert = AlertDialog.Builder(activity)
+                                    alert.setTitle(
+                                        "Are you sure you want the delete: '${name}'?"
+                                    )
+
+                                    alert.setPositiveButton("Yes, Delete") { _, _ ->
+                                        instance!!.deleteDeck(deckInfo.deck)
+                                    }
+
+                                    alert.setNegativeButton(
+                                        "Cancel"
+                                    ) { _, _ ->
+                                        // Do nothing.
+                                    }
                                 }
                             )
                         }

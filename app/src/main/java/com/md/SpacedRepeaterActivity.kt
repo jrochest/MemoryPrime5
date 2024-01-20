@@ -70,7 +70,6 @@ class SpacedRepeaterActivity
         // TODO These can be made into activity scoped instances like workingModeSetter...
         CreateModeSetter.setUp(this, handler)
         BrowsingModeSetter.getInstance().setup(this, handler)
-        DeckChooseModeSetter.getInstance()?.setUp(this, handler)
         learningModeSetter.get().setUp(this, handler)
         SettingModeSetter.setup(this, handler)
         CleanUpAudioFilesModeSetter.getInstance().setup(this, handler)

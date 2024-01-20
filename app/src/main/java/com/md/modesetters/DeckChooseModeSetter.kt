@@ -15,7 +15,6 @@ import com.md.composeModes.DeckModeStateModel
 import com.md.composeModes.Mode
 import com.md.composeModes.TopModeViewModel
 import com.md.modesetters.DeckItemPopulator.populate
-import com.md.modesetters.deckchoose.DeckDeleter
 import com.md.modesetters.deckchoose.DeckNameUpdater
 import com.md.modesetters.deckchoose.InsertNewHandler
 import com.md.provider.Deck
@@ -219,7 +218,7 @@ object DeckChooseModeSetter : ModeSetter() {
                 val alert = AlertDialog.Builder(memoryDroid!!)
                 alert.setTitle("Choose action or press off screen")
                 alert.setPositiveButton("Rename") { _, _ -> DeckNameUpdater(memoryDroid, info, getInstance()).onClick(v) }
-                alert.setNegativeButton("Delete") { _, _ -> DeckDeleter(memoryDroid, info, getInstance()).onClick(v) }
+                //alert.setNegativeButton("Delete") { _, _ -> DeckDeleter(memoryDroid, info, getInstance()).onClick(v) }
                 alert.show()
                 true
             }
@@ -251,7 +250,7 @@ object DeckChooseModeSetter : ModeSetter() {
         val loadingOrSelect = memoryDroid?.findViewById<View>(R.id.loadingOrSelect) as TextView
         loadingOrSelect.text = "Press or Long Press a Deck"
         loadComplete = true
-        ToastSingleton.getInstance().msgCommon("$mTotalNotes notes!", 0f)
+        ToastSingleton.getInstance().msgCommon("$mTotalNotes notes!")
     }
 
     fun applyDeckInfoToExistingUiElement(state: DeckInfo) {

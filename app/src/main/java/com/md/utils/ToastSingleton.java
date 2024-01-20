@@ -1,17 +1,9 @@
 package com.md.utils;
 
-import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import com.md.R;
 import com.md.modesetters.TtsSpeaker;
 
 public class ToastSingleton {
@@ -39,10 +31,15 @@ public class ToastSingleton {
 
     public void error(String msg) {
         TtsSpeaker.speak("Error " + msg);
-        msgCommon("Error: " + msg, 12);
+        msgCommon("Error: " + msg);
     }
 
-    public void msgCommon(String msg, float size) {
+    public void speakAndShow(String msg) {
+        TtsSpeaker.speak(msg);
+        msgCommon(msg);
+    }
+
+    public void msgCommon(String msg) {
         Toast toast = Toast.makeText(context, msg, Toast.LENGTH_SHORT);
         toast.show();
         if (Log.isLoggable(TAG, Log.DEBUG)) {
@@ -51,6 +48,6 @@ public class ToastSingleton {
     }
 
     public void msg(String msg) {
-        msgCommon(msg, 30);
+        msgCommon(msg);
     }
 }
