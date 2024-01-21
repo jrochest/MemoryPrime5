@@ -67,11 +67,11 @@ class DeckLoadManager @Inject constructor(
                     }
 
                     val noteEditor = checkNotNull(DbNoteEditor.instance)
+                     // The sizes are not important for starting so delay loading them.
                     val localDeckIdToDeckSize = mutableMapOf<Int, Int>()
                     for (deck in deckList) {
                         val itemsInDeck = noteEditor.getDeckCount(deck.id)
                         localDeckIdToDeckSize[deck.id] = itemsInDeck
-
                     }
                     withContext(Dispatchers.Main) {
                         deckIdToDeckSize.value = localDeckIdToDeckSize
