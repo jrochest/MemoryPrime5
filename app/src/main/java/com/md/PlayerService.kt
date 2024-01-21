@@ -7,7 +7,6 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.media.MediaBrowserServiceCompat
 import androidx.media.session.MediaButtonReceiver
-import com.md.modesetters.LearningModeSetter
 import com.md.modesetters.TtsSpeaker
 
 class PlayerService : MediaBrowserServiceCompat() {

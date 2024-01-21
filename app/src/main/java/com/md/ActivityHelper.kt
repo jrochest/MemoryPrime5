@@ -6,19 +6,15 @@ import android.view.MenuItem
 import android.view.WindowManager
 import com.md.modesetters.*
 import com.md.utils.ToastSingleton
-import com.md.workers.BackupToUsbManager
 import com.md.workers.IncrementalBackupManager.createAndWriteZipBackToPreviousLocation
-import com.md.composeModes.ComposeModeSetter
-import dagger.Lazy
 import dagger.hilt.android.scopes.ActivityScoped
 import java.io.File
 import javax.inject.Inject
 
 @ActivityScoped
 class ActivityHelper @Inject constructor(
-    val activity: Activity,
-    private val composeModeSetter: Lazy<ComposeModeSetter>,
-    private val learningModeSetter: Lazy<LearningModeSetter>) {
+    val activity: Activity
+) {
     fun commonActivitySetup() {
         val theFile = File(DbContants.getDatabasePath())
         val parentFile = File(theFile.parent)

@@ -1,16 +1,13 @@
 package com.md.modesetters;
 
 import com.md.DbNoteEditor;
-import com.md.RevisionQueue;
-import com.md.provider.Note;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.view.View;
-import android.view.View.OnClickListener;
 
-public final class DeleterOnClickListener extends LearningModeSetter.MultiClickListener {
+public final class DeleterOnClickListener extends MultiClickListener {
 	private final DbNoteEditor noteEditor;
 	private final Activity context;
 	private ItemDeletedHandler itemDeleteHandler;

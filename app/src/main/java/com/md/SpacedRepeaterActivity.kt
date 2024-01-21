@@ -45,9 +45,6 @@ class SpacedRepeaterActivity
     lateinit var activityHelper: ActivityHelper
 
     @Inject
-    lateinit var learningModeSetter: Lazy<LearningModeSetter>
-
-    @Inject
     lateinit var deckLoadManager: Lazy<DeckLoadManager>
 
     @Inject lateinit var toneManager: Lazy<ToneManagerImpl>
@@ -70,7 +67,6 @@ class SpacedRepeaterActivity
         // TODO These can be made into activity scoped instances like workingModeSetter...
         CreateModeSetter.setUp(this, handler)
         BrowsingModeSetter.getInstance().setup(this, handler)
-        learningModeSetter.get().setUp(this, handler)
         SettingModeSetter.setup(this, handler)
         CleanUpAudioFilesModeSetter.getInstance().setup(this, handler)
 
@@ -353,17 +349,8 @@ class SpacedRepeaterActivity
     }
 
     @JvmOverloads
-    fun handleRhythmUiTaps(learningModeSetter: LearningModeSetter, uptimeMillis: Long, pressGroupMaxGapMsScreen: Long, tapCount: Int = 1) {
-        externalClickCounter.get().handleRhythmUiTaps(learningModeSetter, uptimeMillis, pressGroupMaxGapMsScreen, tapCount)
-    }
-
-    @JvmOverloads
     fun handleRhythmUiTaps(uptimeMillis: Long, pressGroupMaxGapMsScreen: Long, tapCount: Int = 1) {
         externalClickCounter.get().handleRhythmUiTaps(uptimeMillis, pressGroupMaxGapMsScreen, tapCount)
-    }
-
-    fun switchToLearningMode() {
-        learningModeSetter.get().switchMode(this)
     }
 
     fun deckLoadManager(): DeckLoadManager? {
