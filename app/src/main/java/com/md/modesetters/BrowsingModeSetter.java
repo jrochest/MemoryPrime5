@@ -133,29 +133,6 @@ public class BrowsingModeSetter extends ModeSetter implements
 			}
 		});
 
-		Button updateAudio = (Button) memoryDroid
-				.findViewById(R.id.updateAudio);
-
-		updateAudio.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-
-				Note note = noteEditor.getNote();
-
-				if (note != null) {
-					CreateModeData.getInstance().setAudioFile(note.getAnswer(),
-							CreateModeSetter.ANSWER_INDEX);
-
-					CreateModeData.getInstance()
-							.setAudioFile(note.getQuestion(),
-									CreateModeSetter.QUESTION_INDEX);
-
-					CreateModeSetter.INSTANCE.setNote(note);
-					CreateModeSetter.INSTANCE.switchMode(memoryDroid);
-
-				}
-			}
-		});
-
 		Button deleteButton = (Button) memoryDroid
 				.findViewById(R.id.deleteButton);
 

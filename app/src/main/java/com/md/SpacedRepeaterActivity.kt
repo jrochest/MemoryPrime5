@@ -65,7 +65,6 @@ class SpacedRepeaterActivity
         // Normal mode.
 
         // TODO These can be made into activity scoped instances like workingModeSetter...
-        CreateModeSetter.setUp(this, handler)
         BrowsingModeSetter.getInstance().setup(this, handler)
         SettingModeSetter.setup(this, handler)
         CleanUpAudioFilesModeSetter.getInstance().setup(this, handler)

@@ -283,9 +283,9 @@ object CreateModeSetter : ModeSetter() {
             stopImage, null, null, null
         )
         if (currentIndex == ANSWER_INDEX) {
-            answer!!.playFile(this, currentIndex)
+            //answer!!.playFile(this, currentIndex)
         } else {
-            question!!.playFile(this, currentIndex)
+           // question!!.playFile(this, currentIndex)
         }
     }
 

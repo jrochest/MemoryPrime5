@@ -74,9 +74,6 @@ class ActivityHelper @Inject constructor(
                         activity: Activity) {
         val findItem = menu.findItem(item)
         findItem.setOnMenuItemClickListener {
-            if (ms is CreateModeSetter) {
-                ms.setNote(null)
-            }
             ms.switchMode(activity)
             true
         }

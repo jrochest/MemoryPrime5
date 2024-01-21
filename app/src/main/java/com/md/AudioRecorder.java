@@ -1,16 +1,14 @@
 package com.md;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Random;
-
-import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaRecorder;
 
-import com.md.modesetters.CreateModeSetter;
 import com.md.modesetters.TtsSpeaker;
 import com.md.utils.ToastSingleton;
 import com.md.workers.BackupToUsbManager;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Random;
 
 
 public class AudioRecorder {
@@ -134,15 +132,6 @@ public class AudioRecorder {
 			}
 		}
 
-	}
-
-	public void playFile(CreateModeSetter createModeSetter, int currentIndex) {
-		final AudioPlayer audioPlayer = AudioPlayer.getInstance();
-
-		OnCompletionListener listener = new MyOnCompletionListener(
-				createModeSetter, currentIndex);
-
-        audioPlayer.playFile(originalFile, listener);
 	}
 
 	public void playFile() {
