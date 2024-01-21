@@ -58,9 +58,7 @@ class DeckLoadManager @Inject constructor(
                     for (deck in deckList) {
                         val revisionQueue = RevisionQueue()
                         revisionQueue.populate(DbNoteEditor.instance!!, deck.id)
-                        val deckCount = DbNoteEditor.instance!!.getDeckCount(deck.id)
-                        // TODOJNOW provide alternative to deck count.
-                        val deckInfo = DeckInfo(deck, revisionQueue, 0)
+                        val deckInfo = DeckInfo(deck, revisionQueue)
                         deckInfoList.add(deckInfo)
                     }
 
