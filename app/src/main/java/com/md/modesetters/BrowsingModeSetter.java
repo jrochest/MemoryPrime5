@@ -7,7 +7,6 @@ import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import com.md.AudioPlayer;
-import com.md.CreateModeData;
 import com.md.DbNoteEditor;
 import com.md.ModeHandler;
 import com.md.NoteEditorListener;
@@ -15,7 +14,6 @@ import com.md.R;
 import com.md.provider.Note;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class BrowsingModeSetter extends ModeSetter implements
 		ItemDeletedHandler {
