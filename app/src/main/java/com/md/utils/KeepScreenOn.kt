@@ -1,35 +1,31 @@
 package com.md.utils
 
-import android.os.Handler
 import android.view.WindowManager
+import androidx.lifecycle.lifecycleScope
 import com.md.SpacedRepeaterActivity
 
-class KeepScreenOn private constructor() {
-    private var sequenceNumber = 0
-    fun keepScreenOn(activity: SpacedRepeaterActivity) {
-        sequenceNumber++
-        activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        val requestId = sequenceNumber
-        Handler().postDelayed({
-            if (activity.isDestroyed || activity.isFinishing) {
-                return@postDelayed
-            }
-            if (requestId == sequenceNumber) {
-                // TIMEOUT_MILLIS without a new command so remove the screen on flag.
-                activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            }
-        }, TIMEOUT_MILLIS.toLong())
+import dagger.hilt.android.scopes.ActivityScoped
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.time.Duration
+
+import javax.inject.Inject
+
+@ActivityScoped
+class KeepScreenOn @Inject constructor(private val activity: SpacedRepeaterActivity) {
+
+    private var screenOnThenDelayThenIfNotCancelledOff: Job? = null
+    fun keepScreenOn() {
+        screenOnThenDelayThenIfNotCancelledOff?.cancel()
+        screenOnThenDelayThenIfNotCancelledOff = activity.lifecycleScope.launch {
+            activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            delay(TIMEOUT_MILLIS.toMillis())
+            activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
     }
 
     companion object {
-        var instance: KeepScreenOn? = null
-            get() {
-                if (field == null) {
-                    field = KeepScreenOn()
-                }
-                return field
-            }
-            private set
-        private const val TIMEOUT_MILLIS = 15 * 60 * 1000
+        private val TIMEOUT_MILLIS = Duration.ofMinutes(2)
     }
 }

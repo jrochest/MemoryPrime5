@@ -37,6 +37,7 @@ class PracticeModeStateHandler @Inject constructor(
     private val model: TopModeViewModel,
     private val practiceModeViewModel: PracticeModeViewModel,
     private val deckLoadManager: DeckLoadManager,
+    private val keepScreenOn: KeepScreenOn,
 ) {
     val activity: SpacedRepeaterActivity = context as SpacedRepeaterActivity
 
@@ -144,7 +145,7 @@ class PracticeModeStateHandler @Inject constructor(
 
     // Used to indicate an answer was not remembered or proceed for a question.
     fun secondaryAction() {
-        KeepScreenOn.getInstance().keepScreenOn(activity)
+        keepScreenOn.keepScreenOn()
         handlePracticeNoteState(noFocusedNoteHandler = {
             TtsSpeaker.speak("single tap to proceed")
         }, focusedNoteExistsHandler = { noteState ->
@@ -160,7 +161,7 @@ class PracticeModeStateHandler @Inject constructor(
 
     /** Moves this note to the end of the queue.  */
     fun postponeNote(shouldQueue: Boolean) {
-        KeepScreenOn.getInstance().keepScreenOn(activity)
+        keepScreenOn.keepScreenOn()
         handlePracticeNoteState(noFocusedNoteHandler = {
             // Do nothing.
         }, focusedNoteExistsHandler = { noteState ->
@@ -196,7 +197,7 @@ class PracticeModeStateHandler @Inject constructor(
     }
 
     fun proceed() {
-        KeepScreenOn.getInstance().keepScreenOn(activity)
+        keepScreenOn.keepScreenOn()
         activity.lifecycleScope.launch {
             val focusedDeck = focusedQueueStateModel.deck.value
             val noteState = currentNotePartManager.noteStateFlow.value
@@ -373,11 +374,6 @@ class PracticeModeStateHandler @Inject constructor(
 
     private fun undoFromAnswerToQuestion() {
         setupQuestionMode(false)
-    }
-
-    fun adjustScreenLock() {
-        KeepScreenOn.getInstance().keepScreenOn(activity)
-        // hideSystemUi()
     }
 
     fun mark() {
