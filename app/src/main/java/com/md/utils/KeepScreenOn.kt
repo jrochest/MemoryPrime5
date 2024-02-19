@@ -12,7 +12,7 @@ import java.time.Duration
 
 import javax.inject.Inject
 
-// Keywords: Keep awake keep alive. Screen wake
+// Keywords: Keep awake keep alive. Screen wake. Keywords.
 @ActivityScoped
 class KeepScreenOn @Inject constructor(private val activity: SpacedRepeaterActivity) {
 
