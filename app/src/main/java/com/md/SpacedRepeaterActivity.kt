@@ -85,7 +85,6 @@ class SpacedRepeaterActivity
     }
 
     public override fun onResume() {
-        // THis doesn't seem to be called?? TODOJNOW
         super.onResume()
 
         playbackServiceOnResume()
@@ -93,7 +92,6 @@ class SpacedRepeaterActivity
         val modeSetter = modeBackStack.whoseOnTop() ?: return
         // Take back media session focus if we lost it.
         modeSetter.handleReplay()
-
     }
 
     // Function to check and request permission.
@@ -110,7 +108,6 @@ class SpacedRepeaterActivity
 
         // Hiding stops the repeat playback in learning mode.
         instance.pause()
-        //MoveManager.cancelJobs()
 
         playbackServiceOnPause()
         maybeStopTone()
