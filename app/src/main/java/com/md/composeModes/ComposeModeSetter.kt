@@ -22,6 +22,7 @@ import com.md.modesetters.DeckLoadManager
 import com.md.modesetters.ItemDeletedHandler
 import com.md.modesetters.ModeSetter
 import com.md.uiTheme.AppTheme
+import com.md.utils.KeepScreenOn
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,7 +53,8 @@ class ComposeModeSetter @Inject constructor(
     private val backupModeComposeManager: BackupModeComposeManager,
     private val practiceModeComposerManager: PracticeModeComposerManager,
     private val focusedQueueStateModel: FocusedQueueStateModel,
-    private val deckLoadManager: DeckLoadManager
+    private val deckLoadManager: DeckLoadManager,
+    private val keepScreenOn: KeepScreenOn,
 ) : ModeSetter(), ItemDeletedHandler {
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
@@ -93,6 +95,7 @@ class ComposeModeSetter @Inject constructor(
                                     // This initially leaves the recording or deleting state
                                     practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
                                     currentNotePartManager.clearPending()
+                                    this@ComposeModeSetter.keepScreenOn.keepScreenOn()
                                     this@ComposeModeSetter.switchMode(context = activity)
                                 }, onDeckChooseMode = {
                                     topModeViewModel.modeModel.value = Mode.DeckChooser

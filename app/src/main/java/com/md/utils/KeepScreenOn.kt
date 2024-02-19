@@ -1,8 +1,12 @@
 package com.md.utils
 
+import android.app.Activity
+import android.content.Context
 import android.view.WindowManager
 import androidx.lifecycle.lifecycleScope
 import com.md.SpacedRepeaterActivity
+import com.md.modesetters.TtsSpeaker
+import dagger.hilt.android.qualifiers.ActivityContext
 
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.Job
@@ -14,19 +18,40 @@ import javax.inject.Inject
 
 // Keywords: Keep awake keep alive. Screen wake. Keywords.. we did it?
 @ActivityScoped
-class KeepScreenOn @Inject constructor(private val activity: SpacedRepeaterActivity) {
+class KeepScreenOn @Inject constructor(
+    @ActivityContext private val context: Context
+) {
+    val activity: SpacedRepeaterActivity by lazy {
+        context as SpacedRepeaterActivity
+    }
 
     private var screenOnThenDelayThenIfNotCancelledOff: Job? = null
     fun keepScreenOn() {
         screenOnThenDelayThenIfNotCancelledOff?.cancel()
         screenOnThenDelayThenIfNotCancelledOff = activity.lifecycleScope.launch {
             activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            delay(TIMEOUT_MILLIS.toMillis())
+            activity.window.attributes = activity.window.attributes.also {
+                it.screenBrightness = 1f
+            }
+            delay(DURATION_UNTIL_DARK.toMillis())
+
+            //TtsSpeaker.speak("screen dark.", lowVolume = false)
+            activity.window.attributes = activity.window.attributes.also {
+                it.screenBrightness = 0f
+            }
+
+            delay(DURATION_UNTIL_WARNING.toMillis())
+
+            TtsSpeaker.speak("screen off soon.", lowVolume = false)
+            delay(DURATION_AFTER_WARNING_TO_SCREEN_OFF.toMillis())
             activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
         }
     }
 
     companion object {
-        private val TIMEOUT_MILLIS = Duration.ofMinutes(2)
+        private val DURATION_UNTIL_DARK = Duration.ofSeconds(5)
+        private val DURATION_UNTIL_WARNING = Duration.ofSeconds(60)
+        private val DURATION_AFTER_WARNING_TO_SCREEN_OFF = Duration.ofSeconds(10)
     }
 }

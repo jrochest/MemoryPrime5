@@ -100,7 +100,7 @@ fun TopMenu(
         })
         MenuButton(
             myMode = Mode.Practice,
-            label = "Review\nnotes",
+            label = "Practice",
             onClick = {
             onPracticeMode()
         })
