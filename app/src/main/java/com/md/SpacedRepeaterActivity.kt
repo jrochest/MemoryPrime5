@@ -260,7 +260,7 @@ class SpacedRepeaterActivity
 
         val eventTimeMs = event.eventTime
 
-        keepScreenOn.get().keepScreenOn(dimScreen = true)
+        keepScreenOn.get().keepScreenOn(updatedDimScreenAfterBriefDelay = true)
 
         return externalClickCounter.get().handleRhythmUiTaps(eventTimeMs, PRESS_GROUP_MAX_GAP_MS_BLUETOOTH, 1)
     }
