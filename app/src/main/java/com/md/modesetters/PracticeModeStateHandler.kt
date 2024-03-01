@@ -145,7 +145,6 @@ class PracticeModeStateHandler @Inject constructor(
 
     // Used to indicate an answer was not remembered or proceed for a question.
     fun secondaryAction() {
-        keepScreenOn.keepScreenOn()
         handlePracticeNoteState(noFocusedNoteHandler = {
             TtsSpeaker.speak("single tap to proceed")
         }, focusedNoteExistsHandler = { noteState ->
@@ -161,7 +160,6 @@ class PracticeModeStateHandler @Inject constructor(
 
     /** Moves this note to the end of the queue.  */
     fun postponeNote(shouldQueue: Boolean) {
-        keepScreenOn.keepScreenOn()
         handlePracticeNoteState(noFocusedNoteHandler = {
             // Do nothing.
         }, focusedNoteExistsHandler = { noteState ->
@@ -197,7 +195,6 @@ class PracticeModeStateHandler @Inject constructor(
     }
 
     fun proceed() {
-        keepScreenOn.keepScreenOn()
         activity.lifecycleScope.launch {
             val focusedDeck = focusedQueueStateModel.deck.value
             val noteState = currentNotePartManager.noteStateFlow.value

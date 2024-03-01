@@ -1,6 +1,5 @@
 package com.md.utils
 
-import android.app.Activity
 import android.content.Context
 import android.view.WindowManager
 import androidx.lifecycle.lifecycleScope
@@ -25,27 +24,36 @@ class KeepScreenOn @Inject constructor(
         context as SpacedRepeaterActivity
     }
 
+    var firstSavedBrightness: Float? = null
+
     private var screenOnThenDelayThenIfNotCancelledOff: Job? = null
-    fun keepScreenOn() {
+    fun keepScreenOn(dimScreen: Boolean = false) {
         screenOnThenDelayThenIfNotCancelledOff?.cancel()
         screenOnThenDelayThenIfNotCancelledOff = activity.lifecycleScope.launch {
             activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
             activity.window.attributes = activity.window.attributes.also {
-                it.screenBrightness = 1f
+               val brightness = firstSavedBrightness
+                if (brightness == null) {
+                   firstSavedBrightness = it.screenBrightness
+               } else {
+                   it.screenBrightness = brightness
+               }
             }
+
             delay(DURATION_UNTIL_DARK.toMillis())
 
-            //TtsSpeaker.speak("screen dark.", lowVolume = false)
-            activity.window.attributes = activity.window.attributes.also {
-                it.screenBrightness = 0f
+            if (dimScreen) {
+                activity.window.attributes = activity.window.attributes.also {
+                    it.screenBrightness = 0f
+                }
             }
 
-            delay(DURATION_UNTIL_WARNING.toMillis())
 
+            delay(DURATION_UNTIL_WARNING.toMillis())
             TtsSpeaker.speak("screen off soon.", lowVolume = false)
             delay(DURATION_AFTER_WARNING_TO_SCREEN_OFF.toMillis())
             activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
         }
     }
 

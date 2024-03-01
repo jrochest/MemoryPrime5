@@ -22,6 +22,7 @@ import com.md.workers.IncrementalBackupPreferences
 import com.md.composeModes.ComposeModeSetter
 import com.md.composeModes.Mode
 import com.md.composeModes.TopModeViewModel
+import com.md.utils.KeepScreenOn
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.scopes.ActivityScoped
@@ -51,6 +52,9 @@ class SpacedRepeaterActivity
 
     @Inject
     lateinit var model: TopModeViewModel
+
+    @Inject
+    lateinit var keepScreenOn: Lazy<KeepScreenOn>
 
     /** Called when the activity is first created.  */
     public override fun onCreate(savedInstanceState: Bundle?) {
@@ -255,6 +259,9 @@ class SpacedRepeaterActivity
         model.modeModel.value = Mode.Practice
 
         val eventTimeMs = event.eventTime
+
+        keepScreenOn.get().keepScreenOn(dimScreen = true)
+
         return externalClickCounter.get().handleRhythmUiTaps(eventTimeMs, PRESS_GROUP_MAX_GAP_MS_BLUETOOTH, 1)
     }
 
@@ -347,6 +354,7 @@ class SpacedRepeaterActivity
     @JvmOverloads
     fun handleRhythmUiTaps(uptimeMillis: Long, pressGroupMaxGapMsScreen: Long, tapCount: Int = 1) {
         externalClickCounter.get().handleRhythmUiTaps(uptimeMillis, pressGroupMaxGapMsScreen, tapCount)
+        keepScreenOn.get().keepScreenOn()
     }
 
     fun deckLoadManager(): DeckLoadManager? {

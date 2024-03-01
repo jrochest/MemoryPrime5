@@ -27,6 +27,7 @@ import com.md.composeModes.WorkingMemoryScreen.LARGE_TAP_AREA_LABEL
 import com.md.composeStyles.ButtonStyles
 import com.md.modesetters.DeckLoadManager
 import com.md.modesetters.TtsSpeaker
+import com.md.utils.KeepScreenOn
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -82,6 +83,7 @@ class PracticeModeComposerManager @Inject constructor(
     val currentNotePartManager: CurrentNotePartManager,
     val focusedQueueStateModel: FocusedQueueStateModel,
     private val deckLoadManager: DeckLoadManager,
+    private val keepScreenOn: KeepScreenOn,
 ) {
 
     val activity: SpacedRepeaterActivity by lazy {
@@ -103,17 +105,20 @@ class PracticeModeComposerManager @Inject constructor(
         PracticeModeComposable(
             onEnableRecordMode = {
                 activity.lifecycleScope.launch {
+                    keepScreenOn.keepScreenOn()
                     activity.lowVolumeClickTone()
                     practiceModeViewModel.practiceStateFlow.value = PracticeMode.Recording
                 }
             },
             onDisabledRecordMode = {
                 activity.lifecycleScope.launch {
+                    keepScreenOn.keepScreenOn()
                     activity.lowVolumeClickTone()
                     practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
                 }
             },
             onDeleteTap = {
+                keepScreenOn.keepScreenOn()
                 stateModel.deleteNote()
             },
             onMiddleButtonTapInPracticeMode = {
