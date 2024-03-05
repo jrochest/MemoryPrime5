@@ -2,10 +2,14 @@ package com.md.composeModes
 
 import android.app.Activity
 import android.content.Context
+import android.os.Build
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -21,8 +25,11 @@ import com.md.SpacedRepeaterActivity
 import com.md.modesetters.DeckLoadManager
 import com.md.modesetters.ItemDeletedHandler
 import com.md.modesetters.ModeSetter
+import com.md.testing.TestingMode
 import com.md.uiTheme.AppTheme
 import com.md.utils.KeepScreenOn
+import com.md.viewmodel.InteractionModelFlowProvider
+import com.md.viewmodel.InteractionType
 import com.md.viewmodel.TopModeFlowProvider
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
@@ -50,32 +57,44 @@ class ComposeModeSetter @Inject constructor(
     private val focusedQueueStateModel: FocusedQueueStateModel,
     private val deckLoadManager: DeckLoadManager,
     private val keepScreenOn: KeepScreenOn,
+    private val interactionProvider: InteractionModelFlowProvider,
+    private val testingMode: TestingMode,
 ) : ModeSetter(), ItemDeletedHandler {
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
     }
+
     init {
         parentSetup(activity, modeHandler)
     }
 
-    var hasAddedContentView = false
+    private var hasAddedContentView = false
 
     override fun onSwitchToMode(context: Activity) {
         //modeHandler.add(this)
         if (!hasAddedContentView) {
             hasAddedContentView = true
             context.setContentView(ComposeView(context).apply {
-                setContent  @Composable {
+                setContent @Composable {
                     AppTheme {
-                        Surface (color = MaterialTheme.colorScheme.background) {
-                            Column {
+                        Column (Modifier.fillMaxSize().background(color = MaterialTheme.colorScheme.background)) {
+                            // This is for testing easily on userdebug devices.
+                            if (testingMode.isTestDevice) {
+                                Button(onClick = {
+                                    interactionProvider.mostRecentInteraction.value =
+                                        InteractionType.RemoteHumanInterfaceDevice
+                                    interactionProvider.clearMostRecentPocketModeTap()
+                                }) {
+                                    Text(text = "Fake BT button ")
+                                }
+                            }
+                            // TODOJ delete
+                            Surface(color = MaterialTheme.colorScheme.background) {
                                 val decks = deckLoadManager.decks.collectAsState().value
-
                                 if (decks == null) {
                                     Text(text = "Loading decks...")
                                     return@Surface
                                 }
-
                                 val mode = if (decks.isEmpty()) {
                                     // For the mode to deck chooser to ensure the user
                                     // is guided to a place where a deck can be added.
@@ -83,36 +102,48 @@ class ComposeModeSetter @Inject constructor(
                                 } else {
                                     topModeFlowProvider.modeModel.collectAsState().value
                                 }
-
-
-                                TopMenu(onPracticeMode = {
-                                    topModeFlowProvider.modeModel.value = Mode.Practice
-                                    // This initially leaves the recording or deleting state
-                                    practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
-                                    currentNotePartManager.clearPending()
-                                    this@ComposeModeSetter.keepScreenOn.keepScreenOn()
-                                    this@ComposeModeSetter.switchMode(context = activity)
-                                }, onDeckChooseMode = {
-                                    topModeFlowProvider.modeModel.value = Mode.DeckChooser
-                                    this@ComposeModeSetter.switchMode(context = activity)
-                                }, topModeFlowProvider, focusedQueueStateModel)
-
-
-
-                                when (mode) {
-                                    Mode.Practice -> {
-                                        practiceModeComposerManager.compose()
+                                if (mode == Mode.Practice) {
+                                    val interactionType =
+                                        interactionProvider.mostRecentInteraction.collectAsState().value
+                                    if (interactionType == InteractionType.RemoteHumanInterfaceDevice) {
+                                        practiceModeComposerManager.PocketLowEnergyPracticeComposition()
+                                        return@Surface
                                     }
-                                    Mode.DeckChooser -> {
-                                        deckModeComposableManager.compose()
+                                }
+
+                                Column {
+                                    TopMenu(onPracticeMode = {
+                                        topModeFlowProvider.modeModel.value = Mode.Practice
+                                        // This initially leaves the recording or deleting state
+                                        practiceModeViewModel.practiceStateFlow.value =
+                                            PracticeMode.Practicing
+                                        currentNotePartManager.clearPending()
+                                        this@ComposeModeSetter.keepScreenOn.keepScreenOn()
+                                        this@ComposeModeSetter.switchMode(context = activity)
+                                    }, onDeckChooseMode = {
+                                        topModeFlowProvider.modeModel.value = Mode.DeckChooser
+                                        this@ComposeModeSetter.switchMode(context = activity)
+                                    }, topModeFlowProvider, focusedQueueStateModel)
+
+                                    when (mode) {
+                                        Mode.Practice -> {
+                                            practiceModeComposerManager.compose()
+                                        }
+
+                                        Mode.DeckChooser -> {
+                                            deckModeComposableManager.compose()
+                                        }
+
+                                        Mode.NewNote -> {
+                                            addNoteComposeManager.compose()
+                                        }
+
+                                        Mode.Backup -> {
+                                            backupModeComposeManager.compose()
+                                        }
+
+                                        else -> {}
                                     }
-                                    Mode.NewNote -> {
-                                        addNoteComposeManager.compose()
-                                    }
-                                    Mode.Backup -> {
-                                        backupModeComposeManager.compose()
-                                    }
-                                    else -> {}
                                 }
                             }
                         }

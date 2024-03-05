@@ -1,7 +1,10 @@
 package com.md.viewmodel
 
+import android.os.SystemClock
+import com.md.testing.TestingMode
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
 enum class InteractionType {
@@ -14,6 +17,24 @@ enum class InteractionType {
 }
 
 @ActivityScoped
-class InteractionModelFlowProvider @Inject constructor() {
-    val mostRecentInteraction = MutableStateFlow(InteractionType.TouchScreen)
+class InteractionModelFlowProvider @Inject constructor(private val testingMode: TestingMode,) {
+
+
+    val mostRecentInteraction = MutableStateFlow(
+
+
+        InteractionType.TouchScreen
+    )
+
+    private val _mostRecentPocketModeTapInstant = MutableStateFlow<Long>(0)
+
+    val mostRecentPocketModeTapInstant: StateFlow<Long> = _mostRecentPocketModeTapInstant
+
+    fun updateMostRecentPocketModeTap() {
+        _mostRecentPocketModeTapInstant.value = SystemClock.uptimeMillis()
+    }
+
+    fun clearMostRecentPocketModeTap() {
+        _mostRecentPocketModeTapInstant.value = 0
+    }
 }

@@ -2,20 +2,27 @@ package com.md.composeModes
 
 import android.content.Context
 import android.os.SystemClock
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -71,10 +78,12 @@ class PracticeModeViewModel @Inject constructor() {
     val practiceStateFlow = MutableStateFlow(PracticeMode.Practicing)
     val hasPlayedCurrentNotePartOrIgnoredAProceed = MutableStateFlow(false)
 
-    data class Metrics(val notesPracticed: Int,
-        val remainingInQueue: Int)
+    data class Metrics(
+        val notesPracticed: Int,
+        val remainingInQueue: Int
+    )
 
-    val metricsFlow = MutableStateFlow(Metrics(0,0))
+    val metricsFlow = MutableStateFlow(Metrics(0, 0))
 }
 
 @ActivityScoped
@@ -83,7 +92,7 @@ class PracticeModeComposerManager @Inject constructor(
     private val practiceModeViewModel: PracticeModeViewModel,
     private val stateModel: PracticeModeStateHandler,
     private val topModeProvider: TopModeFlowProvider,
-    val interactionProvider: InteractionModelFlowProvider,
+    private val interactionProvider: InteractionModelFlowProvider,
     val currentNotePartManager: CurrentNotePartManager,
     val focusedQueueStateModel: FocusedQueueStateModel,
     private val deckLoadManager: DeckLoadManager,
@@ -142,7 +151,6 @@ class PracticeModeComposerManager @Inject constructor(
     }
 
 
-
     @Composable
     fun PracticeModeComposable(
         onEnableRecordMode: () -> Unit = { },
@@ -152,8 +160,11 @@ class PracticeModeComposerManager @Inject constructor(
         practiceMode: PracticeMode,
         currentNotePartManager: CurrentNotePartManager
     ) {
+
+        val interactionType = interactionProvider.mostRecentInteraction.collectAsState().value
         val noteState = currentNotePartManager.noteStateFlow.collectAsState()
         val notePart = noteState.value?.notePart
+
 
         Column(
             verticalArrangement = Arrangement.Top,
@@ -165,6 +176,7 @@ class PracticeModeComposerManager @Inject constructor(
                 .fillMaxWidth()
                 .heightIn(min = 48.dp)
                 .padding(4.dp)
+
             // LARGE BUTTON.
             @Composable
             fun showRepState() {
@@ -201,7 +213,8 @@ class PracticeModeComposerManager @Inject constructor(
                         colors = ButtonStyles.MediumImportanceButtonColor()
                     ) {
                         showRepState()
-                        val isAnswer = currentNotePartManager.noteStateFlow.collectAsState().value?.notePart?.partIsAnswer
+                        val isAnswer =
+                            currentNotePartManager.noteStateFlow.collectAsState().value?.notePart?.partIsAnswer
                         Text(
                             text = if (isAnswer == true) "Answer" else "Question",
                             style = MaterialTheme.typography.headlineSmall
@@ -217,11 +230,12 @@ class PracticeModeComposerManager @Inject constructor(
                     var modifier = largeButtonModifier
                     AudioRecordForPart(modifier = modifier, notePart = notePart)
                 }
-                PracticeMode.Deleting ->  {
+
+                PracticeMode.Deleting -> {
                     MiddlePracticeButton(
                         largeButtonModifier,
                         {
-                          practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
+                            practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
                         },
                         colors = ButtonStyles.MediumImportanceButtonColor()
                     ) {
@@ -249,11 +263,13 @@ class PracticeModeComposerManager @Inject constructor(
                         OutlinedButton(modifier = bottomLeftButtonModifier,
                             colors = ButtonStyles.MediumImportanceButtonColor(),
                             onClick = {
-                                practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
+                                practiceModeViewModel.practiceStateFlow.value =
+                                    PracticeMode.Practicing
                             }) {
                             Text(text = "Exit delete mode")
                         }
                     }
+
                     PracticeMode.Recording -> {
                         UnlockRecordButton(
                             modifier = bottomLeftButtonModifier,
@@ -266,6 +282,7 @@ class PracticeModeComposerManager @Inject constructor(
                             modeDescription = "(Unlocked) - Double tap to disable",
                         )
                     }
+
                     PracticeMode.Practicing -> {
                         UnlockRecordButton(
                             modifier = bottomLeftButtonModifier,
@@ -282,17 +299,53 @@ class PracticeModeComposerManager @Inject constructor(
                             modifier = bottomRightButtonModifier,
                             onSaveTap = {
                                 currentNotePartManager.saveNewAudio()
-                                practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
+                                practiceModeViewModel.practiceStateFlow.value =
+                                    PracticeMode.Practicing
                             },
                             hasSavable = currentNotePartManager.hasSavable
                         )
                     }
+
                     PracticeMode.Deleting,
                     PracticeMode.Practicing -> {
                         DeleteButton(bottomRightButtonModifier, onDeleteTap, practiceMode)
                     }
                 }
             }
+        }
+    }
+
+    @Composable
+    internal fun PocketLowEnergyPracticeComposition() {
+        val mostRecentPocketModeTapInstant = interactionProvider.mostRecentPocketModeTapInstant.collectAsState()
+        val unlockUi: State<Boolean> = remember {
+            derivedStateOf {
+                ((mostRecentPocketModeTapInstant.value + 5_000) > SystemClock.uptimeMillis())
+            }
+        }
+        val interaction = interactionProvider.mostRecentPocketModeTapInstant.collectAsState()
+        if (unlockUi.value) {
+            NTapButton(
+                requiredTaps = 5,
+                onNTap = {
+                    interactionProvider.mostRecentInteraction.value = InteractionType.TouchScreen
+                }
+            ) {
+                Text(
+                    modifier = Modifier.minimumInteractiveComponentSize(),
+                    text = "5 quick taps to unlock",
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
+        } else {
+            Surface(color = MaterialTheme.colorScheme.background,
+                content = {
+                              // No content. The screen is black to save power.
+            }, modifier = Modifier
+                .fillMaxSize()
+                .clickable {
+                    interactionProvider.updateMostRecentPocketModeTap()
+                })
         }
     }
 
@@ -324,7 +377,7 @@ class PracticeModeComposerManager @Inject constructor(
                     style = MaterialTheme.typography.titleLarge
                 )
                 Text(
-                    text = if (mode == PracticeMode.Deleting) "Double tap for delete mode" else "Double tap to delete!" ,
+                    text = if (mode == PracticeMode.Deleting) "Double tap for delete mode" else "Double tap to delete!",
                     style = MaterialTheme.typography.labelSmall
                 )
             }

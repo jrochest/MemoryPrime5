@@ -50,6 +50,9 @@ class SpacedRepeaterActivity
     @Inject
     lateinit var deckLoadManager: Lazy<DeckLoadManager>
 
+    @Inject
+    lateinit var immersiveModelManager: Lazy<ImmersiveModeManager>
+
     @Inject lateinit var toneManager: Lazy<ToneManagerImpl>
 
     @Inject
@@ -89,6 +92,8 @@ class SpacedRepeaterActivity
         TtsSpeaker.setup(this.applicationContext)
 
         deckLoadManager.get()
+
+        immersiveModelManager.get()
 
         checkPermission()
     }
