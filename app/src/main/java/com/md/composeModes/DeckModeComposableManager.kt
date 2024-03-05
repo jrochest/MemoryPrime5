@@ -38,7 +38,7 @@ import com.md.modesetters.DeckInfo
 import com.md.modesetters.DeckLoadManager
 import com.md.provider.Deck
 import com.md.utils.ToastSingleton
-import com.md.viewmodel.TopModeViewModel
+import com.md.viewmodel.TopModeFlowProvider
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,7 +61,7 @@ class DeckModeComposableManager @Inject constructor(
     @ActivityContext val context: Context,
     private val deckLoadManager: DeckLoadManager,
     private val focusedQueueStateModel: FocusedQueueStateModel,
-    private val topModeViewModel: TopModeViewModel,
+    private val topModeFlowProvider: TopModeFlowProvider,
     private val deckModeStateModel: DeckModeStateModel,
 ) {
 
@@ -155,7 +155,7 @@ class DeckModeComposableManager @Inject constructor(
                         TextButton(onClick = {
                             focusedQueueStateModel.deck.value = deckInfo
                             CategorySingleton.getInstance().setDeckInfo(deckInfo)
-                            topModeViewModel.modeModel.value = Mode.Practice
+                            topModeFlowProvider.modeModel.value = Mode.Practice
                         }) {
                             Text(text = "Practice", style = MaterialTheme.typography.labelLarge)
                         }
@@ -163,7 +163,7 @@ class DeckModeComposableManager @Inject constructor(
                         TextButton(onClick = {
                             focusedQueueStateModel.deck.value = deckInfo
                             CategorySingleton.getInstance().setDeckInfo(deckInfo)
-                            topModeViewModel.modeModel.value = Mode.NewNote
+                            topModeFlowProvider.modeModel.value = Mode.NewNote
                         }) {
                             Text(
                                 text = "Add to deck",

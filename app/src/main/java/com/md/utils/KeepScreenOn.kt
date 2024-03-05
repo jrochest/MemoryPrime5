@@ -7,7 +7,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.md.SpacedRepeaterActivity
 import com.md.composeModes.Mode
-import com.md.viewmodel.TopModeViewModel
+import com.md.viewmodel.TopModeFlowProvider
 import com.md.modesetters.TtsSpeaker
 import dagger.hilt.android.qualifiers.ActivityContext
 
@@ -24,7 +24,7 @@ import javax.inject.Inject
 @ActivityScoped
 class KeepScreenOn @Inject constructor(
     @ActivityContext private val context: Context,
-    private val topModeViewModel: TopModeViewModel,
+    private val topModeFlowProvider: TopModeFlowProvider,
 ) {
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
@@ -38,7 +38,7 @@ class KeepScreenOn @Inject constructor(
     init {
         activity.lifecycleScope.launch {
             activity.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                topModeViewModel.modeModel.collect { mode ->
+                topModeFlowProvider.modeModel.collect { mode ->
                     val job = screenOnThenDelayThenIfNotCancelledOff
                     if (mode != Mode.Practice && job != null) {
                         job.cancel()
@@ -57,7 +57,7 @@ class KeepScreenOn @Inject constructor(
         screenOnThenDelayThenIfNotCancelledOff?.cancel()
         screenOnThenDelayThenIfNotCancelledOff = activity.lifecycleScope.launch {
             activity.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                if (topModeViewModel.modeModel.value != Mode.Practice) {
+                if (topModeFlowProvider.modeModel.value != Mode.Practice) {
                     return@repeatOnLifecycle
                 }
                 activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)

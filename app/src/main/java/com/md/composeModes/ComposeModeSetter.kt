@@ -23,7 +23,7 @@ import com.md.modesetters.ItemDeletedHandler
 import com.md.modesetters.ModeSetter
 import com.md.uiTheme.AppTheme
 import com.md.utils.KeepScreenOn
-import com.md.viewmodel.TopModeViewModel
+import com.md.viewmodel.TopModeFlowProvider
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import javax.inject.Inject
@@ -42,7 +42,7 @@ class ComposeModeSetter @Inject constructor(
     private val modeHandler: ModeHandler,
     private val practiceModeViewModel: PracticeModeViewModel,
     private val currentNotePartManager: CurrentNotePartManager,
-    private val topModeViewModel: TopModeViewModel,
+    private val topModeFlowProvider: TopModeFlowProvider,
     private val deckModeComposableManager: DeckModeComposableManager,
     private val addNoteComposeManager: AddNoteComposeManager,
     private val backupModeComposeManager: BackupModeComposeManager,
@@ -81,21 +81,21 @@ class ComposeModeSetter @Inject constructor(
                                     // is guided to a place where a deck can be added.
                                     Mode.DeckChooser
                                 } else {
-                                    topModeViewModel.modeModel.collectAsState().value
+                                    topModeFlowProvider.modeModel.collectAsState().value
                                 }
 
 
                                 TopMenu(onPracticeMode = {
-                                    topModeViewModel.modeModel.value = Mode.Practice
+                                    topModeFlowProvider.modeModel.value = Mode.Practice
                                     // This initially leaves the recording or deleting state
                                     practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
                                     currentNotePartManager.clearPending()
                                     this@ComposeModeSetter.keepScreenOn.keepScreenOn()
                                     this@ComposeModeSetter.switchMode(context = activity)
                                 }, onDeckChooseMode = {
-                                    topModeViewModel.modeModel.value = Mode.DeckChooser
+                                    topModeFlowProvider.modeModel.value = Mode.DeckChooser
                                     this@ComposeModeSetter.switchMode(context = activity)
-                                }, topModeViewModel, focusedQueueStateModel)
+                                }, topModeFlowProvider, focusedQueueStateModel)
 
 
 

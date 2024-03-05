@@ -13,7 +13,7 @@ import com.md.utils.ToastSingleton
 import com.md.workers.BackupPreferences.markAllStale
 import com.md.composeModes.CurrentNotePartManager
 import com.md.composeModes.Mode
-import com.md.viewmodel.TopModeViewModel
+import com.md.viewmodel.TopModeFlowProvider
 import com.md.composeModes.PracticeMode
 import com.md.composeModes.PracticeModeViewModel
 import dagger.hilt.android.qualifiers.ActivityContext
@@ -34,7 +34,7 @@ class PracticeModeStateHandler @Inject constructor(
     @ActivityContext val context: Context,
     private val focusedQueueStateModel: FocusedQueueStateModel,
     // TODOJNOW use theses.
-    private val model: TopModeViewModel,
+    private val model: TopModeFlowProvider,
     private val practiceModeViewModel: PracticeModeViewModel,
     private val deckLoadManager: DeckLoadManager,
     private val keepScreenOn: KeepScreenOn,

@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.lifecycleScope
 import com.md.SpacedRepeaterActivity
-import com.md.viewmodel.TopModeViewModel
+import com.md.viewmodel.TopModeFlowProvider
 import com.md.workers.IncrementalBackupManager
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
@@ -26,7 +26,7 @@ class BackupModeStateModel @Inject constructor() {
 @ActivityScoped
 class BackupModeComposeManager @Inject constructor(
     @ActivityContext val context: Context,
-    private val topModeViewModel: TopModeViewModel,
+    private val topModeFlowProvider: TopModeFlowProvider,
     private val backupModeStateModel: BackupModeStateModel
 
 ) {
@@ -36,7 +36,7 @@ class BackupModeComposeManager @Inject constructor(
 
     init {
         activity.lifecycleScope.launch {
-            topModeViewModel.modeModel.collect() { mode ->
+            topModeFlowProvider.modeModel.collect() { mode ->
                 if (mode == Mode.Backup && !backupModeStateModel.backupInProgress.value) {
                     backupModeStateModel.backupInProgress.value = true
                     IncrementalBackupManager.createAndWriteZipBackToPreviousLocation(

@@ -6,6 +6,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import javax.inject.Inject
 
 @ActivityScoped
-class TopModeViewModel @Inject constructor() {
+class TopModeFlowProvider @Inject constructor() {
     val modeModel = MutableStateFlow(Mode.Practice)
 }

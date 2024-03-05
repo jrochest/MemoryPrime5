@@ -35,16 +35,16 @@ import com.md.RestoreFromIncrementalDirectoryManager
 import com.md.composeStyles.ButtonStyles.ImportantButtonColor
 import com.md.composeStyles.ButtonStyles.MediumImportanceButtonColor
 import com.md.modesetters.SettingModeSetter
-import com.md.viewmodel.TopModeViewModel
+import com.md.viewmodel.TopModeFlowProvider
 
 @Composable
 fun TopMenu(
     onPracticeMode: () -> Unit,
     onDeckChooseMode: () -> Unit,
-    topModeViewModel: TopModeViewModel,
+    topModeFlowProvider: TopModeFlowProvider,
     focusedQueueStateModel: FocusedQueueStateModel,
     ) {
-    val mode = topModeViewModel.modeModel.collectAsState()
+    val mode = topModeFlowProvider.modeModel.collectAsState()
     var showMenu by remember { mutableStateOf(false) }
 
     @Composable
@@ -97,7 +97,7 @@ fun TopMenu(
             label = "Create\nnote",
             myMode = Mode.NewNote,
             onClick = {
-            topModeViewModel.modeModel.value = Mode.NewNote
+            topModeFlowProvider.modeModel.value = Mode.NewNote
         })
         MenuButton(
             myMode = Mode.Practice,
@@ -115,7 +115,7 @@ fun TopMenu(
             myMode = Mode.Backup,
             label = "Backup",
             onClick = {
-                topModeViewModel.modeModel.value = Mode.Backup
+                topModeFlowProvider.modeModel.value = Mode.Backup
         })
         MenuButton(
             label = "More",

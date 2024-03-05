@@ -28,7 +28,7 @@ import com.md.composeStyles.ButtonStyles
 import com.md.modesetters.DeckLoadManager
 import com.md.modesetters.TtsSpeaker
 import com.md.utils.KeepScreenOn
-import com.md.viewmodel.TopModeViewModel
+import com.md.viewmodel.TopModeFlowProvider
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -80,7 +80,7 @@ class PracticeModeComposerManager @Inject constructor(
     @ActivityContext val context: Context,
     val practiceModeViewModel: PracticeModeViewModel,
     val stateModel: PracticeModeStateHandler,
-    val model: TopModeViewModel,
+    val model: TopModeFlowProvider,
     val currentNotePartManager: CurrentNotePartManager,
     val focusedQueueStateModel: FocusedQueueStateModel,
     private val deckLoadManager: DeckLoadManager,

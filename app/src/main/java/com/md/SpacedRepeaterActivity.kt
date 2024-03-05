@@ -21,7 +21,7 @@ import com.md.workers.IncrementalBackupManager
 import com.md.workers.IncrementalBackupPreferences
 import com.md.composeModes.ComposeModeSetter
 import com.md.composeModes.Mode
-import com.md.viewmodel.TopModeViewModel
+import com.md.viewmodel.TopModeFlowProvider
 import com.md.utils.KeepScreenOn
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
@@ -51,7 +51,7 @@ class SpacedRepeaterActivity
     @Inject lateinit var toneManager: Lazy<ToneManagerImpl>
 
     @Inject
-    lateinit var model: TopModeViewModel
+    lateinit var model: TopModeFlowProvider
 
     @Inject
     lateinit var keepScreenOn: Lazy<KeepScreenOn>
