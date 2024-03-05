@@ -23,6 +23,8 @@ import com.md.composeModes.ComposeModeSetter
 import com.md.composeModes.Mode
 import com.md.viewmodel.TopModeFlowProvider
 import com.md.utils.KeepScreenOn
+import com.md.viewmodel.InteractionModelFlowProvider
+import com.md.viewmodel.InteractionType
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.scopes.ActivityScoped
@@ -51,7 +53,10 @@ class SpacedRepeaterActivity
     @Inject lateinit var toneManager: Lazy<ToneManagerImpl>
 
     @Inject
-    lateinit var model: TopModeFlowProvider
+    lateinit var topModeFlowProvider: TopModeFlowProvider
+
+    @Inject
+    lateinit var interactionProvider: InteractionModelFlowProvider
 
     @Inject
     lateinit var keepScreenOn: Lazy<KeepScreenOn>
@@ -256,9 +261,11 @@ class SpacedRepeaterActivity
         if (!isFromMemprimeDevice(keyCode, event)) {
             return super.onKeyDown(keyCode, event)
         }
-        model.modeModel.value = Mode.Practice
+        topModeFlowProvider.modeModel.value = Mode.Practice
 
         val eventTimeMs = event.eventTime
+
+        interactionProvider.mostRecentInteraction.value = InteractionType.RemoteHumanInterfaceDevice
 
         keepScreenOn.get().keepScreenOn(updatedDimScreenAfterBriefDelay = true)
 

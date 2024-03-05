@@ -28,6 +28,8 @@ import com.md.composeStyles.ButtonStyles
 import com.md.modesetters.DeckLoadManager
 import com.md.modesetters.TtsSpeaker
 import com.md.utils.KeepScreenOn
+import com.md.viewmodel.InteractionModelFlowProvider
+import com.md.viewmodel.InteractionType
 import com.md.viewmodel.TopModeFlowProvider
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
@@ -78,9 +80,10 @@ class PracticeModeViewModel @Inject constructor() {
 @ActivityScoped
 class PracticeModeComposerManager @Inject constructor(
     @ActivityContext val context: Context,
-    val practiceModeViewModel: PracticeModeViewModel,
-    val stateModel: PracticeModeStateHandler,
-    val model: TopModeFlowProvider,
+    private val practiceModeViewModel: PracticeModeViewModel,
+    private val stateModel: PracticeModeStateHandler,
+    private val topModeProvider: TopModeFlowProvider,
+    val interactionProvider: InteractionModelFlowProvider,
     val currentNotePartManager: CurrentNotePartManager,
     val focusedQueueStateModel: FocusedQueueStateModel,
     private val deckLoadManager: DeckLoadManager,
@@ -93,7 +96,7 @@ class PracticeModeComposerManager @Inject constructor(
 
     init {
         activity.lifecycleScope.launch {
-            model.modeModel.collect { mode ->
+            topModeProvider.modeModel.collect { mode ->
                 if (mode == Mode.Practice) {
                     stateModel.onSwitchToMode()
                 }
@@ -106,6 +109,7 @@ class PracticeModeComposerManager @Inject constructor(
         PracticeModeComposable(
             onEnableRecordMode = {
                 activity.lifecycleScope.launch {
+                    interactionProvider.mostRecentInteraction.value = InteractionType.TouchScreen
                     keepScreenOn.keepScreenOn()
                     activity.lowVolumeClickTone()
                     practiceModeViewModel.practiceStateFlow.value = PracticeMode.Recording
@@ -113,16 +117,19 @@ class PracticeModeComposerManager @Inject constructor(
             },
             onDisabledRecordMode = {
                 activity.lifecycleScope.launch {
+                    interactionProvider.mostRecentInteraction.value = InteractionType.TouchScreen
                     keepScreenOn.keepScreenOn()
                     activity.lowVolumeClickTone()
                     practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
                 }
             },
             onDeleteTap = {
+                interactionProvider.mostRecentInteraction.value = InteractionType.TouchScreen
                 keepScreenOn.keepScreenOn()
                 stateModel.deleteNote()
             },
             onMiddleButtonTapInPracticeMode = {
+                interactionProvider.mostRecentInteraction.value = InteractionType.TouchScreen
                 activity.handleRhythmUiTaps(
                     SystemClock.uptimeMillis(),
                     SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN
@@ -298,6 +305,7 @@ class PracticeModeComposerManager @Inject constructor(
         NTapButton(
             modifier = bottomRightButtonModifier,
             onNTap = {
+                interactionProvider.mostRecentInteraction.value = InteractionType.TouchScreen
                 if (mode == PracticeMode.Deleting) {
                     TtsSpeaker.speak("Deleted", lowVolume = true)
                     onDeleteTap()
