@@ -28,6 +28,7 @@ import com.md.composeStyles.ButtonStyles
 import com.md.modesetters.DeckLoadManager
 import com.md.modesetters.TtsSpeaker
 import com.md.utils.KeepScreenOn
+import com.md.viewmodel.TopModeViewModel
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.flow.MutableStateFlow

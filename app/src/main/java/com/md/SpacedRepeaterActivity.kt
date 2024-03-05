@@ -21,7 +21,7 @@ import com.md.workers.IncrementalBackupManager
 import com.md.workers.IncrementalBackupPreferences
 import com.md.composeModes.ComposeModeSetter
 import com.md.composeModes.Mode
-import com.md.composeModes.TopModeViewModel
+import com.md.viewmodel.TopModeViewModel
 import com.md.utils.KeepScreenOn
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint

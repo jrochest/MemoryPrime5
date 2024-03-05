@@ -13,7 +13,7 @@ import com.md.utils.ToastSingleton
 import com.md.workers.BackupPreferences.markAllStale
 import com.md.composeModes.CurrentNotePartManager
 import com.md.composeModes.Mode
-import com.md.composeModes.TopModeViewModel
+import com.md.viewmodel.TopModeViewModel
 import com.md.composeModes.PracticeMode
 import com.md.composeModes.PracticeModeViewModel
 import dagger.hilt.android.qualifiers.ActivityContext

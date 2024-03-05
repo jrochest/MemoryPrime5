@@ -7,7 +7,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.md.SpacedRepeaterActivity
 import com.md.composeModes.Mode
-import com.md.composeModes.TopModeViewModel
+import com.md.viewmodel.TopModeViewModel
 import com.md.modesetters.TtsSpeaker
 import dagger.hilt.android.qualifiers.ActivityContext
 

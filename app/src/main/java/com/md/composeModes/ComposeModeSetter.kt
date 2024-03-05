@@ -23,9 +23,9 @@ import com.md.modesetters.ItemDeletedHandler
 import com.md.modesetters.ModeSetter
 import com.md.uiTheme.AppTheme
 import com.md.utils.KeepScreenOn
+import com.md.viewmodel.TopModeViewModel
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
-import kotlinx.coroutines.flow.MutableStateFlow
 import javax.inject.Inject
 
 enum class Mode {
@@ -34,11 +34,6 @@ enum class Mode {
     DeckChooser,
     Settings,
     Backup
-}
-
-@ActivityScoped
-class TopModeViewModel @Inject constructor() {
-    val modeModel = MutableStateFlow(Mode.Practice)
 }
 
 @ActivityScoped
