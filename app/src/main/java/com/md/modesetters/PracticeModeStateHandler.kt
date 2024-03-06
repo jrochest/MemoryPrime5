@@ -8,7 +8,6 @@ import com.md.*
 import com.md.RevisionQueue.Companion.currentDeckReviewQueueDeleteThisTODO
 import com.md.provider.AbstractRep
 import com.md.provider.Note
-import com.md.utils.KeepScreenOn
 import com.md.utils.ToastSingleton
 import com.md.workers.BackupPreferences.markAllStale
 import com.md.composeModes.CurrentNotePartManager
@@ -33,11 +32,9 @@ class PracticeModeStateHandler @Inject constructor(
     val currentNotePartManager: CurrentNotePartManager,
     @ActivityContext val context: Context,
     private val focusedQueueStateModel: FocusedQueueStateModel,
-    // TODOJNOW use theses.
     private val model: TopModeFlowProvider,
     private val practiceModeViewModel: PracticeModeViewModel,
     private val deckLoadManager: DeckLoadManager,
-    private val keepScreenOn: KeepScreenOn,
 ) {
     val activity: SpacedRepeaterActivity = context as SpacedRepeaterActivity
 

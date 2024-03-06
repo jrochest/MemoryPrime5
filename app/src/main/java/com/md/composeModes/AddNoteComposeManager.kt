@@ -242,67 +242,6 @@ fun SaveButtonForPendingNotePartRecording(
     }
 }
 
-// TODOJNOW delete
-@Composable
-fun AudioRecordButton(
-    modifier: Modifier,
-    notePart: NotePart,
-    hasSavable: MutableState<Boolean>,
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    if (isPressed) {
-        if (notePart.pendingRecorder == null) {
-            notePart.pendingRecorder = AudioRecorder().apply { start() }
-        }
-        DisposableEffect(Unit) {
-            onDispose {
-                fun handleFailedPendingRecording() {
-                    val recorder = checkNotNull(notePart.pendingRecorder)
-                    notePart.pendingRecorder = null
-                    recorder.deleteFile()
-                }
-
-                val pendingRecorder = notePart.pendingRecorder
-                if (pendingRecorder != null) {
-                    try {
-                        pendingRecorder.stop()
-                        if (pendingRecorder.isRecorded) {
-                            val oldRecording = notePart.savableRecorder
-                            if (oldRecording != null) {
-                                oldRecording.stop()
-                                oldRecording.deleteFile()
-                            }
-                            notePart.savableRecorder = pendingRecorder
-                        } else {
-                            TtsSpeaker.speak("Recording failed")
-                            handleFailedPendingRecording()
-                        }
-                        notePart.pendingRecorder = null
-                    } catch (e: RecordingTooSmallException) {
-                        TtsSpeaker.speak("Recording too short")
-                        handleFailedPendingRecording()
-                    }
-                }
-            }
-        }
-    }
-    OutlinedButton(
-        modifier = modifier,
-        interactionSource = interactionSource,
-        onClick = {},
-        colors = if (hasSavable.value) MediumImportanceButtonColor() else ImportantButtonColor()
-    ) {
-        RecorderButtonText(
-            text = if (isPressed) {
-                "Recording ${notePart.name}"
-            } else {
-                "Record ${notePart.name} "
-            }
-        )
-    }
-}
-
 
 @Composable
 fun RecorderButtonText(text: String) {
