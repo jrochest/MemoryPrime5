@@ -317,7 +317,8 @@ class PracticeModeComposerManager @Inject constructor(
 
     @Composable
     internal fun PocketLowEnergyPracticeComposition() {
-        val mostRecentPocketModeTapInstant = interactionProvider.mostRecentPocketModeTapInstant.collectAsState()
+        val mostRecentPocketModeTapInstant =
+            interactionProvider.mostRecentPocketModeTapInstant.collectAsState()
         val unlockUi: State<Boolean> = remember {
             derivedStateOf {
                 ((mostRecentPocketModeTapInstant.value + 5_000) > SystemClock.uptimeMillis())
@@ -340,12 +341,14 @@ class PracticeModeComposerManager @Inject constructor(
         } else {
             Surface(color = MaterialTheme.colorScheme.background,
                 content = {
-                              // No content. The screen is black to save power.
-            }, modifier = Modifier
-                .fillMaxSize()
-                .clickable {
-                    interactionProvider.updateMostRecentPocketModeTap()
-                })
+                    // No content. The screen is black to save power.
+                }, modifier = Modifier
+                    .fillMaxSize()
+                    .clickable {
+
+                        keepScreenOn.keepScreenOn(updatedDimScreenAfterBriefDelay = true)
+                        interactionProvider.updateMostRecentPocketModeTap()
+                    })
         }
     }
 

@@ -20,6 +20,8 @@ import java.time.Duration
 
 import javax.inject.Inject
 
+// TODO: perhaps i don't need this or can make it less extreme in dimming
+// because pocket mode exists.
 // Keywords: Keep awake keep alive. Screen wake. Keywords.. we did it?
 @ActivityScoped
 class KeepScreenOn @Inject constructor(
@@ -43,7 +45,10 @@ class KeepScreenOn @Inject constructor(
                     if (mode != Mode.Practice && job != null) {
                         job.cancel()
                         screenOnThenDelayThenIfNotCancelledOff = null
-                        restoreInitialBrightness()
+                        if (ENABLE_BRIGHTNESS_CONTROL) {
+                            restoreInitialBrightness()
+                        }
+
                         // Avoid: BT press -> different top level mode -> Practice -> Dim
                         dimScreenAfterBriefDelayMode = false
                     }
@@ -61,17 +66,22 @@ class KeepScreenOn @Inject constructor(
                     return@repeatOnLifecycle
                 }
                 activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                restoreInitialBrightness()
-
-                if (dimScreenAfterBriefDelayMode) {
-                    delay(DURATION_UNTIL_DARK.toMillis())
-                    activity.window.attributes = activity.window.attributes.also {
-                        it.screenBrightness = 0f
+                if (ENABLE_BRIGHTNESS_CONTROL) {
+                    restoreInitialBrightness()
+                    if (dimScreenAfterBriefDelayMode) {
+                        delay(DURATION_UNTIL_DARK.toMillis())
+                        activity.window.attributes = activity.window.attributes.also {
+                            it.screenBrightness = 0f
+                        }
                     }
                 }
 
+
                 delay(DURATION_UNTIL_WARNING.toMillis())
-                TtsSpeaker.speak("screen off in ${DURATION_AFTER_WARNING_TO_SCREEN_OFF.seconds} seconds", lowVolume = false)
+                TtsSpeaker.speak(
+                    "screen off in ${DURATION_AFTER_WARNING_TO_SCREEN_OFF.seconds} seconds",
+                    lowVolume = false
+                )
                 delay(DURATION_AFTER_WARNING_TO_SCREEN_OFF.toMillis())
                 activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                 cancel()
@@ -80,17 +90,20 @@ class KeepScreenOn @Inject constructor(
     }
 
     private fun restoreInitialBrightness() {
-        activity.window.attributes = activity.window.attributes.also {
-            val brightness = initialBrightness
-            if (brightness == null) {
-                initialBrightness = it.screenBrightness
-            } else {
-                it.screenBrightness = brightness
+        if (ENABLE_BRIGHTNESS_CONTROL) {
+            activity.window.attributes = activity.window.attributes.also {
+                val brightness = initialBrightness
+                if (brightness == null) {
+                    initialBrightness = it.screenBrightness
+                } else {
+                    it.screenBrightness = brightness
+                }
             }
         }
     }
 
     companion object {
+        private const val ENABLE_BRIGHTNESS_CONTROL = false
         private val DURATION_UNTIL_DARK = Duration.ofSeconds(3)
         private val DURATION_UNTIL_WARNING = Duration.ofSeconds(60)
         private val DURATION_AFTER_WARNING_TO_SCREEN_OFF = Duration.ofSeconds(30)

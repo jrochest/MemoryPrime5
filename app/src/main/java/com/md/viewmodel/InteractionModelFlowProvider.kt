@@ -21,8 +21,6 @@ class InteractionModelFlowProvider @Inject constructor(private val testingMode: 
 
 
     val mostRecentInteraction = MutableStateFlow(
-
-
         InteractionType.TouchScreen
     )
 
