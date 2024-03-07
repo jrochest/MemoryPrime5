@@ -6,6 +6,7 @@ import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -18,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.md.ModeHandler
 import com.md.FocusedQueueStateModel
@@ -85,7 +87,9 @@ class ComposeModeSetter @Inject constructor(
                                         InteractionType.RemoteHumanInterfaceDevice
                                     interactionProvider.clearMostRecentPocketModeTap()
                                 }) {
-                                    Text(text = "Fake BT button ")
+                                    Text(textAlign = TextAlign.Center,
+                                        text = "Fake BT button for testing",
+                                        modifier = Modifier.fillMaxWidth())
                                 }
                             }
                             // TODOJ delete
