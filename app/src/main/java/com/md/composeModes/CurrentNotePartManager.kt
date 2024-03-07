@@ -31,7 +31,11 @@ class CurrentNotePartManager @Inject constructor(
     val hasNote = MutableStateFlow(false)
     // Perhaps delete?
     val hasSavable = mutableStateOf(false)
-     init {
+    init {
+        transitionToDeckStagingMode()
+    }
+
+    fun transitionToDeckStagingMode() {
         changeCurrentNotePart(null, null)
     }
 

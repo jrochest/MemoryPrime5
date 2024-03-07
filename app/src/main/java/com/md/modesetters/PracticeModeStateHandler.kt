@@ -86,6 +86,8 @@ class PracticeModeStateHandler @Inject constructor(
                             while (!activity.isAtLeastResumed()) {
                                 delay(1000)
                             }
+                            val noteState = currentNotePartManager.noteStateFlow.value ?: return@launch
+
                             val part = noteState.notePart
                             val note = checkNotNull(noteState.currentNote)
                             if (part.partIsAnswer) {

@@ -20,6 +20,7 @@ import com.md.workers.BackupToUsbManager.createAndWriteZipBackToNewLocation
 import com.md.workers.IncrementalBackupManager
 import com.md.workers.IncrementalBackupPreferences
 import com.md.composeModes.ComposeModeSetter
+import com.md.composeModes.CurrentNotePartManager
 import com.md.composeModes.Mode
 import com.md.eventHandler.RemoteInputDeviceClickHandler
 import com.md.viewmodel.TopModeFlowProvider
@@ -68,6 +69,9 @@ class SpacedRepeaterActivity
     @Inject
     lateinit var keepScreenOn: Lazy<KeepScreenOn>
 
+    @Inject
+    lateinit var currentNotePartManager: Lazy<CurrentNotePartManager>
+
     /** Called when the activity is first created.  */
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -104,12 +108,13 @@ class SpacedRepeaterActivity
 
     public override fun onResume() {
         super.onResume()
-
+        currentNotePartManager.get().transitionToDeckStagingMode()
         playbackServiceOnResume()
         val modeBackStack = modeHandler.get()
         val modeSetter = modeBackStack.whoseOnTop() ?: return
         // Take back media session focus if we lost it.
         modeSetter.handleReplay()
+
     }
 
     // Function to check and request permission.
