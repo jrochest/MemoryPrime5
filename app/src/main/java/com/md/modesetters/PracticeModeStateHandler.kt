@@ -122,7 +122,6 @@ class PracticeModeStateHandler @Inject constructor(
             }
         }
 
-
         activity.lifecycleScope.launch {
             focusedQueueStateModel.deck.collect {
                 val deck = it ?: return@collect
