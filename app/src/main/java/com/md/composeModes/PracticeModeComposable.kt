@@ -25,6 +25,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.md.FocusedQueueStateModel
@@ -332,9 +333,10 @@ class PracticeModeComposerManager @Inject constructor(
                 }
             ) {
                 Text(
-                    modifier = Modifier.minimumInteractiveComponentSize(),
+                    modifier = Modifier.fillMaxHeight(fraction = .3f).fillMaxWidth(),
                     text = "5 quick taps to unlock",
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleLarge,
+                    textAlign = TextAlign.Center,
                 )
             }
         } else {

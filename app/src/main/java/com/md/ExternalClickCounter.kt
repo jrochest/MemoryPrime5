@@ -29,7 +29,7 @@ class ExternalClickCounter
     var mPressGroupLastPressMs: Long = 0
     var mPressGroupLastPressEventMs: Long = 0
     var mPressGroupCount: Int = 0
-    var mPressSequenceNumber: Int = 0
+    var deleteMode = false
 
     var currentJob: Job? = null
 
@@ -146,30 +146,47 @@ class ExternalClickCounter
                 1 -> {
                     message = null
                     handler.proceed()
+                    deleteMode = false
                 }
                 // This takes a different action based on whether it is a question or answer.
                 2 -> {
                    handler.secondaryAction()
                     // Let the secondary action handle the appropriate speech
                     message = null
+                    deleteMode = false
                 }
                 3, 4 -> {
                     message = "undo"
                     handler.undo()
+                    deleteMode = false
                 }
                 5 -> {
                     handler.postponeNote(true)
                     message = "$mPressGroupCount postpone"
+                    deleteMode = false
                 }
                 6  -> {
                     handler.postponeNote(shouldQueue = false)
                     message = "$mPressGroupCount postpone without requeue"
+                    deleteMode = false
+                }
+                7  -> {
+                    if (deleteMode) {
+                        handler.deleteNote()
+                        message = "Delete"
+                        deleteMode = false
+                    } else {
+                        deleteMode = true
+                        message = "Delete mode"
+                    }
                 }
                 9, 10 -> {
                     AudioPlayer.instance.pause()
                     message = "repeat off"
+                    deleteMode = false
                 }
                 else -> {
+                    deleteMode = false
                     message = "unrecognized count"
                 }
             }
