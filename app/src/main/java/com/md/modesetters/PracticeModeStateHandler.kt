@@ -32,7 +32,7 @@ class PracticeModeStateHandler @Inject constructor(
     val currentNotePartManager: CurrentNotePartManager,
     @ActivityContext val context: Context,
     private val focusedQueueStateModel: FocusedQueueStateModel,
-    private val model: TopModeFlowProvider,
+    private val modeFlowProvider: TopModeFlowProvider,
     private val practiceModeViewModel: PracticeModeViewModel,
     private val deckLoadManager: DeckLoadManager,
 ) {
@@ -52,7 +52,7 @@ class PracticeModeStateHandler @Inject constructor(
         activity.lifecycleScope.launch {
             activity.repeatOnLifecycle(Lifecycle.State.RESUMED) {
                 combine(
-                    flow = model.modeModel,
+                    flow = modeFlowProvider.modeModel,
                     flow2 = practiceModeViewModel.practiceStateFlow,
                     flow3 = focusedQueueStateModel.deck,
                     flow4 = currentNotePartManager.noteStateFlow
