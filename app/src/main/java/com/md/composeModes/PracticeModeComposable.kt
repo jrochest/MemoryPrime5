@@ -324,7 +324,6 @@ class PracticeModeComposerManager @Inject constructor(
                 ((mostRecentPocketModeTapInstant.value + 5_000) > SystemClock.uptimeMillis())
             }
         }
-        val interaction = interactionProvider.mostRecentPocketModeTapInstant.collectAsState()
         if (unlockUi.value) {
             NTapButton(
                 requiredTaps = 5,
@@ -345,7 +344,6 @@ class PracticeModeComposerManager @Inject constructor(
                 }, modifier = Modifier
                     .fillMaxSize()
                     .clickable {
-
                         keepScreenOn.keepScreenOn(updatedDimScreenAfterBriefDelay = true)
                         interactionProvider.updateMostRecentPocketModeTap()
                     })
