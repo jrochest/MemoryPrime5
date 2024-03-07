@@ -21,6 +21,7 @@ import com.md.workers.IncrementalBackupManager
 import com.md.workers.IncrementalBackupPreferences
 import com.md.composeModes.ComposeModeSetter
 import com.md.composeModes.Mode
+import com.md.eventHandler.RemoteInputDeviceClickHandler
 import com.md.viewmodel.TopModeFlowProvider
 import com.md.utils.KeepScreenOn
 import com.md.viewmodel.InteractionModelFlowProvider
@@ -60,6 +61,9 @@ class SpacedRepeaterActivity
 
     @Inject
     lateinit var interactionProvider: InteractionModelFlowProvider
+
+    @Inject
+    lateinit var remoteInputDeviceClickHandler: Lazy<RemoteInputDeviceClickHandler>
 
     @Inject
     lateinit var keepScreenOn: Lazy<KeepScreenOn>
@@ -266,15 +270,7 @@ class SpacedRepeaterActivity
         if (!isFromMemprimeDevice(keyCode, event)) {
             return super.onKeyDown(keyCode, event)
         }
-        topModeFlowProvider.modeModel.value = Mode.Practice
-
-        val eventTimeMs = event.eventTime
-
-        interactionProvider.mostRecentInteraction.value = InteractionType.RemoteHumanInterfaceDevice
-
-        keepScreenOn.get().keepScreenOn(updatedDimScreenAfterBriefDelay = true)
-
-        return externalClickCounter.get().handleRhythmUiTaps(eventTimeMs, PRESS_GROUP_MAX_GAP_MS_BLUETOOTH, 1)
+        return remoteInputDeviceClickHandler.get().onClick(event.eventTime)
     }
 
     fun maybeChangeAudioFocus(shouldHaveFocus: Boolean) {

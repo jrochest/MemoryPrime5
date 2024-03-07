@@ -3,6 +3,7 @@ package com.md.composeModes
 import android.app.Activity
 import android.content.Context
 import android.os.Build
+import android.os.SystemClock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.md.ModeHandler
 import com.md.FocusedQueueStateModel
 import com.md.SpacedRepeaterActivity
+import com.md.eventHandler.RemoteInputDeviceClickHandler
 import com.md.modesetters.DeckLoadManager
 import com.md.modesetters.ItemDeletedHandler
 import com.md.modesetters.ModeSetter
@@ -61,6 +63,7 @@ class ComposeModeSetter @Inject constructor(
     private val keepScreenOn: KeepScreenOn,
     private val interactionProvider: InteractionModelFlowProvider,
     private val testingMode: TestingMode,
+    private val remoteInputDeviceClickHandler: RemoteInputDeviceClickHandler
 ) : ModeSetter(), ItemDeletedHandler {
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
@@ -83,9 +86,7 @@ class ComposeModeSetter @Inject constructor(
                             // This is for testing easily on userdebug devices.
                             if (testingMode.isTestDevice) {
                                 Button(onClick = {
-                                    interactionProvider.mostRecentInteraction.value =
-                                        InteractionType.RemoteHumanInterfaceDevice
-                                    interactionProvider.clearMostRecentPocketModeTap()
+                                    remoteInputDeviceClickHandler.onClick(SystemClock.uptimeMillis())
                                 }) {
                                     Text(textAlign = TextAlign.Center,
                                         text = "Fake BT button for testing",
