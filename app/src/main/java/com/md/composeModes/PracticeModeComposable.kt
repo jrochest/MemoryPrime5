@@ -162,7 +162,6 @@ class PracticeModeComposerManager @Inject constructor(
         currentNotePartManager: CurrentNotePartManager
     ) {
 
-        val interactionType = interactionProvider.mostRecentInteraction.collectAsState().value
         val noteState = currentNotePartManager.noteStateFlow.collectAsState()
         val notePart = noteState.value?.notePart
 
