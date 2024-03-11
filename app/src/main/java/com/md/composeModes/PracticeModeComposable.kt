@@ -2,8 +2,11 @@ package com.md.composeModes
 
 import android.content.Context
 import android.os.SystemClock
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -19,12 +22,17 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
@@ -41,6 +49,7 @@ import com.md.viewmodel.InteractionType
 import com.md.viewmodel.TopModeFlowProvider
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -100,6 +109,7 @@ class PracticeModeComposerManager @Inject constructor(
     private val keepScreenOn: KeepScreenOn,
 ) {
 
+    private var lastNotePracticedValue: Int? = null
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
     }
@@ -332,15 +342,33 @@ class PracticeModeComposerManager @Inject constructor(
                 }
             ) {
                 Text(
-                    modifier = Modifier.fillMaxHeight(fraction = .3f).fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxHeight(fraction = .3f)
+                        .fillMaxWidth(),
                     text = "5 quick taps to unlock",
                     style = MaterialTheme.typography.titleLarge,
                     textAlign = TextAlign.Center,
                 )
             }
         } else {
+
+
             Surface(color = MaterialTheme.colorScheme.background,
                 content = {
+                    // Temporarily show reps upon updated value.
+                    val metrics = practiceModeViewModel.metricsFlow.collectAsState()
+                    var showing by remember { mutableStateOf(true) }
+                    LaunchedEffect(key1 = metrics.value.notesPracticed){
+                        showing = true
+                        delay(1000)
+                        showing = false
+                    }
+                    val alpha: Float by animateFloatAsState(if (showing) 1f else 0f, label = "Fade out reps performed to save power")
+                    Text(text = "${metrics.value.notesPracticed}",
+                        style = MaterialTheme.typography.displayLarge,
+                        modifier = Modifier.fillMaxSize().graphicsLayer(alpha = alpha),
+                        textAlign = TextAlign.Center
+                    )
                     // No content. The screen is black to save power.
                 }, modifier = Modifier
                     .fillMaxSize()
