@@ -61,9 +61,7 @@ class ImmersiveModeManager @Inject constructor(
                             WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
                         )
                     }
-                }.collect {
-
-                }
+                }.collect {}
             }
         }
     }
