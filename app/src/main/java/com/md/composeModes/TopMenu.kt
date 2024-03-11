@@ -57,7 +57,7 @@ fun TopMenu(
         myMode: Mode?,
         onClick: () -> Unit,
         label: String? = null,
-        sentContent: @Composable() (() -> Unit) = {},
+        sentContent: @Composable (() -> Unit) = {},
     ) {
         OutlinedButton(
             modifier = Modifier.widthIn(max = (LocalConfiguration.current.screenWidthDp / 5).dp)
