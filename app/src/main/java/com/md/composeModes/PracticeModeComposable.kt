@@ -381,12 +381,12 @@ class PracticeModeComposerManager @Inject constructor(
 
     @Composable
     private fun DeleteButton(
-        bottomRightButtonModifier: Modifier,
+        modifier: Modifier,
         onDeleteTap: () -> Unit,
         mode: PracticeMode
     ) {
         NTapButton(
-            modifier = bottomRightButtonModifier,
+            modifier = modifier,
             onNTap = {
                 interactionProvider.mostRecentInteraction.value = InteractionType.TouchScreen
                 if (mode == PracticeMode.Deleting) {
