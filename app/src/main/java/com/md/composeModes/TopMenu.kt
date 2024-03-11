@@ -3,11 +3,15 @@ package com.md.composeModes
 import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreHoriz
@@ -25,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -55,27 +60,28 @@ fun TopMenu(
         sentContent: @Composable() (() -> Unit) = {},
     ) {
         OutlinedButton(
-            modifier = Modifier
+            modifier = Modifier.widthIn(max = (LocalConfiguration.current.screenWidthDp / 5).dp)
                 .heightIn(min = 120.dp)
-                .widthIn(max = 100.dp)
-                .semantics {
+                .padding(start=1.dp, end = 1.dp).semantics {
                     this.contentDescription = label ?: "overflow"
-                },
+                }.defaultMinSize(minHeight = 2.dp, minWidth = 2.dp),
             colors = if (myMode != null && myMode == mode.value) {
                 ImportantButtonColor()
             } else {
                 MediumImportanceButtonColor()
                     },
+            contentPadding = PaddingValues(0.dp),
             onClick = onClick,
             content = {
                 if (label != null) {
-                    Column(modifier = Modifier.align(alignment = Alignment.Top),
+                    Column(modifier = Modifier.align(alignment = Alignment.Top).fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Top) {
                         // Show the first letter with large text size.
+                        Spacer(modifier = Modifier.height(10.dp))
                         Text(
                             text = label.substring(startIndex = 0, endIndex = 1),
                             style = MaterialTheme.typography.headlineMedium)
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(text = label,
                             textAlign = TextAlign.Center,
                             style = MaterialTheme.typography.labelLarge)
@@ -90,7 +96,7 @@ fun TopMenu(
 
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly
+        horizontalArrangement = Arrangement.SpaceEvenly,
     ) {
         val activity = LocalContext.current as Activity
         MenuButton(
@@ -149,9 +155,12 @@ fun TopMenu(
             }
         }
     }
-    val deck = focusedQueueStateModel.deck.collectAsState()
-    Text(
-        text = "Deck:" + deck.value?.name,
-        style = MaterialTheme.typography.headlineSmall
-    )
+    val deck = focusedQueueStateModel.deck.collectAsState().value
+    if (deck != null) {
+        Text(
+            text = "Deck: " + deck.name,
+            style = MaterialTheme.typography.headlineSmall
+        )
+    }
+
 }
