@@ -311,7 +311,7 @@ class SpacedRepeaterActivity
         private const val LOG_TAG = "SpacedRepeater"
         const val PRESS_GROUP_MAX_GAP_MS_BLUETOOTH = 700L
         const val PRESS_GROUP_MAX_GAP_MS_INSTANT = 2L
-        const val PRESS_GROUP_MAX_GAP_MS_SCREEN = 400L
+        const val PRESS_GROUP_MAX_GAP_MS_SCREEN = 600L
 
 
         const val REQUEST_CODE_MIC_PERMISSION = 11235
