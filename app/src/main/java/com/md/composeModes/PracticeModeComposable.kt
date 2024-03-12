@@ -3,10 +3,8 @@ package com.md.composeModes
 import android.content.Context
 import android.os.SystemClock
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -20,7 +18,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -48,7 +45,6 @@ import com.md.utils.KeepScreenOn
 import com.md.viewmodel.InteractionModelFlowProvider
 import com.md.viewmodel.InteractionType
 import com.md.viewmodel.TopModeFlowProvider
-import dagger.Lazy
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.delay
@@ -156,8 +152,7 @@ class PracticeModeComposerManager @Inject constructor(
                 keepScreenOn.keepScreenOn()
                 externalClickCounter.handleRhythmUiTaps(
                     SystemClock.uptimeMillis(),
-                    SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN,
-                    tapCount = 1
+                    SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN
                 )
             },
             practiceMode = practiceModeViewModel.practiceStateFlow.collectAsState().value,

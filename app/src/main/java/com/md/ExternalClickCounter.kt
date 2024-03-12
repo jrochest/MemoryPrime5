@@ -3,8 +3,6 @@ package com.md
 import android.content.Context
 import android.os.SystemClock
 import androidx.lifecycle.lifecycleScope
-import com.md.modesetters.MoveManager
-import com.md.modesetters.ModeSetter
 import com.md.modesetters.PracticeModeStateHandler
 import com.md.modesetters.TtsSpeaker
 import dagger.hilt.android.qualifiers.ActivityContext
@@ -34,7 +32,8 @@ class ExternalClickCounter
     var currentJob: Job? = null
 
 
-    fun handleRhythmUiTaps(eventTimeMs: Long, pressGroupMaxGapMs: Long, tapCount: Int): Boolean {
+    fun handleRhythmUiTaps(eventTimeMs: Long, pressGroupMaxGapMs: Long): Boolean {
+        val tapCount = 1
         val handler = practiceModeHandler
         currentJob?.cancel()
         currentJob = null

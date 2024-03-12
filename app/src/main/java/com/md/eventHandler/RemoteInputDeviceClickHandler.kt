@@ -22,8 +22,10 @@ class RemoteInputDeviceClickHandler @Inject constructor(
         interactionProvider.mostRecentInteraction.value = InteractionType.RemoteHumanInterfaceDevice
         interactionProvider.clearMostRecentPocketModeTap()
         keepScreenOn.get().keepScreenOn(updatedDimScreenAfterBriefDelay = true)
-        return externalClickCounter.get().handleRhythmUiTaps(eventTimeMs,
-            SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_BLUETOOTH, 1)
+        return externalClickCounter.get().handleRhythmUiTaps(
+            eventTimeMs,
+            SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_BLUETOOTH
+        )
     }
 
 }
