@@ -364,12 +364,6 @@ class SpacedRepeaterActivity
         if (requestCode == RestoreFromIncrementalDirectoryManager.REQUEST_CODE && RestoreFromIncrementalDirectoryManager.restoreFromZip(this, data, requestCode, contentResolver)) return
     }
 
-    @JvmOverloads
-    fun handleRhythmUiTaps(uptimeMillis: Long, pressGroupMaxGapMsScreen: Long, tapCount: Int = 1) {
-        externalClickCounter.get().handleRhythmUiTaps(uptimeMillis, pressGroupMaxGapMsScreen, tapCount)
-        keepScreenOn.get().keepScreenOn()
-    }
-
     fun deckLoadManager(): DeckLoadManager? {
 
         return deckLoadManager.get()

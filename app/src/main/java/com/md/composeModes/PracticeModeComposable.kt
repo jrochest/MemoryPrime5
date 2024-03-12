@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import com.md.ExternalClickCounter
 import com.md.FocusedQueueStateModel
 import com.md.SpacedRepeaterActivity
 import com.md.modesetters.PracticeModeStateHandler
@@ -47,6 +48,7 @@ import com.md.utils.KeepScreenOn
 import com.md.viewmodel.InteractionModelFlowProvider
 import com.md.viewmodel.InteractionType
 import com.md.viewmodel.TopModeFlowProvider
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.delay
@@ -107,6 +109,7 @@ class PracticeModeComposerManager @Inject constructor(
     val focusedQueueStateModel: FocusedQueueStateModel,
     private val deckLoadManager: DeckLoadManager,
     private val keepScreenOn: KeepScreenOn,
+    private var externalClickCounter: ExternalClickCounter
 ) {
 
     private var lastNotePracticedValue: Int? = null
@@ -150,9 +153,11 @@ class PracticeModeComposerManager @Inject constructor(
             },
             onMiddleButtonTapInPracticeMode = {
                 interactionProvider.mostRecentInteraction.value = InteractionType.TouchScreen
-                activity.handleRhythmUiTaps(
+                keepScreenOn.keepScreenOn()
+                externalClickCounter.handleRhythmUiTaps(
                     SystemClock.uptimeMillis(),
-                    SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN
+                    SpacedRepeaterActivity.PRESS_GROUP_MAX_GAP_MS_SCREEN,
+                    tapCount = 1
                 )
             },
             practiceMode = practiceModeViewModel.practiceStateFlow.collectAsState().value,
