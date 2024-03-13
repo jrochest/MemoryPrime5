@@ -22,7 +22,6 @@ import kotlin.coroutines.resumeWithException
 
 class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
     private var lifecycleOwner: LifecycleOwner? = null
-    private var isPrepared: Boolean = false
     private var focusedPlayer: MediaPlayerForASingleFile? = null
     private var playbackSpeedBaseOnErrorRates = 1.5f
 
