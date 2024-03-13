@@ -31,19 +31,18 @@ class ExternalClickCounter
 
     var currentJob: Job? = null
 
-
+    private var previousPressGroupGapMillis: Long = 0
     fun handleRhythmUiTaps(eventTimeMs: Long, pressGroupMaxGapMs: Long): Boolean {
-        val tapCount = 1
         val handler = practiceModeHandler
         currentJob?.cancel()
         currentJob = null
         val currentTimeMs = SystemClock.uptimeMillis()
         if (mPressGroupLastPressMs == 0L) {
-            mPressGroupCount = tapCount
+            mPressGroupCount = 1
             println("New Press group.")
-        } else if (mPressGroupLastPressEventMs + pressGroupMaxGapMs < eventTimeMs) {
+        } else if (mPressGroupLastPressEventMs + previousPressGroupGapMillis < eventTimeMs) {
             // Large gap. Reset count.
-            mPressGroupCount = tapCount
+            mPressGroupCount = 1
             println("New Press group. Expiring old one.")
         } else {
             println("Time diff: " + (currentTimeMs - mPressGroupLastPressMs))
@@ -54,13 +53,23 @@ class ExternalClickCounter
         mPressGroupLastPressEventMs = eventTimeMs
         mPressGroupLastPressMs = currentTimeMs
 
+        // Allow larger gaps for larger counts.
+       val pressGroupMaxGapMsOverride: Long = if (mPressGroupCount > 3) {
+            TtsSpeaker.speak(mPressGroupCount.toString())
+            1500L
+        } else {
+            pressGroupMaxGapMs
+        }
+
+        previousPressGroupGapMillis = pressGroupMaxGapMsOverride
+
         currentJob = activity.lifecycleScope.launch(Dispatchers.Main) {
             async {
                 @Suppress("DeferredResultUnused")
                 activity.lowVolumeClickTone()
             }
 
-            delay(pressGroupMaxGapMs)
+            delay(pressGroupMaxGapMsOverride)
 
             if (!isActive) {
                 return@launch
@@ -80,7 +89,7 @@ class ExternalClickCounter
                     message = null
                     deleteMode = false
                 }
-                3, 4 -> {
+                3 -> {
                     message = "undo"
                     handler.undo()
                     deleteMode = false
