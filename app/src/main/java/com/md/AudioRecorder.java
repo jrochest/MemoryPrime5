@@ -42,6 +42,8 @@ public class AudioRecorder {
 	/** AudioRecorder that generates its own new from current time and suffix */
 	public AudioRecorder() {
 		// Force the last two digits of the time to be the same to always write to the same dir.
+		// To allow backups to exhibit some temporal locality and decrease the number of directory
+		// specific zips that need to be updated.
 		this((System.currentTimeMillis() / 100) + sessionSuffixTwoDigitNumberWithExtension);
 	}
 
@@ -103,7 +105,7 @@ public class AudioRecorder {
 		// Try write without checking if dir exists. Correct thing upon error.
 		try {
 			recorder = new MediaRecorder();
-			recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+			recorder.setAudioSource(MediaRecorder.AudioSource.VOICE_RECOGNITION);
 			recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
 			recorder.setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC);
 			recorder.setAudioChannels(1);
