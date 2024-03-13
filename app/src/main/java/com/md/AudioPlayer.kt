@@ -305,14 +305,6 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
         this.lifecycleOwner = lifecycleOwner
     }
 
-    /**
-     * Returns true if the current file has played or there is no current file.
-     */
-    fun hasPlayedCurrentFile(): Boolean {
-        val player = focusedPlayer ?: return true
-        return player.hasCompletedPlaybackSinceBecomingPrimary
-    }
-
     companion object {
         @JvmStatic
         val instance: AudioPlayer by lazy { AudioPlayer() }
