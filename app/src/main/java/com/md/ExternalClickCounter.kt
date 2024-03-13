@@ -24,9 +24,9 @@ class ExternalClickCounter
         context as SpacedRepeaterActivity
     }
 
-    private var mPressGroupLastPressMs: Long = 0
-    private var mPressGroupLastPressEventMs: Long = 0
-    private var mPressGroupCount: Int = 0
+    private var pressGroupLastPressMs: Long = 0
+    private var pressGroupLastPressEventMs: Long = 0
+    private var pressGroupCount: Int = 0
     private var deleteMode = false
 
     private var currentJob: Job? = null
@@ -37,25 +37,25 @@ class ExternalClickCounter
         currentJob?.cancel()
         currentJob = null
         val currentTimeMs = SystemClock.uptimeMillis()
-        if (mPressGroupLastPressMs == 0L) {
-            mPressGroupCount = 1
+        if (pressGroupLastPressMs == 0L) {
+            pressGroupCount = 1
             println("New Press group.")
-        } else if (mPressGroupLastPressEventMs + previousPressGroupGapMillis < eventTimeMs) {
+        } else if (pressGroupLastPressEventMs + previousPressGroupGapMillis < eventTimeMs) {
             // Large gap. Reset count.
-            mPressGroupCount = 1
+            pressGroupCount = 1
             println("New Press group. Expiring old one.")
         } else {
-            println("Time diff: " + (currentTimeMs - mPressGroupLastPressMs))
-            println("Time diff event time: " + (eventTimeMs - mPressGroupLastPressEventMs))
-            mPressGroupCount++
-            println("mPressGroupCount++. $mPressGroupCount")
+            println("Time diff: " + (currentTimeMs - pressGroupLastPressMs))
+            println("Time diff event time: " + (eventTimeMs - pressGroupLastPressEventMs))
+            pressGroupCount++
+            println("mPressGroupCount++. $pressGroupCount")
         }
-        mPressGroupLastPressEventMs = eventTimeMs
-        mPressGroupLastPressMs = currentTimeMs
+        pressGroupLastPressEventMs = eventTimeMs
+        pressGroupLastPressMs = currentTimeMs
 
         // Allow larger gaps for larger counts.
-       val pressGroupMaxGapMsOverride: Long = if (mPressGroupCount > 3) {
-            TtsSpeaker.speak(mPressGroupCount.toString())
+       val pressGroupMaxGapMsOverride: Long = if (pressGroupCount > 3) {
+            TtsSpeaker.speak(pressGroupCount.toString())
             1500L
         } else {
             pressGroupMaxGapMs
@@ -76,7 +76,7 @@ class ExternalClickCounter
             }
 
             val message: String?
-            when (mPressGroupCount) {
+            when (pressGroupCount) {
                 1 -> {
                     message = null
                     handler.proceed()
@@ -96,12 +96,12 @@ class ExternalClickCounter
                 }
                 5 -> {
                     handler.postponeNote(true)
-                    message = "$mPressGroupCount postpone"
+                    message = "$pressGroupCount postpone"
                     deleteMode = false
                 }
                 6  -> {
                     handler.postponeNote(shouldQueue = false)
-                    message = "$mPressGroupCount postpone without requeue"
+                    message = "$pressGroupCount postpone without requeue"
                     deleteMode = false
                 }
                 7  -> {
