@@ -28,7 +28,7 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
     private var repeatsRemaining: Int? = null
     private var mFiredOnceCompletionListener: OnCompletionListener? = null
     private var lastFile: String? = null
-    var wantsToPlay = false
+    private var wantsToPlay = false
         get() = field
         set(value) {
             field = value
