@@ -24,12 +24,12 @@ class ExternalClickCounter
         context as SpacedRepeaterActivity
     }
 
-    var mPressGroupLastPressMs: Long = 0
-    var mPressGroupLastPressEventMs: Long = 0
-    var mPressGroupCount: Int = 0
-    var deleteMode = false
+    private var mPressGroupLastPressMs: Long = 0
+    private var mPressGroupLastPressEventMs: Long = 0
+    private var mPressGroupCount: Int = 0
+    private var deleteMode = false
 
-    var currentJob: Job? = null
+    private var currentJob: Job? = null
 
     private var previousPressGroupGapMillis: Long = 0
     fun handleRhythmUiTaps(eventTimeMs: Long, pressGroupMaxGapMs: Long): Boolean {
