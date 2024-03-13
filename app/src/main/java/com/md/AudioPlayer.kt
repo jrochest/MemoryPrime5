@@ -155,7 +155,7 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
             val errorCallback =
                 MediaPlayer.OnErrorListener { mp, what, extra ->
                     // Implementation of some callback interface
-                    println("TODOJ on error " + what)
+                    println("OnErrorListener: $what")
                     continuation.resumeWithException(Exception("MediaPlayer Error is what = $what"))
                     mediaPlayer.setOnCompletionListener(null)
                     mediaPlayer.setOnErrorListener(null)
