@@ -45,9 +45,6 @@ class PracticeModeStateHandler @Inject constructor(
     var repCounter = 0
     private var missCounter = 0
 
-    // TODOJSOON delete this upon switching to currentNotePartManager
-    private var questionMode = true
-
     fun onSwitchToMode() {
         activity.lifecycleScope.launch {
             activity.repeatOnLifecycle(Lifecycle.State.RESUMED) {
