@@ -134,10 +134,11 @@ class PracticeModeStateHandler @Inject constructor(
     }
 
     fun undo() {
-        if (questionMode) {
-            undoFromQuestionToAnswerMode()
-        } else {
+        val noteState = currentNotePartManager.noteStateFlow.value ?: return
+        if (noteState.notePart.partIsAnswer) {
             undoFromAnswerToQuestion()
+        } else {
+            undoFromQuestionToAnswerMode()
         }
     }
 
@@ -257,7 +258,6 @@ class PracticeModeStateHandler @Inject constructor(
             if (shouldUpdateQuestion) {
                 updateStartingInQuestionMode()
             }
-            questionMode = true
             currentNotePartManager.changeToQuestionForCurrent()
         }
     }
@@ -266,7 +266,6 @@ class PracticeModeStateHandler @Inject constructor(
         get() = if (!lastNoteList.isEmpty()) lastNoteList.last else null
 
     private fun setupAnswerMode() {
-        questionMode = false
         currentNotePartManager.changeToAnswerForCurrent()
     }
 
