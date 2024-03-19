@@ -45,7 +45,6 @@ class PlayerService : MediaBrowserServiceCompat() {
             override fun onPlay() {
                 super.onPlay()
                 mediaSession.isActive = true
-                println("TODOJ onPlay called")
                 setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
                 // Good.
                 handleTapCount(1)
@@ -54,13 +53,11 @@ class PlayerService : MediaBrowserServiceCompat() {
             override fun onPrepare() {
                 super.onPrepare()
                 mediaSession.isActive = true
-                println("TODOJ onPrepare called")
                 setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
             }
 
             override fun onSkipToNext() {
                 super.onSkipToNext()
-                println("TODOJ next called")
                 setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
                 // Go back
                 handleTapCount(3)
@@ -69,13 +66,11 @@ class PlayerService : MediaBrowserServiceCompat() {
             // Note we don't any info about bluetooth device in:
             // mediaButtonEvent.getParcelableExtra(Intent.EXTRA_KEY_EVENT) as KeyEvent
             override fun onMediaButtonEvent(mediaButtonEvent: Intent?): Boolean {
-                println("TODOJ mediaButtonEvent called")
                 return super.onMediaButtonEvent(mediaButtonEvent)
             }
 
             override fun onSkipToPrevious() {
                 super.onSkipToPrevious()
-                println("TODOJ prev called")
                 setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
 
                 // Bad in answer, repeat in question
@@ -84,7 +79,6 @@ class PlayerService : MediaBrowserServiceCompat() {
 
             override fun onPause() {
                 super.onPause()
-                println("TODOJ pause called")
                 // Always set to playing because if we do pause next and prev actions are not sent
                 // by the bluetooth headphones, both vistas and jabra elite 75T active.
                 setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
@@ -95,7 +89,6 @@ class PlayerService : MediaBrowserServiceCompat() {
 
             override fun onStop() {
                 super.onStop()
-                println("TODOJ stopped called")
                 setPlaybackState(PlaybackStateCompat.STATE_STOPPED)
                 // Don't take media events while activity stopped.
                 mediaSession.isActive = false
@@ -107,13 +100,11 @@ class PlayerService : MediaBrowserServiceCompat() {
     }
 
     override fun onLoadChildren(parentId: String, result: Result<MutableList<MediaBrowserCompat.MediaItem>>) {
-        println("TODOJ send back onLoadChildren empty list!")
         result.sendResult(mutableListOf())
     }
 
     override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot? {
-        // Let everyone connect!
-        println("TODOJ connected to me root!")
+        // The following lets all media browsers connect to this media browse service
         return BrowserRoot("Good", null)
     }
 
