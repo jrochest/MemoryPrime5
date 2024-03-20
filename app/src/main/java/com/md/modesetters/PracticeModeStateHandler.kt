@@ -9,7 +9,6 @@ import com.md.RevisionQueue.Companion.currentDeckReviewQueueDeleteThisTODO
 import com.md.provider.AbstractRep
 import com.md.provider.Note
 import com.md.utils.ToastSingleton
-import com.md.workers.BackupPreferences.markBackupLocationsAsStaleDueToSufficientReps
 import com.md.composeModes.CurrentNotePartManager
 import com.md.composeModes.Mode
 import com.md.viewmodel.TopModeFlowProvider
@@ -270,15 +269,11 @@ class PracticeModeStateHandler @Inject constructor(
         val currentNote = currentDeckReviewQueueDeleteThisTODO!!.peekQueue()
         currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = false)
         if (currentNote != null) {
-            repCounter++
             val metrics = practiceModeViewModel.metricsFlow.value
             practiceModeViewModel.metricsFlow.value = metrics.copy(
                 notesPracticed = metrics.notesPracticed + 1,
                 remainingInQueue = currentDeckReviewQueueDeleteThisTODO?.getSize() ?: 0
             )
-            if (repCounter % 10 == 9) {
-                markBackupLocationsAsStaleDueToSufficientReps(activity)
-            }
         }
     }
 

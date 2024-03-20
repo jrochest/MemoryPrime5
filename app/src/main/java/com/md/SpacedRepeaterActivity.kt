@@ -15,18 +15,14 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.md.AudioPlayer.Companion.instance
 import com.md.modesetters.*
-import com.md.workers.BackupPreferences
-import com.md.workers.BackupToUsbManager.createAndWriteZipBackToNewLocation
 import com.md.workers.IncrementalBackupManager
 import com.md.workers.IncrementalBackupPreferences
 import com.md.composeModes.ComposeModeSetter
 import com.md.composeModes.CurrentNotePartManager
-import com.md.composeModes.Mode
 import com.md.eventHandler.RemoteInputDeviceClickHandler
 import com.md.viewmodel.TopModeFlowProvider
 import com.md.utils.KeepScreenOn
 import com.md.viewmodel.InteractionModelFlowProvider
-import com.md.viewmodel.InteractionType
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.scopes.ActivityScoped
@@ -85,7 +81,6 @@ class SpacedRepeaterActivity
         // Normal mode.
 
         // TODO These can be made into activity scoped instances like workingModeSetter...
-        BrowsingModeSetter.getInstance().setup(this, handler)
         SettingModeSetter.setup(this, handler)
         CleanUpAudioFilesModeSetter.getInstance().setup(this, handler)
 
@@ -336,17 +331,6 @@ class SpacedRepeaterActivity
         // else if ok user probably selected a file
 
         if (data == null) return
-
-        if (BackupPreferences.requestCodeToKey.containsKey(requestCode) &&
-                createAndWriteZipBackToNewLocation(
-                        this,
-                        data,
-                        requestCode,
-                        contentResolver
-                )) {
-            SettingModeSetter.refreshSettings(this)
-            return
-        }
 
         if (IncrementalBackupPreferences.requestCodeToKey.containsKey(requestCode) &&
                 IncrementalBackupManager.createAndWriteZipBackToNewLocation(

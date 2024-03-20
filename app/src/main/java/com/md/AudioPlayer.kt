@@ -219,7 +219,6 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
 
             // Note: noise supressor seem to fail and say not enough memory. NoiseSuppressor.
 
-            // TODOJ delete
             val mediaPlayer = localCurrentPlayer.mediaPlayer
             wantsToPlay = autoPlay
             repeatsRemaining = if (shouldRepeat) 3 else 0

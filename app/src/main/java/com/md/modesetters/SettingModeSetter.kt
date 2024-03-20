@@ -9,12 +9,6 @@ import android.widget.ToggleButton
 import com.md.CategorySingleton
 import com.md.ModeHandler
 import com.md.R
-import com.md.workers.BackupPreferences
-import com.md.workers.BackupPreferences.REQUEST_CODE_FOR_LOCATION_1
-import com.md.workers.BackupPreferences.REQUEST_CODE_FOR_LOCATION_2
-import com.md.workers.BackupPreferences.REQUEST_CODE_FOR_LOCATION_3
-import com.md.workers.BackupPreferences.REQUEST_CODE_FOR_LOCATION_4
-import com.md.workers.BackupToUsbManager.openZipFileDocument
 import com.md.workers.IncrementalBackupManager
 import com.md.workers.IncrementalBackupPreferences
 

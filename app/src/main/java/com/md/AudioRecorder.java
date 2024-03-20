@@ -4,7 +4,6 @@ import android.media.MediaRecorder;
 
 import com.md.modesetters.TtsSpeaker;
 import com.md.utils.ToastSingleton;
-import com.md.workers.BackupToUsbManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -85,11 +84,8 @@ public class AudioRecorder {
 			throw new RecordingTooSmallException();
 		} else {
 			recorded = true;
-			BackupToUsbManager.INSTANCE.markPathAsUpdated(originalFile);
 		}
 	}
-
-
 
 	/**
 	 * Starts a new recording.
