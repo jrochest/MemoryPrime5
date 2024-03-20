@@ -8,6 +8,7 @@ import com.md.utils.ToastSingleton;
 import java.io.File;
 import java.io.IOException;
 import java.util.Random;
+import java.util.Timer;
 
 
 public class AudioRecorder {
@@ -65,6 +66,7 @@ public class AudioRecorder {
 	 */
 	public void stop() throws IOException {
 		try {
+			//TtsSpeaker.speak("Max amp is: " + recorder.getMaxAmplitude());
 			recorder.stop();
 		} catch (Exception e) {
 			System.out.print("Error during stop and release" + e);
@@ -83,6 +85,7 @@ public class AudioRecorder {
 			audioFileExists.delete();
 			throw new RecordingTooSmallException();
 		} else {
+// TODOJNOW maybe check that recording volume and warn if too low.
 			recorded = true;
 		}
 	}
@@ -111,7 +114,6 @@ public class AudioRecorder {
 			recorder.setOutputFile(AudioPlayer.transformToM4a(this.path));
 			recorder.prepare();
 			recorder.start();
-
 		} catch (Exception e) {
 			String state = android.os.Environment.getExternalStorageState();
 			if (!state.equals(android.os.Environment.MEDIA_MOUNTED)) {

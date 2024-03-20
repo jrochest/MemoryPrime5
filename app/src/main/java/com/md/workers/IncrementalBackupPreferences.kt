@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import java.net.URLDecoder
 
-// TODOJNOW maybe check that recording volume and warn if too low.
 object IncrementalBackupPreferences {
     const val REQUEST_CODE_FOR_LOCATION_1 = 169
     const val REQUEST_CODE_FOR_LOCATION_2 = 170
