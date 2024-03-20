@@ -49,7 +49,7 @@ object BackupPreferences {
         return backupLocations
     }
 
-    fun markAllStale(context: Context) {
+    fun markBackupLocationsAsStaleDueToSufficientReps(context: Context) {
         requestCodeToKey.values.forEach { key ->
             markBackupFresh(context, key, false)
         }
