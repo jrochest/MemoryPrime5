@@ -156,6 +156,7 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
                 MediaPlayer.OnErrorListener { mp, what, extra ->
                     // Implementation of some callback interface
                     println("OnErrorListener: $what")
+                    TtsSpeaker.speak("playback error $what")
                     continuation.resumeWithException(Exception("MediaPlayer Error is what = $what"))
                     mediaPlayer.setOnCompletionListener(null)
                     mediaPlayer.setOnErrorListener(null)
