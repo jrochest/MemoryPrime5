@@ -100,7 +100,7 @@ public class AudioRecorder {
 	/**
 	 * Starts a new recording.
 	 */
-	public void start(boolean isRetry) throws IOException {
+	private void start(boolean isRetry) {
 		// Try write without checking if dir exists. Correct thing upon error.
 		try {
 			recorder = new MediaRecorder();
