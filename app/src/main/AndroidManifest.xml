@@ -18,7 +18,6 @@
         android:theme="@style/AppTheme" >
         <activity
             android:name="SpacedRepeaterActivity"
-            android:label="${appName}"
             android:screenOrientation="portrait"
             android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation"
             android:exported="true"
