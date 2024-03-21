@@ -274,7 +274,7 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
     }
 
     override fun onError(mediaPlayer: MediaPlayer, what: Int, extra: Int): Boolean {
-        println("TODOJ error during playback what=$what extra $extra $lastFile")
+        println("error during playback what=$what extra $extra $lastFile")
         if (MEDIA_ERROR_UNKNOWN == what) {
             TtsSpeaker.speak("play MEDIA_ERROR_UNKNOWN. Trying normal speed")
             playbackSpeedBaseOnErrorRates = 1f

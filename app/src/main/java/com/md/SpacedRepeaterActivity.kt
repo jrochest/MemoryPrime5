@@ -236,7 +236,6 @@ class SpacedRepeaterActivity
     // fun onKeyLongPress(keyCode: Int, event: KeyEvent?): Boolean {
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-        println("TODOJ key up event$event")
         val modeBackStack = modeHandler.get()
         val modeSetter = modeBackStack.whoseOnTop()
         // BR301 sends an enter command, which we want to ignore.
@@ -246,7 +245,6 @@ class SpacedRepeaterActivity
         if (keyCode != KeyEvent.KEYCODE_VOLUME_DOWN && keyCode != KeyEvent.KEYCODE_VOLUME_UP) {
             return super.onKeyUp(keyCode, event)
         }
-        println("TODOJ event$event")
         return if (modeSetter == null || !isFromMemprimeDevice(keyCode, event)) {
             super.onKeyUp(keyCode, event)
         } else true

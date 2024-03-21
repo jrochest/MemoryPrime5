@@ -7,7 +7,6 @@ import dagger.hilt.android.scopes.ActivityScoped
 import java.util.Stack
 import javax.inject.Inject
 
-// TODOJ change to view model scoped.
 @ActivityScoped
 class ModeHandler @Inject constructor(val context: Activity) {
     private val modeStack = Stack<ModeSetter>()
