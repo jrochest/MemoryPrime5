@@ -1,7 +1,6 @@
 package com.md.composeModes
 
 import android.content.Context
-import android.content.SharedPreferences
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,7 +18,6 @@ import com.md.SpacedRepeaterActivity
 import com.md.viewmodel.TopModeFlowProvider
 import com.md.workers.IncrementalBackupManager
 import com.md.workers.IncrementalBackupPreferences
-import com.md.workers.IncrementalBackupPreferences.requestCodeToKey
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -105,21 +103,20 @@ class SettingsModeComposeManager @Inject constructor(
                 }
             )
 
-            BackLocationForIndex(1, IncrementalBackupPreferences.REQUEST_CODE_FOR_LOCATION_1) { stateModel.backupLocationName1 }
-            BackLocationForIndex(2, IncrementalBackupPreferences.REQUEST_CODE_FOR_LOCATION_2) { stateModel.backupLocationName2 }
-            BackLocationForIndex(3, IncrementalBackupPreferences.REQUEST_CODE_FOR_LOCATION_3) { stateModel.backupLocationName3 }
-            BackLocationForIndex(4, IncrementalBackupPreferences.REQUEST_CODE_FOR_LOCATION_4) { stateModel.backupLocationName4 }
+            BackLocationForIndex(IncrementalBackupPreferences.location1) { stateModel.backupLocationName1 }
+            BackLocationForIndex(IncrementalBackupPreferences.location2) { stateModel.backupLocationName2 }
+            BackLocationForIndex(IncrementalBackupPreferences.location3) { stateModel.backupLocationName3 }
+            BackLocationForIndex(IncrementalBackupPreferences.location4) { stateModel.backupLocationName4 }
         }
      }
 
     @Composable
     private fun BackLocationForIndex(
-        index: Int,
-        requestCode: Int,
+        location: IncrementalBackupPreferences.BackupLocation,
         flowWithPreferencesValue: () -> MutableStateFlow<String?>
     ) {
         SpaceBetweenSettings()
-        Text(text = "Backup location $index:", style = MaterialTheme.typography.labelLarge)
+        Text(text = location.labelForUi, style = MaterialTheme.typography.labelLarge)
         SpaceLabelAndValue()
 
         val backupLocation = flowWithPreferencesValue().collectAsState().value
@@ -128,7 +125,7 @@ class SettingsModeComposeManager @Inject constructor(
             SpaceLabelAndValue()
         }
         Row {
-            Button(onClick = { IncrementalBackupManager.openBackupDir(activity, requestCode) }) {
+            Button(onClick = { IncrementalBackupManager.openBackupDir(activity, location.requestCode) }) {
                 Text(text = "Update backup location", style = MaterialTheme.typography.labelMedium)
             }
             NTapButton(requiredTaps = 3, onNTap = {
@@ -136,7 +133,7 @@ class SettingsModeComposeManager @Inject constructor(
                     IncrementalBackupPreferences.BACKUP_LOCATION_FILE,
                     Context.MODE_PRIVATE
                 )
-                prefFile.edit().remove(IncrementalBackupPreferences.requestCodeToKey[requestCode]).apply()
+                prefFile.edit().remove(IncrementalBackupPreferences.requestCodeToKey[location.requestCode]).apply()
                 updateStateModel()
             }
             ) {
