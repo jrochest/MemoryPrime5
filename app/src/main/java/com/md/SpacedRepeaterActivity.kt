@@ -19,6 +19,7 @@ import com.md.workers.IncrementalBackupManager
 import com.md.workers.IncrementalBackupPreferences
 import com.md.composeModes.ComposeModeSetter
 import com.md.composeModes.CurrentNotePartManager
+import com.md.composeModes.SettingsModeComposeManager
 import com.md.eventHandler.RemoteInputDeviceClickHandler
 import com.md.viewmodel.TopModeFlowProvider
 import com.md.utils.KeepScreenOn
@@ -52,6 +53,8 @@ class SpacedRepeaterActivity
     lateinit var immersiveModelManager: Lazy<ImmersiveModeManager>
 
     @Inject lateinit var toneManager: Lazy<ToneManagerImpl>
+
+    @Inject lateinit var settingsModeComposeManager: Lazy<SettingsModeComposeManager>
 
     @Inject
     lateinit var topModeFlowProvider: TopModeFlowProvider
@@ -296,10 +299,6 @@ class SpacedRepeaterActivity
     }
 
 
-    fun maybeDim() {
-        // TODOJSOONNOW delete.
-    }
-
     companion object {
         private const val LOG_TAG = "SpacedRepeater"
         const val PRESS_GROUP_MAX_GAP_MS_BLUETOOTH = 700L
@@ -337,7 +336,8 @@ class SpacedRepeaterActivity
                         requestCode,
                         contentResolver
                 )) {
-            SettingModeSetter.refreshSettings(this)
+
+            settingsModeComposeManager.get().updateStateModel()
             return
         }
 

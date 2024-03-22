@@ -24,8 +24,6 @@ object SettingModeSetter : ModeSetter(), ItemDeletedHandler {
 
     fun refreshSettings(activity: Activity) {
         val markButton = activity.findViewById<ToggleButton>(R.id.look_ahead) ?: return
-
-
         val instance = CategorySingleton.getInstance()
         markButton.isChecked = instance.lookAheadDays != 0
         markButton.setOnClickListener {

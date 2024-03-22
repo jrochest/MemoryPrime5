@@ -2,7 +2,6 @@ package com.md.composeModes
 
 import android.app.Activity
 import android.content.Context
-import android.os.Build
 import android.os.SystemClock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -44,6 +43,7 @@ enum class Mode {
     NewNote,
     DeckChooser,
     Settings,
+    Restore,
     Backup
 }
 
@@ -57,6 +57,8 @@ class ComposeModeSetter @Inject constructor(
     private val deckModeComposableManager: DeckModeComposableManager,
     private val addNoteComposeManager: AddNoteComposeManager,
     private val backupModeComposeManager: BackupModeComposeManager,
+
+    private val settingsModeComposeManager: SettingsModeComposeManager,
     private val practiceModeComposerManager: PracticeModeComposerManager,
     private val focusedQueueStateModel: FocusedQueueStateModel,
     private val deckLoadManager: DeckLoadManager,
@@ -145,6 +147,10 @@ class ComposeModeSetter @Inject constructor(
 
                                         Mode.Backup -> {
                                             backupModeComposeManager.compose()
+                                        }
+
+                                        Mode.Settings -> {
+                                            settingsModeComposeManager.compose()
                                         }
 
                                         else -> {}

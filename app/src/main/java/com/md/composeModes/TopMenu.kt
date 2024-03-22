@@ -139,18 +139,12 @@ fun TopMenu(
                 onDismissRequest = { showMenu = false }
             ) {
                 DropdownMenuItem({ Text("Settings") }, onClick = {
-                    SettingModeSetter.switchMode(activity)
-                })
-            }
-            DropdownMenu(
-                expanded = showMenu,
-                onDismissRequest = { showMenu = false }
-            ) {
-                DropdownMenuItem({ Text("Settings") }, onClick = {
-                    SettingModeSetter.switchMode(activity)
+                    topModeFlowProvider.modeModel.value = Mode.Settings
+                    showMenu = false
                 })
                 DropdownMenuItem({ Text("Restore from incremental directory") }, onClick = {
                     RestoreFromIncrementalDirectoryManager.openZipFileDocument(activity)
+                    showMenu = false
                 })
             }
         }
