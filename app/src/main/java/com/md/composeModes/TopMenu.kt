@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreHoriz
@@ -39,7 +38,6 @@ import com.md.FocusedQueueStateModel
 import com.md.RestoreFromIncrementalDirectoryManager
 import com.md.composeStyles.ButtonStyles.ImportantButtonColor
 import com.md.composeStyles.ButtonStyles.MediumImportanceButtonColor
-import com.md.modesetters.SettingModeSetter
 import com.md.viewmodel.TopModeFlowProvider
 
 @Composable

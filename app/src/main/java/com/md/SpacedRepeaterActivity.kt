@@ -83,8 +83,6 @@ class SpacedRepeaterActivity
         activityHelper.commonActivitySetup()
         // Normal mode.
 
-        // TODO These can be made into activity scoped instances like workingModeSetter...
-        SettingModeSetter.setup(this, handler)
         CleanUpAudioFilesModeSetter.getInstance().setup(this, handler)
 
 
@@ -165,11 +163,6 @@ class SpacedRepeaterActivity
         super.onStop()
 
         maybeStopTone()
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        activityHelper.createCommonMenu(menu, this)
-        return true
     }
 
     private fun isFromMemprimeDevice(keyCode: Int, event: KeyEvent?): Boolean {
