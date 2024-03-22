@@ -91,10 +91,20 @@ class SettingsModeComposeManager @Inject constructor(
     fun ShowUiForState() {
         Column {
             Text(text = "Settings", style = MaterialTheme.typography.headlineSmall)
+            SpaceBetweenSettings()
+            Text(text = "Incremental backup locations", style = MaterialTheme.typography.titleMedium)
+
+            BackLocationForIndex(IncrementalBackupPreferences.location1) { stateModel.backupLocationName1 }
+            BackLocationForIndex(IncrementalBackupPreferences.location2) { stateModel.backupLocationName2 }
+            BackLocationForIndex(IncrementalBackupPreferences.location3) { stateModel.backupLocationName3 }
+            BackLocationForIndex(IncrementalBackupPreferences.location4) { stateModel.backupLocationName4 }
+
+            SpaceBetweenSettings()
+            Text(text = "Activity settings", style = MaterialTheme.typography.titleMedium)
 
             SpaceBetweenSettings()
             val lookAhead = stateModel.enableLookAhead.collectAsState()
-            Text(text = "Look ahead", style = MaterialTheme.typography.labelLarge)
+            Text(text = "Look ahead (not integrated yet)", style = MaterialTheme.typography.labelLarge)
             SpaceLabelAndValue()
             Switch(
                 checked = lookAhead.value,
@@ -103,10 +113,6 @@ class SettingsModeComposeManager @Inject constructor(
                 }
             )
 
-            BackLocationForIndex(IncrementalBackupPreferences.location1) { stateModel.backupLocationName1 }
-            BackLocationForIndex(IncrementalBackupPreferences.location2) { stateModel.backupLocationName2 }
-            BackLocationForIndex(IncrementalBackupPreferences.location3) { stateModel.backupLocationName3 }
-            BackLocationForIndex(IncrementalBackupPreferences.location4) { stateModel.backupLocationName4 }
         }
      }
 
