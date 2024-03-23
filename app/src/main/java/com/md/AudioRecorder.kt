@@ -106,12 +106,12 @@ class AudioRecorder @Inject constructor(
         }
     }
 
-    fun playFile() {
-        audioPlayer.playFile(generatedAudioFileNameWithExtension)
+    suspend fun playFile() : Boolean {
+       return audioPlayer.suspendPlayReturningTrueIfLoadedFileChanged(generatedAudioFileNameWithExtension)
     }
 
     companion object {
-        val sessionSuffixTwoDigitNumber = createSuffix()
+        private val sessionSuffixTwoDigitNumber = createSuffix()
         private val sessionSuffixTwoDigitNumberWithExtension = sessionSuffixTwoDigitNumber + ".m4a"
         private fun createSuffix(): String {
             val random = Random()

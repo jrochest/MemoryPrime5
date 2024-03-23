@@ -140,6 +140,11 @@ class AudioPlayer @Inject constructor(
         }
     }
 
+    /**
+     * Plays the audio for the given [audioFileName].
+     *
+     * @return Whether the file was successfully played.
+     */
     suspend fun suspendPlayReturningTrueIfLoadedFileChanged(
         audioFileName: String?,
     ) : Boolean {

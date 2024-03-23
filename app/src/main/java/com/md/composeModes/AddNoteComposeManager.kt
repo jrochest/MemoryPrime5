@@ -13,6 +13,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -21,12 +22,15 @@ import com.md.DbNoteEditor
 import com.md.RecordingTooSmallException
 import com.md.RevisionQueue
 import com.md.SpacedRepeaterActivity
+import com.md.application.MainDispatcher
 import com.md.composeStyles.ButtonStyles.ImportantButtonColor
 import com.md.composeStyles.ButtonStyles.MediumImportanceButtonColor
 import com.md.modesetters.TtsSpeaker
 import com.md.provider.Note
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Provider
 
@@ -34,7 +38,7 @@ import javax.inject.Provider
 @ActivityScoped
 class AddNoteComposeManager @Inject constructor(
     @ActivityContext val context: Context,
-    val audioRecorderProvider: Provider<AudioRecorder>
+    private val audioRecorderProvider: Provider<AudioRecorder>
 ) {
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
@@ -214,10 +218,15 @@ fun PlayButtonForRecorderIfPending(
     notePart: NotePart,
     hasSavable: MutableState<Boolean> = mutableStateOf(false)
 ) {
+    // https://developer.android.com/jetpack/compose/kotlin#coroutines
+    // Create a CoroutineScope that follows this composable's lifecycle
+    val coroutineScope = rememberCoroutineScope()
     if (hasSavable.value) {
         OutlinedButton(modifier = modifier,
             onClick = {
-                notePart.savableRecorder?.playFile()
+                coroutineScope.launch(context = Dispatchers.Main) {
+                    notePart.savableRecorder?.playFile()
+                }
             }) {
             RecorderButtonText(text = "Play ${notePart.name}")
         }
