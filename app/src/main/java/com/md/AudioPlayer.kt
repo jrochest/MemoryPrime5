@@ -50,8 +50,16 @@ class AudioPlayer @Inject constructor(
      * Preloads the file and returns true if successful. False if successful
      */
     suspend fun preload(originalMediaFile: String): MediaPlayerForASingleFile? {
-        // Verify the new file exists prior to switching to it.
         val path = sanitizePath(originalMediaFile)
+        // Retrieve from map prior to adding to catch without validating, but always validate
+        // prior to adding to cache.
+        val validatedFile = ValidatedAudioFileName(path)
+        val oldPlayer = fileToMediaPlayerCache.get(validatedFile)
+        if (oldPlayer != null && !oldPlayer.isCleanedUp) {
+            return oldPlayer
+        }
+
+        // Verify the new file exists prior to switching to it.
         val audioFile = File(path)
         val exists = withContext(defaultDispatcher) {
             if (!audioFile.exists()) {
@@ -61,7 +69,7 @@ class AudioPlayer @Inject constructor(
                 // com.jrochest.mp.debug/files/com.md.MemoryPrime/AudioMemo/46/1661565629946.m4a
                 // which did not exist.
                 System.err.println("$path does not exist. original $originalMediaFile")
-                false
+                return@withContext false
             }
             true
         }
@@ -69,12 +77,6 @@ class AudioPlayer @Inject constructor(
             return null
         }
 
-        val validatedFile = ValidatedAudioFileName(path)
-        val oldPlayer = fileToMediaPlayerCache.get(validatedFile)
-
-        if (oldPlayer != null && !oldPlayer.isCleanedUp) {
-            return oldPlayer
-        }
         val newPlayer = withContext(defaultDispatcher) {
             // Example time to execute call this call in milliseconds:
             // 194 (first call is the slowest typically)

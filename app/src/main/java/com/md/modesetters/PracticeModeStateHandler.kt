@@ -4,25 +4,34 @@ import android.content.Context
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.md.*
+import com.md.AudioPlayer
+import com.md.CategorySingleton
+import com.md.DbNoteEditor
+import com.md.DbRepEditor
+import com.md.FocusedQueueStateModel
 import com.md.RevisionQueue.Companion.currentDeckReviewQueueDeleteThisTODOJNOW
+import com.md.SpacedRepeaterActivity
+import com.md.application.MainDispatcher
+import com.md.composeModes.CurrentNotePartManager
+import com.md.composeModes.Mode
+import com.md.composeModes.PracticeMode
+import com.md.composeModes.PracticeModeViewModel
+import com.md.isAtLeastResumed
 import com.md.provider.AbstractRep
 import com.md.provider.Note
 import com.md.utils.ToastSingleton
-import com.md.composeModes.CurrentNotePartManager
-import com.md.composeModes.Mode
 import com.md.viewmodel.TopModeFlowProvider
-import com.md.composeModes.PracticeMode
-import com.md.composeModes.PracticeModeViewModel
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.util.*
+import java.util.ArrayDeque
+import java.util.Deque
 import javax.inject.Inject
 
 
@@ -35,6 +44,7 @@ class PracticeModeStateHandler @Inject constructor(
     private val practiceModeViewModel: PracticeModeViewModel,
     private val deckLoadManager: DeckLoadManager,
     private val audioPlayer: AudioPlayer,
+    @MainDispatcher private val mainDispatcher: CoroutineDispatcher,
 ) {
     val activity: SpacedRepeaterActivity = context as SpacedRepeaterActivity
 
@@ -78,7 +88,7 @@ class PracticeModeStateHandler @Inject constructor(
                     // Ensure that we don't allow the user to go forward without playing through the
                     // audio file once.
                     practiceModeViewModel.hasPlayedCurrentNotePartOrIgnoredAProceed.value = false
-                    MoveManager.replaceMoveJobWith(activity.lifecycleScope.launch(Dispatchers.Main) {
+                    MoveManager.replaceMoveJobWith(activity.lifecycleScope.launch(mainDispatcher) {
                         while (isActive) {
                             while (!activity.isAtLeastResumed()) {
                                 delay(1000)
@@ -105,6 +115,11 @@ class PracticeModeStateHandler @Inject constructor(
                             }
                             practiceModeViewModel.hasPlayedCurrentNotePartOrIgnoredAProceed.value =
                                 true
+
+                            // Preload in parallel while the delay occurs.
+                            activity.lifecycleScope.launch(mainDispatcher) {
+                                deckInfo.revisionQueue.preload()
+                            }
                             delay(2_000)
                             while (!activity.isAtLeastResumed()) {
                                 delay(1000)
