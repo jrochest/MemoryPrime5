@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import com.md.AudioRecorder
 import com.md.ExternalClickCounter
 import com.md.FocusedQueueStateModel
 import com.md.SpacedRepeaterActivity
@@ -107,7 +108,7 @@ class PracticeModeComposerManager @Inject constructor(
     private val deckLoadManager: DeckLoadManager,
     private val keepScreenOn: KeepScreenOn,
     private var externalClickCounter: ExternalClickCounter,
-    //private val audioRecorderProvider: Provider<AudioRecorder>,
+    private val audioRecorderProvider: Provider<AudioRecorder>,
 ) {
 
     private var lastNotePracticedValue: Int? = null
@@ -239,8 +240,11 @@ class PracticeModeComposerManager @Inject constructor(
                 }
 
                 PracticeMode.Recording -> {
-                    var modifier = largeButtonModifier
-                    AudioRecordForPart(modifier = modifier, notePart = notePart)
+                    AudioRecordForPart(
+                        modifier = largeButtonModifier,
+                        notePart = notePart,
+                        audioRecorderProvider = audioRecorderProvider
+                    )
                 }
 
                 PracticeMode.Deleting -> {

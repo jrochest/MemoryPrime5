@@ -28,11 +28,13 @@ import com.md.provider.Note
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import javax.inject.Inject
+import javax.inject.Provider
 
 
 @ActivityScoped
 class AddNoteComposeManager @Inject constructor(
     @ActivityContext val context: Context,
+    val audioRecorderProvider: Provider<AudioRecorder>
 ) {
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
@@ -69,7 +71,8 @@ class AddNoteComposeManager @Inject constructor(
         Column {
             Row(Modifier.fillMaxHeight(.33f)) {
                 AudioRecordForPart(
-                    firstButtonModifier, notePart = notePartQuestion
+                    firstButtonModifier, notePart = notePartQuestion,
+                    audioRecorderProvider
                 )
                 PlayButtonForRecorderIfPending(
                     secondButtonModifier, notePart = notePartQuestion,
@@ -78,7 +81,7 @@ class AddNoteComposeManager @Inject constructor(
             }
             Row(Modifier.fillMaxHeight(.5f)) {
                 AudioRecordForPart(
-                    firstButtonModifier, notePart = notePartAnswer
+                    firstButtonModifier, notePart = notePartAnswer, audioRecorderProvider
                 )
                 PlayButtonForRecorderIfPending(
                     secondButtonModifier, notePart = notePartAnswer,
@@ -137,7 +140,8 @@ class AddNoteComposeManager @Inject constructor(
 @Composable
 fun AudioRecordForPart(
     modifier: Modifier,
-    notePart: NotePart
+    notePart: NotePart,
+    audioRecorderProvider: Provider<AudioRecorder>
 ) {
     val isRecording = remember { mutableStateOf(false) }
 
@@ -149,7 +153,7 @@ fun AudioRecordForPart(
             colors = MediumImportanceButtonColor(),
             onClick = {
                 if (notePart.pendingRecorder == null) {
-                    notePart.pendingRecorder = AudioRecorder().apply { start() }
+                    notePart.pendingRecorder = audioRecorderProvider.get().apply { start() }
                 }
                 isRecording.value = true
             }) {

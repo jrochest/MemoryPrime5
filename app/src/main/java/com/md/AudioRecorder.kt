@@ -10,8 +10,11 @@ import com.md.utils.ToastSingleton
 import java.io.File
 import java.io.IOException
 import java.util.Random
+import javax.inject.Inject
 
-class AudioRecorder {
+class AudioRecorder @Inject constructor(
+    private val audioPlayer: AudioPlayer,
+) {
     private var recorder: MediaRecorder? = null
     private val path: String
     val generatedAudioFileNameWithExtension: String = (System.currentTimeMillis() / 100).toString() + sessionSuffixTwoDigitNumberWithExtension
@@ -105,7 +108,6 @@ class AudioRecorder {
     }
 
     fun playFile() {
-        val audioPlayer = instance
         audioPlayer.playFile(generatedAudioFileNameWithExtension)
     }
 
