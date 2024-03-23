@@ -122,10 +122,10 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
         try {
             localCurrentPlayer = preload(audioFileName)
         } catch (e: IOException) {
-            TtsSpeaker.speak("Error loading audio file. Delete or record again")
+            TtsSpeaker.speak("IOException loading audio file. Delete or record again: " + e.message)
             e.printStackTrace()
         } catch (e: IllegalStateException) {
-            TtsSpeaker.speak("Error loading audio file. Delete or record again")
+            TtsSpeaker.speak("IllegalStateException loading audio file. Delete or record again: "+ e.message)
             e.printStackTrace()
         }
         if (localCurrentPlayer == null)  {
