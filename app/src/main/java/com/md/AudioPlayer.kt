@@ -40,10 +40,6 @@ class AudioPlayer @Inject constructor() : OnCompletionListener, MediaPlayer.OnEr
 
     data class ValidatedAudioFileName(val originalMediaFile: String)
 
-    init {
-        AudioPlayer.instance = this
-    }
-
     /**
      * Preloads the file and returns true if successful. False if successful
      */

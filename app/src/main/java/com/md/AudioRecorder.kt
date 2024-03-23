@@ -2,7 +2,6 @@ package com.md
 
 import android.media.MediaRecorder
 import android.os.Environment
-import com.md.AudioPlayer.Companion.instance
 import com.md.AudioPlayer.Companion.sanitizePath
 import com.md.AudioPlayer.Companion.transformToM4a
 import com.md.modesetters.TtsSpeaker.error
