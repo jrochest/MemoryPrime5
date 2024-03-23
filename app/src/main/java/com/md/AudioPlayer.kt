@@ -36,7 +36,6 @@ class AudioPlayer @Inject constructor(
     private var playbackSpeedBaseOnErrorRates = 1.5f
 
     private var repeatsRemaining: Int? = null
-    private var mFiredOnceCompletionListener: OnCompletionListener? = null
     private var lastFile: String? = null
     private var wantsToPlay = false
         get() = field
@@ -234,10 +233,6 @@ class AudioPlayer @Inject constructor(
                         // This avoid firing the completion listener
                         return@launch
                     }
-                }
-                if (mFiredOnceCompletionListener != null) {
-                    mFiredOnceCompletionListener!!.onCompletion(mp)
-                    mFiredOnceCompletionListener = null
                 }
             }
         }
