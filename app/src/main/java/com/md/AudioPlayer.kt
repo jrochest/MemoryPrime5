@@ -40,9 +40,10 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
     /**
      * Preloads the file and returns true if successful. False if successful
      */
-    fun preload(originalMediaFile: String): MediaPlayerForASingleFile? {
+    suspend fun preload(originalMediaFile: String): MediaPlayerForASingleFile? {
         // Verify the new file exists prior to switching to it.
         val path = sanitizePath(originalMediaFile)
+        // TODOJNOW
         val audioFile = File(path)
         if (!audioFile.exists()) {
             TtsSpeaker.speak("Missing audio file")
@@ -61,13 +62,11 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
             return oldPlayer
         }
 
-        val before = SystemClock.uptimeMillis()
         // Example time to execute call this call in milliseconds:
         // 194 (first call is the slowest typically)
         // 68, 42,82, 59, 89...
         val newPlayer = MediaPlayerForASingleFile(validatedFile)
 
-        println("TODOJ after MediaPlayerForASingleFile = " + (SystemClock.uptimeMillis() - before))
         fileToMediaPlayerCache.put(validatedFile, newPlayer)
         return newPlayer
     }

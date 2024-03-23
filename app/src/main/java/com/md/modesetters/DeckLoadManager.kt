@@ -12,11 +12,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import javax.inject.Provider
 
 
 @ActivityScoped
 class DeckLoadManager @Inject constructor(
     @ActivityContext val context: Context,
+    private val revisionQueueProvider: Provider<RevisionQueue>,
     val currentNotePartManager: CurrentNotePartManager,
     private val focusedQueueStateModel: FocusedQueueStateModel,) {
     val decks = MutableStateFlow<List<DeckInfo>?>(null)
@@ -56,7 +58,7 @@ class DeckLoadManager @Inject constructor(
                     }
 
                     for (deck in deckList) {
-                        val revisionQueue = RevisionQueue()
+                        val revisionQueue = revisionQueueProvider.get()
                         revisionQueue.populate(DbNoteEditor.instance!!, deck.id)
                         val deckInfo = DeckInfo(deck, revisionQueue)
                         deckInfoList.add(deckInfo)

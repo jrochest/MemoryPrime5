@@ -1,15 +1,20 @@
 package com.md
 
+import android.content.Context
 import android.util.Log
 import com.md.modesetters.DeckInfo
 import com.md.provider.Note
+import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.flow.MutableStateFlow
 import javax.inject.Inject
 
-class RevisionQueue {
-    private var notesToReview = mutableListOf<Note>()
 
+class RevisionQueue
+@Inject constructor(
+    @ActivityContext val context: Context,
+) {
+    private var notesToReview = mutableListOf<Note>()
     fun populate(noteEditor: DbNoteEditor, category: Int) {
         notesToReview.clear()
         for (note in noteEditor.getOverdue(category)) {
@@ -78,7 +83,7 @@ class RevisionQueue {
     }
 
 
-    fun preload() {
+    suspend fun preload() {
         val preloadAble = notesToReview.getOrNull(1) ?: return
         AudioPlayer.instance.preload(preloadAble.question)
         AudioPlayer.instance.preload(preloadAble.answer)
