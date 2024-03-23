@@ -1,138 +1,128 @@
-package com.md;
+package com.md
 
-import android.media.MediaRecorder;
+import android.media.MediaRecorder
+import android.os.Environment
+import com.md.AudioPlayer.Companion.instance
+import com.md.AudioPlayer.Companion.sanitizePath
+import com.md.AudioPlayer.Companion.transformToM4a
+import com.md.modesetters.TtsSpeaker.error
+import com.md.utils.ToastSingleton
+import java.io.File
+import java.io.IOException
+import java.util.Random
 
-import com.md.modesetters.TtsSpeaker;
-import com.md.utils.ToastSingleton;
+class AudioRecorder {
+    private var recorder: MediaRecorder? = null
+    private val path: String
+    val generatedAudioFileNameWithExtension: String = (System.currentTimeMillis() / 100).toString() + sessionSuffixTwoDigitNumberWithExtension
+    var isRecorded = false
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Random;
+    /** AudioRecorder that generates its own new from current time and suffix  */
+    init {
+        // Force the last two digits of the time to be the same to always write to the same dir.
+        // To allow backups to exhibit some temporal locality and decrease the number of directory
+        // specific zips that need to be updated.
+        path = sanitizePath(generatedAudioFileNameWithExtension)
+    }
 
+    fun deleteFile() {
+        if (isRecorded) {
+            isRecorded = false
+            val file = File(path)
+            file.delete()
+        }
+    }
 
-public class AudioRecorder {
-	public static final String sessionSuffixTwoDigitNumber = createSuffix();
-	private static final String sessionSuffixTwoDigitNumberWithExtension = sessionSuffixTwoDigitNumber + ".m4a";
-
-	private static String createSuffix() {
-		Random random = new Random();
-
-		// String with two digit ints between 00 and 99.
-		return random.nextInt(10) + "" + random.nextInt(10);
-	}
-
-	private MediaRecorder recorder = null;
-	private final String path;
-	private final String generatedAudioFileNameWithExtension;
-	boolean recorded = false;
-
-	public String getGeneratedAudioFileNameWithExtension() {
-		return generatedAudioFileNameWithExtension;
-	}
-
-
-	/** AudioRecorder that generates its own new from current time and suffix */
-	public AudioRecorder() {
-		// Force the last two digits of the time to be the same to always write to the same dir.
-		// To allow backups to exhibit some temporal locality and decrease the number of directory
-		// specific zips that need to be updated.
-		this.generatedAudioFileNameWithExtension = (System.currentTimeMillis() / 100) + sessionSuffixTwoDigitNumberWithExtension;;
-		this.path = AudioPlayer.sanitizePath(generatedAudioFileNameWithExtension);
-	}
-
-	public void deleteFile() {
-		if (recorded) {
-			recorded = false;
-			File file = new File(this.path);
-			file.delete();
-		}
-	}
-
-	public static boolean deleteFile(String fileName) {
-		String path = AudioPlayer.sanitizePath(fileName);
-		File file = new File(path);
-		return file.delete();
-	}
-
-	/**
-	 * Stops a recording that has been previously started.
-	 */
-	public void stop() throws IOException {
-		try {
-			//TtsSpeaker.speak("Max amp is: " + recorder.getMaxAmplitude());
-			recorder.stop();
-		} catch (Exception e) {
-			System.out.print("Error during stop and release" + e);
-		} finally {
-			try {
-				recorder.release();
-			} catch (Exception e) {
-				System.out.print("Removed in finally" + e);
-			}
-		}
-
-		File audioFileExists = new File(this.path);
-		if (!audioFileExists.exists()) {
-			ToastSingleton.getInstance().error(this.path + " does not exist!");
-		} else if (audioFileExists.length() < 4_000) {
-			audioFileExists.delete();
-			throw new RecordingTooSmallException();
-		} else {
+    /**
+     * Stops a recording that has been previously started.
+     */
+    @Throws(IOException::class)
+    fun stop() {
+        try {
+            //TtsSpeaker.speak("Max amp is: " + recorder.getMaxAmplitude());
+            recorder!!.stop()
+        } catch (e: Exception) {
+            print("Error during stop and release$e")
+        } finally {
+            try {
+                recorder!!.release()
+            } catch (e: Exception) {
+                print("Removed in finally$e")
+            }
+        }
+        val audioFileExists = File(path)
+        if (!audioFileExists.exists()) {
+            ToastSingleton.getInstance().error(path + " does not exist!")
+        } else if (audioFileExists.length() < 4000) {
+            audioFileExists.delete()
+            throw RecordingTooSmallException()
+        } else {
 // TODOJNOW maybe check that recording volume and warn if too low.
-			recorded = true;
-		}
-	}
+            isRecorded = true
+        }
+    }
 
-	/**
-	 * Starts a new recording.
-	 */
-	public void start() throws IOException {
-		start(false);
-	}
+    /**
+     * Starts a new recording.
+     */
+    @Throws(IOException::class)
+    fun start() {
+        start(false)
+    }
 
-	/**
-	 * Starts a new recording.
-	 */
-	private void start(boolean isRetry) {
-		// Try write without checking if dir exists. Correct thing upon error.
-		try {
-			recorder = new MediaRecorder();
-			recorder.setAudioSource(MediaRecorder.AudioSource.VOICE_RECOGNITION);
-			recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-			recorder.setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC);
-			recorder.setAudioChannels(1);
-			recorder.setAudioEncodingBitRate(128000);
-			recorder.setAudioSamplingRate(44100);
+    /**
+     * Starts a new recording.
+     */
+    private fun start(isRetry: Boolean) {
+        // Try write without checking if dir exists. Correct thing upon error.
+        try {
+            recorder = MediaRecorder()
+            recorder!!.setAudioSource(MediaRecorder.AudioSource.VOICE_RECOGNITION)
+            recorder!!.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            recorder!!.setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC)
+            recorder!!.setAudioChannels(1)
+            recorder!!.setAudioEncodingBitRate(128000)
+            recorder!!.setAudioSamplingRate(44100)
+            recorder!!.setOutputFile(transformToM4a(path))
+            recorder!!.prepare()
+            recorder!!.start()
+        } catch (e: Exception) {
+            val state = Environment.getExternalStorageState()
+            if (state != Environment.MEDIA_MOUNTED) {
+                error("SD Card is not mounted.  It is $state")
+            }
 
-			recorder.setOutputFile(AudioPlayer.transformToM4a(this.path));
-			recorder.prepare();
-			recorder.start();
-		} catch (Exception e) {
-			String state = android.os.Environment.getExternalStorageState();
-			if (!state.equals(android.os.Environment.MEDIA_MOUNTED)) {
-				TtsSpeaker.error("SD Card is not mounted.  It is " + state);
-			}
+            // make sure the directory we plan to store the recording in exists
+            val directory = File(transformToM4a(path)).parentFile
+            if (!directory.exists() && !directory.mkdirs()) {
+                error("Path to file could not be created.")
+            }
+            if (!isRetry) {
+                // Retry once after directory creation.
+                start(true)
+            }
+        }
+    }
 
-			// make sure the directory we plan to store the recording in exists
-			File directory = new File(AudioPlayer.transformToM4a(this.path)).getParentFile();
-			if (!directory.exists() && !directory.mkdirs()) {
-				TtsSpeaker.error("Path to file could not be created.");
-			}
+    fun playFile() {
+        val audioPlayer = instance
+        audioPlayer.playFile(generatedAudioFileNameWithExtension)
+    }
 
-			if (!isRetry) {
-				// Retry once after directory creation.
-				start(true);
-			}
-		}
+    companion object {
+        val sessionSuffixTwoDigitNumber = createSuffix()
+        private val sessionSuffixTwoDigitNumberWithExtension = sessionSuffixTwoDigitNumber + ".m4a"
+        private fun createSuffix(): String {
+            val random = Random()
 
-	}
+            // String with two digit ints between 00 and 99.
+            return random.nextInt(10).toString() + "" + random.nextInt(10)
+        }
 
-	public void playFile() {
-		final AudioPlayer audioPlayer = AudioPlayer.getInstance();
-		audioPlayer.playFile(generatedAudioFileNameWithExtension);
-	}
-
-	public boolean isRecorded() {
-		return recorded;
-	}
+        fun deleteFile(fileName: String?): Boolean {
+            val path = sanitizePath(fileName!!)
+            val file = File(path)
+            return file.delete()
+        }
+    }
 }
