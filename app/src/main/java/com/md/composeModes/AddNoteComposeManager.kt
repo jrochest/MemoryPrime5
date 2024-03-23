@@ -1,7 +1,6 @@
 package com.md.composeModes
 
 import android.content.Context
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -29,6 +28,7 @@ import com.md.provider.Note
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import javax.inject.Inject
+import javax.inject.Provider
 
 
 @ActivityScoped
@@ -135,7 +135,6 @@ class AddNoteComposeManager @Inject constructor(
 }
 
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AudioRecordForPart(
     modifier: Modifier,

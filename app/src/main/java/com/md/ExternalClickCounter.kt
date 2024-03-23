@@ -16,7 +16,8 @@ class ExternalClickCounter
 
     @Inject
     constructor(
-       private val practiceModeHandler: PracticeModeStateHandler
+       private val practiceModeHandler: PracticeModeStateHandler,
+        private val audioPlayer: AudioPlayer,
     ) {
 
     @ActivityContext @Inject lateinit var context: Context
@@ -115,7 +116,7 @@ class ExternalClickCounter
                     }
                 }
                 9, 10 -> {
-                    AudioPlayer.instance.pause()
+                    audioPlayer.pause()
                     message = "repeat off"
                     deleteMode = false
                 }

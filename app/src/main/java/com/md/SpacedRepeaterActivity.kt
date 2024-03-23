@@ -9,11 +9,9 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.Bundle
 import android.view.KeyEvent
-import android.view.Menu
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
-import com.md.AudioPlayer.Companion.instance
 import com.md.modesetters.*
 import com.md.workers.IncrementalBackupManager
 import com.md.workers.IncrementalBackupPreferences
@@ -71,11 +69,14 @@ class SpacedRepeaterActivity
     @Inject
     lateinit var currentNotePartManager: Lazy<CurrentNotePartManager>
 
+    @Inject
+    lateinit var audioPlayer: Lazy<AudioPlayer>
+
     /** Called when the activity is first created.  */
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        AudioPlayer.instance.setLifeCycleOwner(this)
+        audioPlayer.get().setLifeCycleOwner(this)
         val handler = modeHandler.get()
 
         DbContants.setup(this)
@@ -126,7 +127,7 @@ class SpacedRepeaterActivity
         super.onPause()
 
         // Hiding stops the repeat playback in learning mode.
-        instance.pause()
+        audioPlayer.get().pause()
 
         playbackServiceOnPause()
         maybeStopTone()

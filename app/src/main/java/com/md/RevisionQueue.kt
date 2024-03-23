@@ -13,6 +13,7 @@ import javax.inject.Inject
 class RevisionQueue
 @Inject constructor(
     @ActivityContext val context: Context,
+    private val audioPlayer: AudioPlayer,
 ) {
     private var notesToReview = mutableListOf<Note>()
     fun populate(noteEditor: DbNoteEditor, category: Int) {
@@ -83,10 +84,11 @@ class RevisionQueue
     }
 
 
+    // TODOJNOW  preload stuff.
     suspend fun preload() {
         val preloadAble = notesToReview.getOrNull(1) ?: return
-        AudioPlayer.instance.preload(preloadAble.question)
-        AudioPlayer.instance.preload(preloadAble.answer)
+        audioPlayer.preload(preloadAble.question)
+        audioPlayer.preload(preloadAble.answer)
     }
 
     companion object {

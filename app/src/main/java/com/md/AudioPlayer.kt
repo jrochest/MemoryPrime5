@@ -8,20 +8,23 @@ import android.media.MediaPlayer.MEDIA_ERROR_UNKNOWN
 import android.media.MediaPlayer.OnCompletionListener
 import android.media.audiofx.LoudnessEnhancer
 import android.os.SystemClock
+import android.provider.MediaStore.Audio
 import android.util.LruCache
 import androidx.lifecycle.LifecycleOwner
 import com.md.modesetters.TtsSpeaker
 import com.md.utils.ToastSingleton
 import androidx.lifecycle.lifecycleScope
+import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import java.io.IOException
 import java.lang.Exception
+import javax.inject.Inject
 import kotlin.coroutines.resumeWithException
-
-class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
+@ActivityScoped
+class AudioPlayer @Inject constructor() : OnCompletionListener, MediaPlayer.OnErrorListener {
     private var lifecycleOwner: LifecycleOwner? = null
     private var focusedPlayer: MediaPlayerForASingleFile? = null
     private var playbackSpeedBaseOnErrorRates = 1.5f
@@ -36,6 +39,10 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
         }
 
     data class ValidatedAudioFileName(val originalMediaFile: String)
+
+    init {
+        AudioPlayer.instance = this
+    }
 
     /**
      * Preloads the file and returns true if successful. False if successful
@@ -236,8 +243,8 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
             wantsToPlay = autoPlay
             repeatsRemaining = if (shouldRepeat) 3 else 0
             try {
-                mediaPlayer.setOnErrorListener(instance)
-                mediaPlayer.setOnCompletionListener(instance)
+                mediaPlayer.setOnErrorListener(this@AudioPlayer)
+                mediaPlayer.setOnCompletionListener(this@AudioPlayer)
             } catch (e: IllegalArgumentException) {
                 e.printStackTrace()
             } catch (e: IllegalStateException) {
@@ -318,7 +325,7 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
 
     companion object {
         @JvmStatic
-        val instance: AudioPlayer by lazy { AudioPlayer() }
+        var instance: AudioPlayer = AudioPlayer() // TODOJNOW this is a dummy so that we can switch to DI.
 
         @JvmStatic
         fun transformToM4a(filename: String): String {

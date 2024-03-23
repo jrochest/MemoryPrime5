@@ -51,6 +51,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import javax.inject.Provider
 
 object WorkingMemoryScreen {
     const val MAX_FONT_SIZE = 36
@@ -105,7 +106,8 @@ class PracticeModeComposerManager @Inject constructor(
     val focusedQueueStateModel: FocusedQueueStateModel,
     private val deckLoadManager: DeckLoadManager,
     private val keepScreenOn: KeepScreenOn,
-    private var externalClickCounter: ExternalClickCounter
+    private var externalClickCounter: ExternalClickCounter,
+    //private val audioRecorderProvider: Provider<AudioRecorder>,
 ) {
 
     private var lastNotePracticedValue: Int? = null

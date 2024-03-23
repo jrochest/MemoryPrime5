@@ -34,6 +34,7 @@ class PracticeModeStateHandler @Inject constructor(
     private val modeFlowProvider: TopModeFlowProvider,
     private val practiceModeViewModel: PracticeModeViewModel,
     private val deckLoadManager: DeckLoadManager,
+    private val audioPlayer: AudioPlayer,
 ) {
     val activity: SpacedRepeaterActivity = context as SpacedRepeaterActivity
 
@@ -87,17 +88,17 @@ class PracticeModeStateHandler @Inject constructor(
                             val part = noteState.notePart
                             val note = checkNotNull(noteState.currentNote)
                             if (part.partIsAnswer) {
-                                AudioPlayer.instance.suspendPlayReturningTrueIfLoadedFileChanged(
+                                audioPlayer.suspendPlayReturningTrueIfLoadedFileChanged(
                                     note.answer
                                 )
                             } else {
                                 val firstPlay =
-                                    AudioPlayer.instance.suspendPlayReturningTrueIfLoadedFileChanged(
+                                    audioPlayer.suspendPlayReturningTrueIfLoadedFileChanged(
                                         note.question
                                     )
                                 if (firstPlay) {
                                     // Play twice without a break the first time.
-                                    AudioPlayer.instance.suspendPlayReturningTrueIfLoadedFileChanged(
+                                    audioPlayer.suspendPlayReturningTrueIfLoadedFileChanged(
                                         note.question
                                     )
                                 }
