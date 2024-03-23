@@ -245,7 +245,7 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
         localFocusedPlayer.hasCompletedPlaybackSinceBecomingPrimary = true
 
         lifecycleOwner?.lifecycleScope?.launch {
-            if (localFocusedPlayer == null || mp != localFocusedPlayer.mediaPlayer) {
+            if (mp != localFocusedPlayer.mediaPlayer) {
                 return@launch
             }
             repeatsRemaining?.let { repeats ->
