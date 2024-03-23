@@ -47,7 +47,9 @@ class AudioPlayer @Inject constructor(
     data class ValidatedAudioFileName(val originalMediaFile: String)
 
     /**
-     * Preloads the file and returns true if successful. False if successful
+     * Preloads the file and returns true if successful. False if successful.
+     * Preloading tends to take 100 milliseconds to load if a new MediaPlayer is needed.
+     * Returning an existing player is trivial (1 milliseconds max)
      */
     suspend fun preload(originalMediaFile: String): MediaPlayerForASingleFile? {
         val path = sanitizePath(originalMediaFile)
