@@ -7,6 +7,7 @@ import android.media.MediaPlayer
 import android.media.MediaPlayer.MEDIA_ERROR_UNKNOWN
 import android.media.MediaPlayer.OnCompletionListener
 import android.media.audiofx.LoudnessEnhancer
+import android.os.SystemClock
 import android.util.LruCache
 import androidx.lifecycle.LifecycleOwner
 import com.md.modesetters.TtsSpeaker
@@ -60,7 +61,13 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
             return oldPlayer
         }
 
+        val before = SystemClock.uptimeMillis()
+        // Example time to execute call this call in milliseconds:
+        // 194 (first call is the slowest typically)
+        // 68, 42,82, 59, 89...
         val newPlayer = MediaPlayerForASingleFile(validatedFile)
+
+        println("TODOJ after MediaPlayerForASingleFile = " + (SystemClock.uptimeMillis() - before))
         fileToMediaPlayerCache.put(validatedFile, newPlayer)
         return newPlayer
     }
