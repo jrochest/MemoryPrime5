@@ -8,7 +8,6 @@ import com.md.utils.ToastSingleton;
 import java.io.File;
 import java.io.IOException;
 import java.util.Random;
-import java.util.Timer;
 
 
 public class AudioRecorder {
@@ -24,27 +23,21 @@ public class AudioRecorder {
 
 	private MediaRecorder recorder = null;
 	private final String path;
-	private final String originalFile;
+	private final String generatedAudioFileNameWithExtension;
 	boolean recorded = false;
 
-	public String getOriginalFile() {
-		return originalFile;
+	public String getGeneratedAudioFileNameWithExtension() {
+		return generatedAudioFileNameWithExtension;
 	}
 
-	/**
-	 * Creates a new audio recording at the given path (relative to root of SD card).
-	 */
-	public AudioRecorder(String path) {
-		originalFile = path;
-		this.path = AudioPlayer.sanitizePath(path);
-	}
 
 	/** AudioRecorder that generates its own new from current time and suffix */
 	public AudioRecorder() {
 		// Force the last two digits of the time to be the same to always write to the same dir.
 		// To allow backups to exhibit some temporal locality and decrease the number of directory
 		// specific zips that need to be updated.
-		this((System.currentTimeMillis() / 100) + sessionSuffixTwoDigitNumberWithExtension);
+		this.generatedAudioFileNameWithExtension = (System.currentTimeMillis() / 100) + sessionSuffixTwoDigitNumberWithExtension;;
+		this.path = AudioPlayer.sanitizePath(generatedAudioFileNameWithExtension);
 	}
 
 	public void deleteFile() {
@@ -136,7 +129,7 @@ public class AudioRecorder {
 
 	public void playFile() {
 		final AudioPlayer audioPlayer = AudioPlayer.getInstance();
-		audioPlayer.playFile(originalFile);
+		audioPlayer.playFile(generatedAudioFileNameWithExtension);
 	}
 
 	public boolean isRecorded() {

@@ -361,9 +361,10 @@ class AudioPlayer @Inject constructor() : OnCompletionListener, MediaPlayer.OnEr
         fun sanitizePath(original: String): String {
             var filename = getAudioDirectory(original) + original
 
+            // TODOJNOW  // Check if any mp3 or wave in file system or database.
             if (!filename.contains("wav") && !filename.contains("mp3") && !filename.contains("m4a")) {
-                filename += ".mp3"
-                TtsSpeaker.error("mp3 had to be concatenated")
+                filename += ".m4a"
+                TtsSpeaker.error("m4a had to be concatenated")
             }
             return filename
         }

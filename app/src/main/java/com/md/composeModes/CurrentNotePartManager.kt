@@ -74,7 +74,7 @@ class CurrentNotePartManager @Inject constructor(
     fun saveNewAudio() {
        val notePart = noteStateFlow.value?.notePart
        val savableRecorder = checkNotNull(checkNotNull(notePart, {"note part null"}).consumeSavableRecorder())
-        updateAudioFilename(savableRecorder.originalFile)
+        updateAudioFilename(savableRecorder.generatedAudioFileNameWithExtension)
         notePart.clearRecordings()
      }
 

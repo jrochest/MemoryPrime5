@@ -28,7 +28,6 @@ import com.md.provider.Note
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import javax.inject.Inject
-import javax.inject.Provider
 
 
 @ActivityScoped
@@ -112,9 +111,9 @@ class AddNoteComposeManager @Inject constructor(
                                 return@OutlinedButton
                             }
                             val questionFile =
-                                checkNotNull(notePartQuestion.savableRecorder).originalFile
+                                checkNotNull(notePartQuestion.savableRecorder).generatedAudioFileNameWithExtension
                             val answerFile =
-                                checkNotNull(notePartAnswer.savableRecorder).originalFile
+                                checkNotNull(notePartAnswer.savableRecorder).generatedAudioFileNameWithExtension
                             val noteEditor = checkNotNull(DbNoteEditor.instance)
                             var note = Note(questionFile, answerFile)
                             note = noteEditor.insert(note) as Note
