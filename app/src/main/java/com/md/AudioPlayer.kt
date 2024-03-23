@@ -55,7 +55,8 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
 
         val validatedFile = ValidatedAudioFileName(path)
         val oldPlayer = fileToMediaPlayerCache.get(validatedFile)
-        if (oldPlayer != null) {
+
+        if (oldPlayer != null && !oldPlayer.isCleanedUp) {
             return oldPlayer
         }
 
@@ -81,6 +82,7 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
     /** A wrapper for a combination of a file and media player. */
     inner class MediaPlayerForASingleFile(audioFileName: ValidatedAudioFileName) {
         var hasCompletedPlaybackSinceBecomingPrimary: Boolean = false
+        var isCleanedUp: Boolean = false
         val mediaPlayer = MediaPlayer()
         private val loudnessEnhancer: LoudnessEnhancer =
             LoudnessEnhancer(mediaPlayer.audioSessionId)
@@ -105,6 +107,7 @@ class AudioPlayer : OnCompletionListener, MediaPlayer.OnErrorListener {
         }
 
         fun cleanup() {
+            isCleanedUp = true
             mediaPlayer.release()
             loudnessEnhancer.release()
         }
