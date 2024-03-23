@@ -282,7 +282,6 @@ class AudioPlayer @Inject constructor(
 
         @JvmStatic
         fun getAudioDirectory(filename: String): String {
-            var filename = filename
             var basename = filename.replace(".mp3", "").replace(".wav", "").replace(".m4a", "")
             // Cut off the negative sign. Just used for dir name.
             basename = basename.substring(1)
