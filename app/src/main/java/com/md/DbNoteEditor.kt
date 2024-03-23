@@ -5,7 +5,7 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
-import com.md.RevisionQueue.Companion.currentDeckReviewQueueDeleteThisTODO
+import com.md.RevisionQueue.Companion.currentDeckReviewQueueDeleteThisTODOJNOW
 import com.md.provider.AbstractDeck
 import com.md.provider.AbstractNote
 import com.md.provider.Deck
@@ -45,7 +45,7 @@ class DbNoteEditor {
 
     fun update(note: AbstractNote) {
         // If it's in there update it.
-        currentDeckReviewQueueDeleteThisTODO!!.updateNote((note as Note), true)
+        currentDeckReviewQueueDeleteThisTODOJNOW!!.updateNote((note as Note), true)
         val values = ContentValues()
 
         // Bump the modification time to now.
@@ -404,7 +404,7 @@ class DbNoteEditor {
         if (currentNoteId != null) {
             val intCurrentId = currentNoteId!!.toInt()
 
-            currentDeckReviewQueueDeleteThisTODO!!.removeNote(intCurrentId)
+            currentDeckReviewQueueDeleteThisTODOJNOW!!.removeNote(intCurrentId)
         }
         if (this.note == note) {
             returnVal = next
@@ -428,7 +428,7 @@ class DbNoteEditor {
                 null)
         if (currentNoteId != null) {
             val intCurrentId = currentNoteId!!.toInt()
-            currentDeckReviewQueueDeleteThisTODO!!.removeNote(intCurrentId)
+            currentDeckReviewQueueDeleteThisTODOJNOW!!.removeNote(intCurrentId)
         }
     }
 

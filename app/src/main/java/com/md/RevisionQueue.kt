@@ -92,7 +92,7 @@ class RevisionQueue
     companion object {
         // use the FocusedQueueStateModel instead.
         @JvmStatic
-		var currentDeckReviewQueueDeleteThisTODO: RevisionQueue? = null
+		var currentDeckReviewQueueDeleteThisTODOJNOW: RevisionQueue? = null
     }
 }
 

@@ -2,8 +2,6 @@ package com.md.composeModes
 
 import android.content.Context
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -12,10 +10,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -110,7 +106,7 @@ class AddNoteComposeManager @Inject constructor(
                                                                              contentDescription = text
                     },
                         onClick = {
-                            val currentDeckReviewQueue = RevisionQueue.currentDeckReviewQueueDeleteThisTODO
+                            val currentDeckReviewQueue = RevisionQueue.currentDeckReviewQueueDeleteThisTODOJNOW
                             if (currentDeckReviewQueue == null) {
                                 TtsSpeaker.error("No revision queue. Make and or select a deck.")
                                 return@OutlinedButton
