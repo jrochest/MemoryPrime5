@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 import java.lang.Exception
@@ -51,15 +52,20 @@ class AudioPlayer @Inject constructor(
     suspend fun preload(originalMediaFile: String): MediaPlayerForASingleFile? {
         // Verify the new file exists prior to switching to it.
         val path = sanitizePath(originalMediaFile)
-        // TODOJNOW
         val audioFile = File(path)
-        if (!audioFile.exists()) {
-            TtsSpeaker.speak("Missing audio file")
-            // This seem like it might be using a branch newly recorded file when it
-            // messes up. The missing file it found was:
-            // com.jrochest.mp.debug/files/com.md.MemoryPrime/AudioMemo/46/1661565629946.m4a
-            // which did not exist.
-            System.err.println("$path does not exist. original $originalMediaFile")
+        val exists = withContext(defaultDispatcher) {
+            if (!audioFile.exists()) {
+                TtsSpeaker.speak("Missing audio file")
+                // This seem like it might be using a branch newly recorded file when it
+                // messes up. The missing file it found was:
+                // com.jrochest.mp.debug/files/com.md.MemoryPrime/AudioMemo/46/1661565629946.m4a
+                // which did not exist.
+                System.err.println("$path does not exist. original $originalMediaFile")
+                false
+            }
+            true
+        }
+        if (!exists) {
             return null
         }
 
@@ -69,12 +75,12 @@ class AudioPlayer @Inject constructor(
         if (oldPlayer != null && !oldPlayer.isCleanedUp) {
             return oldPlayer
         }
-
-        // Example time to execute call this call in milliseconds:
-        // 194 (first call is the slowest typically)
-        // 68, 42,82, 59, 89...
-        val newPlayer = MediaPlayerForASingleFile(validatedFile)
-
+        val newPlayer = withContext(defaultDispatcher) {
+            // Example time to execute call this call in milliseconds:
+            // 194 (first call is the slowest typically)
+            // 68, 42,82, 59, 89...
+            MediaPlayerForASingleFile(validatedFile)
+        }
         fileToMediaPlayerCache.put(validatedFile, newPlayer)
         return newPlayer
     }
