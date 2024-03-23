@@ -83,8 +83,6 @@ class RevisionQueue
 
     }
 
-
-    // TODOJNOW  preload stuff.
     suspend fun preload() {
         val preloadAble = notesToReview.getOrNull(1) ?: return
         audioPlayer.preload(preloadAble.question)

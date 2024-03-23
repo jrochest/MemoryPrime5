@@ -14,7 +14,10 @@ import androidx.lifecycle.LifecycleOwner
 import com.md.modesetters.TtsSpeaker
 import com.md.utils.ToastSingleton
 import androidx.lifecycle.lifecycleScope
+import com.md.application.DefaultDispatcher
 import dagger.hilt.android.scopes.ActivityScoped
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -24,7 +27,9 @@ import java.lang.Exception
 import javax.inject.Inject
 import kotlin.coroutines.resumeWithException
 @ActivityScoped
-class AudioPlayer @Inject constructor() : OnCompletionListener, MediaPlayer.OnErrorListener {
+class AudioPlayer @Inject constructor(
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher
+) : OnCompletionListener, MediaPlayer.OnErrorListener {
     private var lifecycleOwner: LifecycleOwner? = null
     private var focusedPlayer: MediaPlayerForASingleFile? = null
     private var playbackSpeedBaseOnErrorRates = 1.5f
@@ -320,9 +325,6 @@ class AudioPlayer @Inject constructor() : OnCompletionListener, MediaPlayer.OnEr
     }
 
     companion object {
-        @JvmStatic
-        var instance: AudioPlayer = AudioPlayer() // TODOJNOW this is a dummy so that we can switch to DI.
-
         @JvmStatic
         fun transformToM4a(filename: String): String {
             return filename.replace(".mp3", ".m4a").replace(".wav", ".m4a")
