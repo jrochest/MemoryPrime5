@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 
+// Keep this.
 public class CleanUpAudioFilesModeSetter extends ModeSetter {
 
 	private TextView mStatusMessage;
@@ -206,7 +207,7 @@ public class CleanUpAudioFilesModeSetter extends ModeSetter {
 				if (file.isDirectory()) {
 					inFiles.addAll(getListFiles(file));
 				} else {
-					if (file.getName().endsWith(".wav") || file.getName().endsWith(".mp3") || file.getName().endsWith("mp4")) {
+					if (file.getName().endsWith("mp4")) {
 						inFiles.add(file);
 					} else if (file.getName().endsWith(".bad")) {
 						System.out.println("deleting .bad file " + file.getName());
