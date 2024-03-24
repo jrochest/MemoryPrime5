@@ -30,7 +30,7 @@ import kotlin.coroutines.resumeWithException
 @ActivityScoped
 class AudioPlayer @Inject constructor(
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher
-) : OnCompletionListener, MediaPlayer.OnErrorListener {
+) {
     private var lifecycleOwner: LifecycleOwner? = null
     private var focusedPlayer: MediaPlayerForASingleFile? = null
     private var playbackSpeedBaseOnErrorRates = 1.5f
@@ -205,64 +205,12 @@ class AudioPlayer @Inject constructor(
         return fileNeededToBeFreshlyLoaded
     }
 
-    override fun onCompletion(mp: MediaPlayer) {
-        val localFocusedPlayer = focusedPlayer
-        if (localFocusedPlayer == null || mp != localFocusedPlayer.mediaPlayer) {
-            return
-        }
-
-        localFocusedPlayer.hasCompletedPlaybackSinceBecomingPrimary = true
-
-        lifecycleOwner?.lifecycleScope?.launch {
-            if (mp != localFocusedPlayer.mediaPlayer) {
-                return@launch
-            }
-            repeatsRemaining?.let { repeats ->
-                if ((repeats <= 0 && wantsToPlay)) {
-                    //pause()
-                    localFocusedPlayer.mediaPlayer.pause()
-                } else if (wantsToPlay) {
-                    // This was added to avoid playing when not resumed.
-                    if (lifecycleOwner.isAtLeastResumed()) {
-                        localFocusedPlayer.mediaPlayer.seekTo(0)
-                        localFocusedPlayer.mediaPlayer.start()
-                        if (repeats <= 1) {
-                            wantsToPlay = false
-                        }
-                        repeatsRemaining = repeats - 1
-                        // This avoid firing the completion listener
-                        return@launch
-                    }
-                }
-            }
-        }
-    }
-
-    override fun onError(mediaPlayer: MediaPlayer, what: Int, extra: Int): Boolean {
-        println("error during playback what=$what extra $extra $lastFile")
-        if (MEDIA_ERROR_UNKNOWN == what) {
-            TtsSpeaker.speak("play MEDIA_ERROR_UNKNOWN. Trying normal speed")
-            playbackSpeedBaseOnErrorRates = 1f
-        } else {
-            TtsSpeaker.speak("play error. code $what")
-            //cleanUp(mediaPlayer)
-        }
-
-        return true
-    }
-
     fun pause() {
         wantsToPlay = false
         val player = focusedPlayer ?: return
         if (player.mediaPlayer.isPlaying) {
             player.mediaPlayer.pause()
         }
-    }
-
-    fun playWhenReady() {
-        wantsToPlay = true
-        val player = focusedPlayer ?: return
-        player.mediaPlayer.start()
     }
 
     fun setLifeCycleOwner(lifecycleOwner: LifecycleOwner) {
