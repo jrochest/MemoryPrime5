@@ -84,13 +84,11 @@ class SpacedRepeaterActivity
         activityHelper.commonActivitySetup()
         // Normal mode.
 
-        CleanUpAudioFilesModeSetter.getInstance().setup(this, handler)
-
-
-        // DEFAULT MODE TEMP
-        // DeckChooseModeSetter.getInstance().switchMode(this)
+        // Uncomment these to clean up.
+        // CleanUpAudioFilesModeSetter.getInstance().setup(this, handler)
+        // CleanUpAudioFilesModeSetter.getInstance().switchMode(this)
+        // and comment this out temporarily.
         workingModeSetter.get().switchMode(this)
-
 
         playbackServiceOnCreate()
 

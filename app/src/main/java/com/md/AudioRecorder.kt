@@ -48,6 +48,11 @@ class AudioRecorder @Inject constructor(
         } finally {
             try {
                 recorder!!.release()
+                val audioFileExists = File(path)
+                if (audioFileExists.length() > 4_000_000) {
+                    // Typically this means that the recording didn't stop correctly.
+                    audioFileExists.delete()
+                }
             } catch (e: Exception) {
                 print("Removed in finally$e")
             }
@@ -59,7 +64,7 @@ class AudioRecorder @Inject constructor(
             audioFileExists.delete()
             throw RecordingTooSmallException()
         } else {
-// TODOJNOW maybe check that recording volume and warn if too low.
+            // TODOJNOW maybe check that recording volume and warn if too low.
             isRecorded = true
         }
     }

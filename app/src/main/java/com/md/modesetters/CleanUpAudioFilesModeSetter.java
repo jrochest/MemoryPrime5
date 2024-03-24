@@ -127,8 +127,11 @@ public class CleanUpAudioFilesModeSetter extends ModeSetter {
 	private int countValidGoodFiles() {
 		// Call on background thread only!!!
 		int missingFileCount = 0;
-		for (String goodFiles : mGoodFiles) {
-			final String filePathString = AudioPlayer.sanitizePath(goodFiles);
+		for (String goodFile : mGoodFiles) {
+			if (goodFile == null) {
+				continue;
+			}
+			final String filePathString = AudioPlayer.sanitizePath(goodFile);
 			File f = new File(filePathString);
 			if(!f.exists()) {
 				System.out.println("Missing file " + filePathString);
@@ -203,7 +206,7 @@ public class CleanUpAudioFilesModeSetter extends ModeSetter {
 				if (file.isDirectory()) {
 					inFiles.addAll(getListFiles(file));
 				} else {
-					if (file.getName().endsWith(".wav") || file.getName().endsWith(".mp3")) {
+					if (file.getName().endsWith(".wav") || file.getName().endsWith(".mp3") || file.getName().endsWith("mp4")) {
 						inFiles.add(file);
 					} else if (file.getName().endsWith(".bad")) {
 						System.out.println("deleting .bad file " + file.getName());
