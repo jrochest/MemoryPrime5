@@ -50,7 +50,6 @@ class SettingsModeComposeManager @Inject constructor(
     init {
         activity.lifecycleScope.launch {
             topModeFlowProvider.modeModel.collect { mode ->
-
                 if (mode == Mode.Settings) {
                     updateStateModel()
                 }
@@ -130,6 +129,7 @@ class SettingsModeComposeManager @Inject constructor(
             Text(text = backupLocation, style = MaterialTheme.typography.bodySmall)
             SpaceLabelAndValue()
         }
+
         Row {
             Button(onClick = { IncrementalBackupManager.openBackupDir(activity, location.requestCode) }) {
                 Text(text = "Update backup location", style = MaterialTheme.typography.labelMedium)
