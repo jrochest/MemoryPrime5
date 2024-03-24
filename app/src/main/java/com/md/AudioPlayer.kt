@@ -270,18 +270,16 @@ class AudioPlayer @Inject constructor(
     }
 
     companion object {
-
+        private const val NUMBER_OF_DIRS = 100
         @JvmStatic
         fun getAudioDirectory(filename: String): String {
             var basename = filename
             // Cut off the negative sign. Just used for dir name.
             basename = basename.substring(1)
             val fileInNumberForm = basename.toLong()
-            val NUMBER_OF_DIRS = 100
             val whichDirToPutIn = (fileInNumberForm % NUMBER_OF_DIRS).toInt()
-            val zeroPadding: String
             // make this more general some day.
-            zeroPadding = if (whichDirToPutIn < 10) {
+            val zeroPadding: String = if (whichDirToPutIn < 10) {
                 "0"
             } else {
                 ""
