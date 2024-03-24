@@ -4,22 +4,15 @@ package com.md
 
 import android.media.AudioAttributes
 import android.media.MediaPlayer
-import android.media.MediaPlayer.MEDIA_ERROR_UNKNOWN
 import android.media.MediaPlayer.OnCompletionListener
 import android.media.audiofx.LoudnessEnhancer
-import android.os.SystemClock
-import android.provider.MediaStore.Audio
 import android.util.LruCache
-import androidx.lifecycle.LifecycleOwner
 import com.md.modesetters.TtsSpeaker
 import com.md.utils.ToastSingleton
-import androidx.lifecycle.lifecycleScope
 import com.md.application.DefaultDispatcher
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -214,7 +207,7 @@ class AudioPlayer @Inject constructor(
         private const val NUMBER_OF_DIRS = 100
         @JvmStatic
         fun getAudioDirectory(filename: String): String {
-            var basename = filename
+            var basename = filename.replace(".m4a", "")
             // Cut off the negative sign. Just used for dir name.
             basename = basename.substring(1)
             val fileInNumberForm = basename.toLong()
@@ -230,13 +223,13 @@ class AudioPlayer @Inject constructor(
         }
 
         @JvmStatic
-        fun sanitizePath(original: String): String {
-            var filename = getAudioDirectory(original) + original
-            if (!filename.contains("m4a")) {
-                filename += ".m4a"
+        fun sanitizePath(fileName: String): String {
+            var fullPathPlusFileName = getAudioDirectory(fileName) + fileName
+            if (!fullPathPlusFileName.contains("m4a")) {
+                fullPathPlusFileName += ".m4a"
                 TtsSpeaker.error("m4a had to be concatenated")
             }
-            return filename
+            return fullPathPlusFileName
         }
     }
 }
