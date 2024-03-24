@@ -182,9 +182,7 @@ public class CleanUpAudioFilesModeSetter extends ModeSetter {
 					return;
 				}
 
-				// TODO(jrochest) This code is probably unnecessary. The db entries sometimes
-				// are missing the extension, but not the other way around.
-				String basename = AudioPlayer.basename(goodFile);
+				String basename = goodFile;
 				if (fileName.contains(basename)) {
 					System.out.println("Basename that matches. basename " + basename);
 					if (!fileName.contains("(")) {

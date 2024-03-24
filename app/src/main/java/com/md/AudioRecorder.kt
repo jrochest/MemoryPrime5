@@ -3,7 +3,6 @@ package com.md
 import android.media.MediaRecorder
 import android.os.Environment
 import com.md.AudioPlayer.Companion.sanitizePath
-import com.md.AudioPlayer.Companion.transformToM4a
 import com.md.modesetters.TtsSpeaker.error
 import com.md.utils.ToastSingleton
 import java.io.File
@@ -90,7 +89,7 @@ class AudioRecorder @Inject constructor(
             recorder!!.setAudioChannels(1)
             recorder!!.setAudioEncodingBitRate(128000)
             recorder!!.setAudioSamplingRate(44100)
-            recorder!!.setOutputFile(transformToM4a(path))
+            recorder!!.setOutputFile(path)
             recorder!!.prepare()
             recorder!!.start()
         } catch (e: Exception) {
@@ -98,9 +97,8 @@ class AudioRecorder @Inject constructor(
             if (state != Environment.MEDIA_MOUNTED) {
                 error("SD Card is not mounted.  It is $state")
             }
-
             // make sure the directory we plan to store the recording in exists
-            val directory = File(transformToM4a(path)).parentFile
+            val directory = File(path).parentFile
             if (!directory.exists() && !directory.mkdirs()) {
                 error("Path to file could not be created.")
             }

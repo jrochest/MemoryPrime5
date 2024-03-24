@@ -270,19 +270,10 @@ class AudioPlayer @Inject constructor(
     }
 
     companion object {
-        @JvmStatic
-        fun transformToM4a(filename: String): String {
-            return filename.replace(".mp3", ".m4a").replace(".wav", ".m4a")
-        }
-
-        @JvmStatic
-        fun basename(filename: String): String {
-            return filename.replace(".mp3", "").replace(".wav", "").replace(".m4a", "")
-        }
 
         @JvmStatic
         fun getAudioDirectory(filename: String): String {
-            var basename = filename.replace(".mp3", "").replace(".wav", "").replace(".m4a", "")
+            var basename = filename
             // Cut off the negative sign. Just used for dir name.
             basename = basename.substring(1)
             val fileInNumberForm = basename.toLong()
@@ -302,9 +293,7 @@ class AudioPlayer @Inject constructor(
         @JvmStatic
         fun sanitizePath(original: String): String {
             var filename = getAudioDirectory(original) + original
-
-            // TODOJNOW  // Check if any mp3 or wave in file system or database.
-            if (!filename.contains("wav") && !filename.contains("mp3") && !filename.contains("m4a")) {
+            if (!filename.contains("m4a")) {
                 filename += ".m4a"
                 TtsSpeaker.error("m4a had to be concatenated")
             }
