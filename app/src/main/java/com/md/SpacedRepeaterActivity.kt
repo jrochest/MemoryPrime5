@@ -76,7 +76,6 @@ class SpacedRepeaterActivity
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        audioPlayer.get().setLifeCycleOwner(this)
         val handler = modeHandler.get()
 
         DbContants.setup(this)

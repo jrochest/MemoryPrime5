@@ -31,12 +31,9 @@ import kotlin.coroutines.resumeWithException
 class AudioPlayer @Inject constructor(
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher
 ) {
-    private var lifecycleOwner: LifecycleOwner? = null
     private var focusedPlayer: MediaPlayerForASingleFile? = null
     private var playbackSpeedBaseOnErrorRates = 1.5f
 
-    private var repeatsRemaining: Int? = null
-    private var lastFile: String? = null
     private var wantsToPlay = false
         get() = field
         set(value) {
@@ -211,10 +208,6 @@ class AudioPlayer @Inject constructor(
         if (player.mediaPlayer.isPlaying) {
             player.mediaPlayer.pause()
         }
-    }
-
-    fun setLifeCycleOwner(lifecycleOwner: LifecycleOwner) {
-        this.lifecycleOwner = lifecycleOwner
     }
 
     companion object {
