@@ -49,7 +49,8 @@ object IncrementalBackupPreferences {
         BACKUP_LOCATION_KEY_4, "Backup location 4"
     )
 
-    fun getBackupLocations(context: Context): MutableMap<String, Uri> {
+
+    fun getBackupLocationsFromPrefs(context: Context): MutableMap<String, Uri> {
         val sharedPref = context.getSharedPreferences(BACKUP_LOCATION_FILE, Context.MODE_PRIVATE)
 
         val backupLocations = mutableMapOf<String, Uri>()

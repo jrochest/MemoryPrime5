@@ -43,7 +43,7 @@ class BackupModeComposeManager @Inject constructor(
                         activity,
                         activity.contentResolver,
                         shouldSpeak = true,
-                        runExtraValidation = false,
+                        runExtraValidation = true,
                         backupModeStateModel = backupModeStateModel
                     )
                 }

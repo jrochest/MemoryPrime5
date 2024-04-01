@@ -45,9 +45,9 @@ object IncrementalBackupManager {
         onFinished: ((Boolean) -> Unit)? = null,
         backupModeStateModel: BackupModeStateModel? = null
     ) {
-        val backupLocations = IncrementalBackupPreferences.getBackupLocations(context)
-        if (backupLocations.isNotEmpty()) {
-            backupToUris(context, contentResolver, backupLocations, shouldSpeak, runExtraValidation, onFinished,
+        val prefBackupLocations = IncrementalBackupPreferences.getBackupLocationsFromPrefs(context)
+        if (prefBackupLocations.isNotEmpty()) {
+            backupToUris(context, contentResolver, prefBackupLocations, shouldSpeak, runExtraValidation, onFinished,
                 backupModeStateModel)
         } else {
             backupModeStateModel?.summary?.value = "No backup needed"
@@ -83,7 +83,7 @@ object IncrementalBackupManager {
     private fun backupToUris(
         context: Context,
         contentResolver: ContentResolver,
-        backupUris: MutableMap<String, Uri>,
+        backupUrisFromPrefs: MutableMap<String, Uri>,
         shouldSpeak: Boolean = false,
         runExtraValidation: Boolean,
         onFinished: ((Boolean) -> Unit)?,
@@ -94,7 +94,7 @@ object IncrementalBackupManager {
             launch(Dispatchers.IO) {
                 val result = backupOnBackground(
                     contentResolver,
-                    backupUris,
+                    backupUrisFromPrefs,
                     context.filesDir,
                     shouldSpeak,
                     context,
@@ -116,7 +116,7 @@ object IncrementalBackupManager {
 
     private suspend fun backupOnBackground(
         contentResolver: ContentResolver,
-        backupUris: MutableMap<String, Uri>,
+        backupUrisFromPrefs: MutableMap<String, Uri>,
         appStorageRoot: File,
         shouldSpeak: Boolean,
         context: Context,
@@ -124,7 +124,7 @@ object IncrementalBackupManager {
         backupModeStateModel: BackupModeStateModel?
     ) : Boolean {
         var success = false
-        val validBackupUris = backupUris.filter { uri ->
+        val validBackupUris = backupUrisFromPrefs.filter { uri ->
             try {
                 if (DocumentFile.fromTreeUri(context, uri.value)?.isDirectory == true) {
                     TtsSpeaker.speak("Backup needed for: " + (uri.value.lastPathSegment))
