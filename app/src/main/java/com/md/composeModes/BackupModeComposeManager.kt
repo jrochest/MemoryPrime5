@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.lifecycleScope
 import com.md.SpacedRepeaterActivity
+import com.md.utils.KeepScreenOn
 import com.md.viewmodel.TopModeFlowProvider
 import com.md.workers.IncrementalBackupManager
 import dagger.hilt.android.qualifiers.ActivityContext
@@ -27,7 +28,8 @@ class BackupModeStateModel @Inject constructor() {
 class BackupModeComposeManager @Inject constructor(
     @ActivityContext val context: Context,
     private val topModeFlowProvider: TopModeFlowProvider,
-    private val backupModeStateModel: BackupModeStateModel
+    private val backupModeStateModel: BackupModeStateModel,
+    private val keepScreenOn: KeepScreenOn
 
 ) {
     val activity: SpacedRepeaterActivity by lazy {
@@ -38,6 +40,7 @@ class BackupModeComposeManager @Inject constructor(
         activity.lifecycleScope.launch {
             topModeFlowProvider.modeModel.collect() { mode ->
                 if (mode == Mode.Backup && !backupModeStateModel.backupInProgress.value) {
+                    keepScreenOn.keepScreenOn(extraScreenOnDuration = java.time.Duration.ofMinutes(1000))
                     backupModeStateModel.backupInProgress.value = true
                     IncrementalBackupManager.createAndWriteZipBackToPreviousLocation(
                         activity,

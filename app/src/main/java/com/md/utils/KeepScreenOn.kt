@@ -57,7 +57,7 @@ class KeepScreenOn @Inject constructor(
         }
     }
 
-    fun keepScreenOn(updatedDimScreenAfterBriefDelay: Boolean = false) {
+    fun keepScreenOn(updatedDimScreenAfterBriefDelay: Boolean = false, extraScreenOnDuration: Duration? = null) {
         dimScreenAfterBriefDelayMode = updatedDimScreenAfterBriefDelay
         screenOnThenDelayThenIfNotCancelledOff?.cancel()
         screenOnThenDelayThenIfNotCancelledOff = activity.lifecycleScope.launch {
@@ -66,6 +66,11 @@ class KeepScreenOn @Inject constructor(
                     return@repeatOnLifecycle
                 }
                 activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+                if (extraScreenOnDuration != null) {
+                    delay(extraScreenOnDuration.toMillis())
+                }
+
                 if (ENABLE_BRIGHTNESS_CONTROL) {
                     restoreInitialBrightness()
                     if (dimScreenAfterBriefDelayMode) {
