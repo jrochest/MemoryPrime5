@@ -9,7 +9,7 @@ import com.md.CategorySingleton
 import com.md.DbNoteEditor
 import com.md.DbRepEditor
 import com.md.FocusedQueueStateModel
-import com.md.RevisionQueue.Companion.currentDeckReviewQueueDeleteThisTODOJNOW
+import com.md.RevisionQueue.Companion.currentDeckReviewQueueDeleteThisTODOJSOON
 import com.md.SpacedRepeaterActivity
 import com.md.application.MainDispatcher
 import com.md.composeModes.CurrentNotePartManager
@@ -24,7 +24,6 @@ import com.md.viewmodel.TopModeFlowProvider
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
@@ -177,7 +176,7 @@ class PracticeModeStateHandler @Inject constructor(
             val currentNote = noteState.currentNote
             if (shouldQueue) {
                 // Place at end of queue.
-                currentDeckReviewQueueDeleteThisTODOJNOW!!.updateNote(currentNote, false)
+                currentDeckReviewQueueDeleteThisTODOJSOON!!.updateNote(currentNote, false)
             } else {
                 val editor = DbNoteEditor.instance
                 if (editor != null) {
@@ -186,7 +185,7 @@ class PracticeModeStateHandler @Inject constructor(
                 } else {
                     TtsSpeaker.speak("Error decreasing priority")
                 }
-                currentDeckReviewQueueDeleteThisTODOJNOW!!.hardPostpone(currentNote)
+                currentDeckReviewQueueDeleteThisTODOJSOON!!.hardPostpone(currentNote)
             }
             // Prepare the next note in the queue.
             setupQuestionMode()
@@ -282,13 +281,13 @@ class PracticeModeStateHandler @Inject constructor(
     }
 
     private fun updateStartingInQuestionMode() {
-        val currentNote = currentDeckReviewQueueDeleteThisTODOJNOW!!.peekQueue()
+        val currentNote = currentDeckReviewQueueDeleteThisTODOJSOON!!.peekQueue()
         currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = false)
         if (currentNote != null) {
             val metrics = practiceModeViewModel.metricsFlow.value
             practiceModeViewModel.metricsFlow.value = metrics.copy(
                 notesPracticed = metrics.notesPracticed + 1,
-                remainingInQueue = currentDeckReviewQueueDeleteThisTODOJNOW?.getSize() ?: 0
+                remainingInQueue = currentDeckReviewQueueDeleteThisTODOJSOON?.getSize() ?: 0
             )
         }
     }
@@ -320,10 +319,10 @@ class PracticeModeStateHandler @Inject constructor(
 
         // If you scored too low review it again, at the end.
         if (currentNote.is_due_for_acquisition_rep) {
-            currentDeckReviewQueueDeleteThisTODOJNOW!!.updateNote(currentNote, false)
+            currentDeckReviewQueueDeleteThisTODOJSOON!!.updateNote(currentNote, false)
             missCounter++
         } else {
-            currentDeckReviewQueueDeleteThisTODOJNOW!!.removeNote(currentNote.id)
+            currentDeckReviewQueueDeleteThisTODOJSOON!!.removeNote(currentNote.id)
         }
     }
 
@@ -333,7 +332,7 @@ class PracticeModeStateHandler @Inject constructor(
             val noteEditor = DbNoteEditor.instance
             val note = noteState.currentNote
             noteEditor!!.deleteCurrent(activity, note)
-            currentDeckReviewQueueDeleteThisTODOJNOW!!.removeNote(note.id)
+            currentDeckReviewQueueDeleteThisTODOJSOON!!.removeNote(note.id)
             currentNotePartManager.onDelete()
             setupQuestionMode()
         }
@@ -360,14 +359,14 @@ class PracticeModeStateHandler @Inject constructor(
             val metrics = practiceModeViewModel.metricsFlow.value
             practiceModeViewModel.metricsFlow.value = metrics.copy(
                 notesPracticed = metrics.notesPracticed - 1,
-                remainingInQueue = currentDeckReviewQueueDeleteThisTODOJNOW?.getSize() ?: 0
+                remainingInQueue = currentDeckReviewQueueDeleteThisTODOJSOON?.getSize() ?: 0
             )
 
             val noteEditor = DbNoteEditor.instance
             noteEditor!!.update(currentNote)
             // In case the grade was bad take it out of revision queue.
-            currentDeckReviewQueueDeleteThisTODOJNOW!!.removeNote(currentNote.id)
-            currentDeckReviewQueueDeleteThisTODOJNOW!!.addToFront(currentNote)
+            currentDeckReviewQueueDeleteThisTODOJSOON!!.removeNote(currentNote.id)
+            currentDeckReviewQueueDeleteThisTODOJSOON!!.addToFront(currentNote)
             setupAnswerMode()
         } else {
             TtsSpeaker.speak("Nothing to undo")

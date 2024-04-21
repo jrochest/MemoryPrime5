@@ -22,7 +22,6 @@ import com.md.DbNoteEditor
 import com.md.RecordingTooSmallException
 import com.md.RevisionQueue
 import com.md.SpacedRepeaterActivity
-import com.md.application.MainDispatcher
 import com.md.composeStyles.ButtonStyles.ImportantButtonColor
 import com.md.composeStyles.ButtonStyles.MediumImportanceButtonColor
 import com.md.modesetters.TtsSpeaker
@@ -112,7 +111,7 @@ class AddNoteComposeManager @Inject constructor(
                                                                              contentDescription = text
                     },
                         onClick = {
-                            val currentDeckReviewQueue = RevisionQueue.currentDeckReviewQueueDeleteThisTODOJNOW
+                            val currentDeckReviewQueue = RevisionQueue.currentDeckReviewQueueDeleteThisTODOJSOON
                             if (currentDeckReviewQueue == null) {
                                 TtsSpeaker.error("No revision queue. Make and or select a deck.")
                                 return@OutlinedButton

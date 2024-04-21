@@ -86,7 +86,7 @@ class RevisionQueue
     companion object {
         // use the FocusedQueueStateModel instead.
         @JvmStatic
-		var currentDeckReviewQueueDeleteThisTODOJNOW: RevisionQueue? = null
+		var currentDeckReviewQueueDeleteThisTODOJSOON: RevisionQueue? = null
     }
 
     suspend fun preload() {
