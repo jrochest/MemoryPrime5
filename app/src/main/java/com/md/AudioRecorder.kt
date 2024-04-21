@@ -15,6 +15,7 @@ import java.io.File
 import java.io.IOException
 import java.util.Random
 import javax.inject.Inject
+import kotlin.math.max
 
 class AudioRecorder @Inject constructor(
     @ActivityContext val context: Context,
@@ -119,9 +120,8 @@ class AudioRecorder @Inject constructor(
 
             activity.lifecycleScope.launch {
                 while (isRecording) {
-                    maxRecordingAmplitude = Math.max(localRecorder.maxAmplitude, maxRecordingAmplitude)
-                    delay(100)
-                    println("TODOJ current max maxRecordingAmplitude = " + maxRecordingAmplitude)
+                    maxRecordingAmplitude = max(localRecorder.maxAmplitude, maxRecordingAmplitude)
+                    delay(300)
                 }
             }
         } catch (e: Exception) {
