@@ -15,17 +15,32 @@ import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.Duration
 
 import javax.inject.Inject
 
+
+@ActivityScoped
+class ClickToKeepAwakeProvider @Inject constructor() {
+    private val _oneClickToScreenOn = MutableStateFlow(false)
+
+    val oneClickToScreenOn: StateFlow<Boolean> = _oneClickToScreenOn
+
+    fun enableOneClickToStayAwakeMode() { _oneClickToScreenOn.value = true }
+
+    fun disableOneClickToStayAwakeMode() { _oneClickToScreenOn.value = false }
+}
+
 // TODO: perhaps i don't need this or can make it less extreme in dimming
 // because pocket mode exists.
-// Keywords: Keep awake keep alive. Screen wake. Keywords.. we did it?
+// Keywords: Keep awake keep alive. Screen wake. Keywords.
 @ActivityScoped
 class KeepScreenOn @Inject constructor(
     @ActivityContext private val context: Context,
+    private val clickToKeepAwakeProvider: ClickToKeepAwakeProvider,
     private val topModeFlowProvider: TopModeFlowProvider,
 ) {
     val activity: SpacedRepeaterActivity by lazy {
@@ -81,12 +96,12 @@ class KeepScreenOn @Inject constructor(
                     }
                 }
 
-
                 delay(DURATION_UNTIL_WARNING.toMillis())
                 TtsSpeaker.speak(
-                    "screen off in ${DURATION_AFTER_WARNING_TO_SCREEN_OFF.seconds} seconds",
+                    "screen off in ${DURATION_AFTER_WARNING_TO_SCREEN_OFF.seconds} seconds. Click to stay awake.",
                     lowVolume = false
                 )
+                clickToKeepAwakeProvider.enableOneClickToStayAwakeMode()
                 delay(DURATION_AFTER_WARNING_TO_SCREEN_OFF.toMillis())
                 activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                 cancel()

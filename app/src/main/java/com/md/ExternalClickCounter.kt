@@ -5,6 +5,8 @@ import android.os.SystemClock
 import androidx.lifecycle.lifecycleScope
 import com.md.modesetters.PracticeModeStateHandler
 import com.md.modesetters.TtsSpeaker
+import com.md.utils.KeepScreenOn
+import com.md.utils.ClickToKeepAwakeProvider
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.*
@@ -16,8 +18,8 @@ class ExternalClickCounter
 
     @Inject
     constructor(
-       private val practiceModeHandler: PracticeModeStateHandler,
-        private val audioPlayer: AudioPlayer,
+        private val practiceModeHandler: PracticeModeStateHandler,
+        private val clickToKeepAwakeProvider: ClickToKeepAwakeProvider,
     ) {
 
     @ActivityContext @Inject lateinit var context: Context
@@ -25,9 +27,21 @@ class ExternalClickCounter
         context as SpacedRepeaterActivity
     }
 
+    inner class PressGroupInstanceData {
+        val isInClickToKeepAwakeMode = clickToKeepAwakeProvider.oneClickToScreenOn.value
+        var pressGroupCount = 1
+            private set
+
+
+        fun incrementCount()  {
+           pressGroupCount++
+        }
+    }
+
     private var pressGroupLastPressMs: Long = 0
     private var pressGroupLastPressEventMs: Long = 0
-    private var pressGroupCount: Int = 0
+    private var pressGroupInstanceData: PressGroupInstanceData? = null
+
     private var deleteMode = false
 
     private var currentJob: Job? = null
@@ -37,35 +51,46 @@ class ExternalClickCounter
         val handler = practiceModeHandler
         currentJob?.cancel()
         currentJob = null
+        var pressGroupInstanceDataLocal = pressGroupInstanceData
         val currentTimeMs = SystemClock.uptimeMillis()
-        if (pressGroupLastPressMs == 0L) {
-            pressGroupCount = 1
+        if (pressGroupInstanceDataLocal == null) {
+            pressGroupInstanceDataLocal = PressGroupInstanceData()
+            this.pressGroupInstanceData = pressGroupInstanceDataLocal
             println("New Press group.")
         } else if (pressGroupLastPressEventMs + previousPressGroupGapMillis < eventTimeMs) {
             // Large gap. Reset count.
-            pressGroupCount = 1
+            pressGroupInstanceDataLocal = PressGroupInstanceData()
+            this.pressGroupInstanceData = pressGroupInstanceDataLocal
             println("New Press group. Expiring old one.")
         } else {
-            println("Time diff: " + (currentTimeMs - pressGroupLastPressMs))
-            println("Time diff event time: " + (eventTimeMs - pressGroupLastPressEventMs))
-            pressGroupCount++
-            println("mPressGroupCount++. $pressGroupCount")
+            pressGroupInstanceDataLocal.incrementCount()
         }
         pressGroupLastPressEventMs = eventTimeMs
         pressGroupLastPressMs = currentTimeMs
 
+        val pressGroupCount = pressGroupInstanceDataLocal.pressGroupCount
+
         // Allow larger gaps for larger counts.
-       val pressGroupMaxGapMsOverride: Long = if (pressGroupCount > 3) {
-            TtsSpeaker.speak(pressGroupCount.toString())
-            1500L
-        } else {
-            pressGroupMaxGapMs
-        }
-
+       val pressGroupMaxGapMsOverride: Long = when {
+           pressGroupCount > 5 -> {
+               TtsSpeaker.speak(pressGroupCount.toString())
+               2000L
+           }
+           pressGroupCount > 3 -> {
+               TtsSpeaker.speak(pressGroupCount.toString())
+               1500L
+           }
+           pressGroupCount == 3 -> {
+               TtsSpeaker.speak(pressGroupCount.toString())
+               1000L
+           }
+           else -> {
+               pressGroupMaxGapMs
+           }
+       }
         previousPressGroupGapMillis = pressGroupMaxGapMsOverride
-
         currentJob = activity.lifecycleScope.launch(Dispatchers.Main) {
-            async {
+            val unused = async {
                 @Suppress("DeferredResultUnused")
                 activity.lowVolumeClickTone()
             }
@@ -73,6 +98,16 @@ class ExternalClickCounter
             delay(pressGroupMaxGapMsOverride)
 
             if (!isActive) {
+                return@launch
+            }
+
+            // This mode is sticky. If the click group starts prior to
+            // going into the activity level isInClickToKeepAwakeMode
+            // that won't affect the clip group. And all items in the
+            // click group are affected by a start group isInClickToKeepAwakeMode = true.
+            if (pressGroupInstanceDataLocal.isInClickToKeepAwakeMode) {
+                TtsSpeaker.speak("awake")
+                clickToKeepAwakeProvider.disableOneClickToStayAwakeMode()
                 return@launch
             }
 
@@ -116,7 +151,6 @@ class ExternalClickCounter
                     }
                 }
                 9, 10 -> {
-                    audioPlayer.pause()
                     message = "repeat off"
                     deleteMode = false
                 }
