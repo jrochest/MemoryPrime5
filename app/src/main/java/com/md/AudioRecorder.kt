@@ -80,7 +80,6 @@ class AudioRecorder @Inject constructor(
             audioFileExists.delete()
             throw RecordingTooQuiet()
         } else {
-            // TODOJNOW maybe check that recording volume and warn if too low.
             isRecorded = true
         }
     }
