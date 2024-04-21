@@ -19,6 +19,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.md.AudioRecorder
 import com.md.DbNoteEditor
+import com.md.RecordingTooQuiet
 import com.md.RecordingTooSmallException
 import com.md.RevisionQueue
 import com.md.SpacedRepeaterActivity
@@ -197,6 +198,9 @@ fun AudioRecordForPart(
                         notePart.pendingRecorder = null
                     } catch (e: RecordingTooSmallException) {
                         TtsSpeaker.speak("Recording too short")
+                        handleFailedPendingRecording()
+                    }  catch (e: RecordingTooQuiet) {
+                        TtsSpeaker.speak("Recording too quiet")
                         handleFailedPendingRecording()
                     }
                 }

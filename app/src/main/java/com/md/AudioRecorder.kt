@@ -1,22 +1,34 @@
 package com.md
 
+import android.content.Context
 import android.media.MediaRecorder
+import android.os.Build
 import android.os.Environment
+import androidx.lifecycle.lifecycleScope
 import com.md.AudioPlayer.Companion.sanitizePath
 import com.md.modesetters.TtsSpeaker.error
 import com.md.utils.ToastSingleton
+import dagger.hilt.android.qualifiers.ActivityContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.IOException
 import java.util.Random
 import javax.inject.Inject
 
 class AudioRecorder @Inject constructor(
+    @ActivityContext val context: Context,
     private val audioPlayer: AudioPlayer,
 ) {
+    val activity: SpacedRepeaterActivity by lazy {
+        context as SpacedRepeaterActivity
+    }
     private var recorder: MediaRecorder? = null
     private val path: String
     val generatedAudioFileNameWithExtension: String = (System.currentTimeMillis() / 100).toString() + sessionSuffixTwoDigitNumberWithExtension
     var isRecorded = false
+    var isRecording = false
+    var maxRecordingAmplitude = 0
 
     /** AudioRecorder that generates its own new from current time and suffix  */
     init {
@@ -37,10 +49,10 @@ class AudioRecorder @Inject constructor(
     /**
      * Stops a recording that has been previously started.
      */
-    @Throws(IOException::class)
+    @Throws(java.lang.Exception::class)
     fun stop() {
         try {
-            //TtsSpeaker.speak("Max amp is: " + recorder.getMaxAmplitude());
+            isRecording = false
             recorder!!.stop()
         } catch (e: Exception) {
             print("Error during stop and release$e")
@@ -62,6 +74,11 @@ class AudioRecorder @Inject constructor(
         } else if (audioFileExists.length() < 4000) {
             audioFileExists.delete()
             throw RecordingTooSmallException()
+
+        } else if (maxRecordingAmplitude < 1900) {
+            // When I whisper reasonably loud the level is about 2000.
+            audioFileExists.delete()
+            throw RecordingTooQuiet()
         } else {
             // TODOJNOW maybe check that recording volume and warn if too low.
             isRecorded = true
@@ -80,18 +97,34 @@ class AudioRecorder @Inject constructor(
      * Starts a new recording.
      */
     private fun start(isRetry: Boolean) {
+
         // Try write without checking if dir exists. Correct thing upon error.
         try {
-            recorder = MediaRecorder()
-            recorder!!.setAudioSource(MediaRecorder.AudioSource.VOICE_RECOGNITION)
-            recorder!!.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            recorder!!.setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC)
-            recorder!!.setAudioChannels(1)
-            recorder!!.setAudioEncodingBitRate(128000)
-            recorder!!.setAudioSamplingRate(44100)
-            recorder!!.setOutputFile(path)
-            recorder!!.prepare()
-            recorder!!.start()
+            val localRecorder =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                 MediaRecorder(context)
+            } else {
+                MediaRecorder()
+            }
+            recorder = localRecorder
+            localRecorder.setAudioSource(MediaRecorder.AudioSource.VOICE_RECOGNITION)
+            localRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            localRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC)
+            localRecorder.setAudioChannels(1)
+            localRecorder.setAudioEncodingBitRate(128000)
+            localRecorder.setAudioSamplingRate(44100)
+            localRecorder.setOutputFile(path)
+            localRecorder.prepare()
+            localRecorder.start()
+            isRecording = true
+
+            activity.lifecycleScope.launch {
+                while (isRecording) {
+                    maxRecordingAmplitude = Math.max(localRecorder.maxAmplitude, maxRecordingAmplitude)
+                    delay(100)
+                    println("TODOJ current max maxRecordingAmplitude = " + maxRecordingAmplitude)
+                }
+            }
         } catch (e: Exception) {
             val state = Environment.getExternalStorageState()
             if (state != Environment.MEDIA_MOUNTED) {
