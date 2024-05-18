@@ -1,6 +1,8 @@
 package com.md.utils
 
 import android.content.Context
+import android.media.AudioManager
+import android.media.ToneGenerator
 import android.view.WindowManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -51,6 +53,7 @@ class KeepScreenOn @Inject constructor(
     private var dimScreenAfterBriefDelayMode: Boolean = false
 
     private var screenOnThenDelayThenIfNotCancelledOff: Job? = null
+    private val tone  = ToneGenerator(AudioManager.STREAM_MUSIC, 50)
 
     init {
         activity.lifecycleScope.launch {
@@ -98,11 +101,17 @@ class KeepScreenOn @Inject constructor(
 
                 delay(DURATION_UNTIL_WARNING.toMillis())
                 TtsSpeaker.speak(
-                    "screen off in ${DURATION_AFTER_WARNING_TO_SCREEN_OFF.seconds} seconds. Click to stay awake.",
+                    "Click to stay awake.",
                     lowVolume = false
                 )
+
                 clickToKeepAwakeProvider.enableOneClickToStayAwakeMode()
-                delay(DURATION_AFTER_WARNING_TO_SCREEN_OFF.toMillis())
+
+                for (i in 1..DURATION_AFTER_WARNING_TO_SCREEN_OFF.seconds) {
+                    tone.startTone(ToneGenerator.TONE_PROP_PROMPT,  /* durationMs = */ 100)
+                    delay(Duration.ofSeconds(1).toMillis())
+                }
+
                 activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                 cancel()
             }
@@ -126,6 +135,6 @@ class KeepScreenOn @Inject constructor(
         private const val ENABLE_BRIGHTNESS_CONTROL = false
         private val DURATION_UNTIL_DARK = Duration.ofSeconds(3)
         private val DURATION_UNTIL_WARNING = Duration.ofSeconds(60)
-        private val DURATION_AFTER_WARNING_TO_SCREEN_OFF = Duration.ofSeconds(30)
+        private val DURATION_AFTER_WARNING_TO_SCREEN_OFF = Duration.ofSeconds(60)
     }
 }
