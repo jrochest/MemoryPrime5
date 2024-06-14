@@ -140,17 +140,6 @@ class SpacedRepeaterActivity
         TtsSpeaker.speak("Config change")
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        MoveManager.cancelJobs()
-        val modeBackStack = modeHandler.get()
-        if (modeBackStack.goBack()) {
-            return
-        }
-
-        super.onBackPressed()
-    }
-
     override fun onStart() {
         super.onStart()
 
