@@ -11,21 +11,22 @@ android {
     defaultConfig {
         applicationId "com.jrochest.mp"
         minSdkVersion 28
-        targetSdkVersion 33
-        versionCode 10203
+        targetSdkVersion 34
+        versionCode 10204
         versionName '1.2.5'
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         proguardFiles 'proguard-rules.pro'
     }
     buildTypes {
+        // As of 2024 I'm going to use the same package name and app name for compatibility.
         release {
             minifyEnabled true
             shrinkResources true
             debuggable false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.debug
-            applicationIdSuffix = '.release'
-            manifestPlaceholders.appName = "MemoryPrime"
+            applicationIdSuffix = '.debug'
+            manifestPlaceholders.appName = "MP"
         }
         debug {
             debuggable = true
