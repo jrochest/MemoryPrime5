@@ -107,9 +107,11 @@ class AudioRecorder @Inject constructor(
                 MediaRecorder()
             }
             recorder = localRecorder
+            // This sounds better than default with Kimura boom mic.
             localRecorder.setAudioSource(MediaRecorder.AudioSource.VOICE_RECOGNITION)
             localRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            localRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC)
+            // I switched to this and test just with the Shokz headphones. Be ready to revert.
+            localRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC_ELD)
             localRecorder.setAudioChannels(1)
             localRecorder.setAudioEncodingBitRate(128000)
             localRecorder.setAudioSamplingRate(44100)
