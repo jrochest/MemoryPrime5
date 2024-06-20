@@ -6,6 +6,7 @@ import android.os.Build
 import android.os.Environment
 import androidx.lifecycle.lifecycleScope
 import com.md.AudioPlayer.Companion.sanitizePath
+import com.md.composeModes.SettingsModeStateModel
 import com.md.modesetters.TtsSpeaker.error
 import com.md.utils.ToastSingleton
 import dagger.hilt.android.qualifiers.ActivityContext
@@ -20,6 +21,7 @@ import kotlin.math.max
 class AudioRecorder @Inject constructor(
     @ActivityContext val context: Context,
     private val audioPlayer: AudioPlayer,
+    private val stateModel: SettingsModeStateModel,
 ) {
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
@@ -76,7 +78,7 @@ class AudioRecorder @Inject constructor(
             audioFileExists.delete()
             throw RecordingTooSmallException()
 
-        } else if (maxRecordingAmplitude < 1900) {
+        } else if (maxRecordingAmplitude < 900) {
             // When I whisper reasonably loud the level is about 2000.
             audioFileExists.delete()
             throw RecordingTooQuiet()
@@ -118,6 +120,7 @@ class AudioRecorder @Inject constructor(
             localRecorder.setOutputFile(path)
             localRecorder.prepare()
             localRecorder.start()
+            localRecorder.preferredDevice = stateModel.preferredMic.value
             isRecording = true
 
             activity.lifecycleScope.launch {
