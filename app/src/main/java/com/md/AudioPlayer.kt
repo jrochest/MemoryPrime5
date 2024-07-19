@@ -10,6 +10,7 @@ import android.util.LruCache
 import com.md.modesetters.TtsSpeaker
 import com.md.utils.ToastSingleton
 import com.md.application.DefaultDispatcher
+import com.md.composeModes.SettingsModeStateModel
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,9 +21,11 @@ import java.io.IOException
 import java.lang.Exception
 import javax.inject.Inject
 import kotlin.coroutines.resumeWithException
+
 @ActivityScoped
 class AudioPlayer @Inject constructor(
-    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
+    private val stateModel: SettingsModeStateModel,
 ) {
     private var focusedPlayer: MediaPlayerForASingleFile? = null
     private var playbackSpeedBaseOnErrorRates = 1.5f
@@ -97,17 +100,20 @@ class AudioPlayer @Inject constructor(
         var hasCompletedPlaybackSinceBecomingPrimary: Boolean = false
         var isCleanedUp: Boolean = false
         val mediaPlayer = MediaPlayer()
-        private val loudnessEnhancer: LoudnessEnhancer =
-            LoudnessEnhancer(mediaPlayer.audioSessionId)
+        private var loudnessEnhancer: LoudnessEnhancer? = null
 
         init {
             with(mediaPlayer) {
-                val loudnessEnhancer = LoudnessEnhancer(mediaPlayer.audioSessionId)
-                // As of 2024 Q1 this does increase volume.
-                // 7000 is easily perceivable as loader than 700, and 0 easily perceivable as
-                // quieter than 700.
-                loudnessEnhancer.setTargetGain(700)
-                loudnessEnhancer.enabled = true
+
+                if (stateModel.increaseLoudness.value) {
+                    val loudnessEnhancer = LoudnessEnhancer(mediaPlayer.audioSessionId)
+                    // As of 2024 Q1 this does increase volume.
+                    // 7000 is easily perceivable as loader than 700, and 0 easily perceivable as
+                    // quieter than 700.
+                    loudnessEnhancer.setTargetGain(700)
+                    loudnessEnhancer.enabled = true
+                }
+
                 setAudioAttributes(
                     AudioAttributes.Builder()
                         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
@@ -116,7 +122,12 @@ class AudioPlayer @Inject constructor(
                 )
                 setDataSource(audioFileName.originalMediaFile)
                 prepare()
-                playbackParams = playbackParams.setSpeed(playbackSpeedBaseOnErrorRates)
+
+                // Note playback crashes without this.
+                playbackParams = playbackParams.setSpeed(
+                    if (stateModel.speedUpPlayback.value) playbackSpeedBaseOnErrorRates else 1f
+                )
+
                 isLooping = false
                 pause()
             }
@@ -125,7 +136,8 @@ class AudioPlayer @Inject constructor(
         fun cleanup() {
             isCleanedUp = true
             mediaPlayer.release()
-            loudnessEnhancer.release()
+            loudnessEnhancer?.release()
+            loudnessEnhancer = null
         }
     }
 
@@ -136,7 +148,7 @@ class AudioPlayer @Inject constructor(
      */
     suspend fun suspendPlayReturningTrueIfLoadedFileChanged(
         audioFileName: String?,
-    ) : Boolean {
+    ): Boolean {
         if (audioFileName == null) {
             ToastSingleton.getInstance()
                 .error("Null file path. You should probably delete this note Jacob.")
@@ -149,10 +161,10 @@ class AudioPlayer @Inject constructor(
             TtsSpeaker.speak("IOException loading audio file. Delete or record again: " + e.message)
             e.printStackTrace()
         } catch (e: IllegalStateException) {
-            TtsSpeaker.speak("IllegalStateException loading audio file. Delete or record again: "+ e.message)
+            TtsSpeaker.speak("IllegalStateException loading audio file. Delete or record again: " + e.message)
             e.printStackTrace()
         }
-        if (localCurrentPlayer == null)  {
+        if (localCurrentPlayer == null) {
             return false
         }
         val fileNeededToBeFreshlyLoaded: Boolean
@@ -205,6 +217,7 @@ class AudioPlayer @Inject constructor(
 
     companion object {
         private const val NUMBER_OF_DIRS = 100
+
         @JvmStatic
         fun getAudioDirectory(filename: String): String {
             var basename = filename.replace(".m4a", "")

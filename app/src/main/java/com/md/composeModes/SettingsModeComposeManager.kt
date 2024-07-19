@@ -2,13 +2,9 @@ package com.md.composeModes
 
 import android.content.Context
 import android.media.AudioDeviceInfo
-import android.media.AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
 import android.media.AudioDeviceInfo.TYPE_USB_HEADSET
-import android.media.AudioDeviceInfo.TYPE_WIRED_HEADSET
 import android.media.AudioManager
-import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -48,6 +44,10 @@ class SettingsModeStateModel @Inject constructor() {
     val backupLocationName4 = MutableStateFlow<String?>(null)
 
     val preferredMic = MutableStateFlow<AudioDeviceInfo?>(null)
+
+    val speedUpPlayback = MutableStateFlow(false)
+
+    val increaseLoudness = MutableStateFlow(true)
 }
 
 @ActivityScoped
@@ -121,10 +121,13 @@ class SettingsModeComposeManager @Inject constructor(
             Text(text = "Activity settings", style = MaterialTheme.typography.titleMedium)
 
             SpaceBetweenSettings()
-            LookAheadSetting()
+            PlaybackSpeedSetting()
 
             SpaceBetweenSettings()
-            MicrophoneSetting()
+            PlaybackAudioIncreaseSetting()
+
+            SpaceBetweenSettings()
+            LookAheadSetting()
 
             SpaceBetweenSettings()
             MicrophoneSetting()
@@ -188,6 +191,39 @@ class SettingsModeComposeManager @Inject constructor(
                 style = MaterialTheme.typography.labelLarge
             )
         }
+    }
+
+
+    @Composable
+    private fun PlaybackSpeedSetting() {
+        Text(
+            text = "Speed up playback",
+            style = MaterialTheme.typography.labelLarge
+        )
+        SpaceLabelAndValue()
+        val speedUpPlayback = stateModel.speedUpPlayback.collectAsState().value
+        Switch(
+            checked = speedUpPlayback,
+            onCheckedChange = {
+                stateModel.speedUpPlayback.value = it
+            }
+        )
+    }
+
+    @Composable
+    private fun PlaybackAudioIncreaseSetting() {
+        Text(
+            text = "Increase audio loudness",
+            style = MaterialTheme.typography.labelLarge
+        )
+        SpaceLabelAndValue()
+        val speedUpPlayback = stateModel.increaseLoudness.collectAsState().value
+        Switch(
+            checked = speedUpPlayback,
+            onCheckedChange = {
+                stateModel.increaseLoudness.value = it
+            }
+        )
     }
 
     @Composable
