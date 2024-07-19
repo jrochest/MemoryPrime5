@@ -114,57 +114,77 @@ class SettingsModeComposeManager @Inject constructor(
             BackLocationForIndex(IncrementalBackupPreferences.location4) { stateModel.backupLocationName4 }
 
             SpaceBetweenSettings()
+
             Text(text = "Activity settings", style = MaterialTheme.typography.titleMedium)
 
             SpaceBetweenSettings()
-            val lookAhead = stateModel.enableLookAhead.collectAsState()
+            LookAheadSetting()
+
+            SpaceBetweenSettings()
+            MicrophoneSetting()
+
+
+            SpaceBetweenSettings()
+            MicrophoneSetting()
+        }
+    }
+
+    @Composable
+    private fun LookAheadSetting() {
+        val lookAhead = stateModel.enableLookAhead.collectAsState()
+        Text(
+            text = "Look ahead (not integrated yet)",
+            style = MaterialTheme.typography.labelLarge
+        )
+        SpaceLabelAndValue()
+        Switch(
+            checked = lookAhead.value,
+            onCheckedChange = {
+                stateModel.enableLookAhead.value = it
+            }
+        )
+    }
+
+    @Composable
+    private fun MicrophoneSetting() {
+        val preferredMic = stateModel.preferredMic.collectAsState().value
+        if (preferredMic == null) {
             Text(
-                text = "Look ahead (not integrated yet)",
+                text = "Using DEFAULT mic",
                 style = MaterialTheme.typography.labelLarge
             )
-            SpaceLabelAndValue()
-            Switch(
-                checked = lookAhead.value,
-                onCheckedChange = {
-                    stateModel.enableLookAhead.value = it
-                }
+        } else if (preferredMic.type == TYPE_USB_HEADSET) {
+            Text(
+                text = "Using TYPE_USB_HEADSET mic",
+                style = MaterialTheme.typography.labelLarge
             )
-
-            SpaceLabelAndValue()
-
-            val preferredMic = stateModel.preferredMic.collectAsState().value
-            if (preferredMic == null) {
-                Text(text = "Using DEFAULT mic",
-                    style = MaterialTheme.typography.labelLarge)
-            } else if (preferredMic.type == TYPE_USB_HEADSET) {
-                Text(text = "Using TYPE_USB_HEADSET mic",
-                    style = MaterialTheme.typography.labelLarge)
+        }
+        TextButton(onClick = {
+            stateModel.preferredMic.value = null
+        }) {
+            Text(
+                text = "Switch to DEFAULT mic",
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
+        TextButton(onClick = {
+            val audioManager =
+                context.getSystemService(AppCompatActivity.AUDIO_SERVICE) as AudioManager
+            val headset: AudioDeviceInfo? =
+                audioManager.getDevices(
+                    AudioManager.GET_DEVICES_INPUTS
+                ).find { it.type == TYPE_USB_HEADSET }
+            if (headset != null) {
+                stateModel.preferredMic.value = headset
+                TtsSpeaker.speak("Found TYPE_USB_HEADSET")
+            } else {
+                TtsSpeaker.speak("Fail")
             }
-
-            TextButton(onClick = {
-                stateModel.preferredMic.value = null
-            }) {
-                Text(text = "Switch to DEFAULT mic",
-                    style = MaterialTheme.typography.labelLarge)
-            }
-
-            TextButton(onClick = {
-                val audioManager =
-                    context.getSystemService(AppCompatActivity.AUDIO_SERVICE) as AudioManager
-                val headset: AudioDeviceInfo? =
-                    audioManager.getDevices(
-                        AudioManager.GET_DEVICES_INPUTS
-                    ).find { it.type == TYPE_USB_HEADSET }
-                if (headset != null) {
-                    stateModel.preferredMic.value = headset
-                    TtsSpeaker.speak("Found TYPE_USB_HEADSET")
-                } else {
-                    TtsSpeaker.speak("Fail")
-                }
-            }) {
-                Text(text = "Switch to Mic TYPE_USB_HEADSET",
-                    style = MaterialTheme.typography.labelLarge)
-            }
+        }) {
+            Text(
+                text = "Switch to Mic TYPE_USB_HEADSET",
+                style = MaterialTheme.typography.labelLarge
+            )
         }
     }
 
