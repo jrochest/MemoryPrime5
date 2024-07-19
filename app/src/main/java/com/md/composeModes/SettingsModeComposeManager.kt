@@ -47,7 +47,7 @@ class SettingsModeStateModel @Inject constructor() {
 
     val speedUpPlayback = MutableStateFlow(false)
 
-    val increaseLoudness = MutableStateFlow(true)
+    val increaseLoudness = MutableStateFlow(false)
 }
 
 @ActivityScoped

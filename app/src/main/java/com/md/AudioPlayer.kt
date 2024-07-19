@@ -109,7 +109,7 @@ class AudioPlayer @Inject constructor(
                     val loudnessEnhancer = LoudnessEnhancer(mediaPlayer.audioSessionId)
                     // As of 2024 Q1 this does increase volume.
                     // 7000 is easily perceivable as loader than 700, and 0 easily perceivable as
-                    // quieter than 700.
+                    // quieter than 700. This also makes the audio sound less clear at high values.
                     loudnessEnhancer.setTargetGain(700)
                     loudnessEnhancer.enabled = true
                 }
