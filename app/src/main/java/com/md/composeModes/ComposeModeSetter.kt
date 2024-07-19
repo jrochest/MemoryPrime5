@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
@@ -84,15 +86,22 @@ class ComposeModeSetter @Inject constructor(
             context.setContentView(ComposeView(context).apply {
                 setContent @Composable {
                     AppTheme {
-                        Column (Modifier.fillMaxSize().background(color = MaterialTheme.colorScheme.background)) {
+                        Column(
+                            Modifier
+                                .fillMaxSize()
+                                .background(color = MaterialTheme.colorScheme.background)
+                                .verticalScroll(state = rememberScrollState())
+                        ) {
                             // This is for testing easily on userdebug devices.
                             if (testingMode.isTestDevice) {
                                 Button(onClick = {
                                     remoteInputDeviceClickHandler.onClick(SystemClock.uptimeMillis())
                                 }) {
-                                    Text(textAlign = TextAlign.Center,
+                                    Text(
+                                        textAlign = TextAlign.Center,
                                         text = "Fake BT button for testing",
-                                        modifier = Modifier.fillMaxWidth())
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
                                 }
                             }
                             // TODOJ delete

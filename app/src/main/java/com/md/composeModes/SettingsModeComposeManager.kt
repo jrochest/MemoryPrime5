@@ -8,10 +8,13 @@ import android.media.AudioDeviceInfo.TYPE_WIRED_HEADSET
 import android.media.AudioManager
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -100,7 +103,7 @@ class SettingsModeComposeManager @Inject constructor(
 
     @Composable
     fun ShowUiForState() {
-        Column {
+        Column(modifier = Modifier.verticalScroll(state = rememberScrollState())) {
             Text(text = "Settings", style = MaterialTheme.typography.headlineSmall)
             SpaceBetweenSettings()
             Text(
@@ -122,7 +125,6 @@ class SettingsModeComposeManager @Inject constructor(
 
             SpaceBetweenSettings()
             MicrophoneSetting()
-
 
             SpaceBetweenSettings()
             MicrophoneSetting()
