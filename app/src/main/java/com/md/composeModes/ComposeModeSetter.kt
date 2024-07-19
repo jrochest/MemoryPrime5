@@ -90,7 +90,7 @@ class ComposeModeSetter @Inject constructor(
                             Modifier
                                 .fillMaxSize()
                                 .background(color = MaterialTheme.colorScheme.background)
-                                .verticalScroll(state = rememberScrollState())
+
                         ) {
                             // This is for testing easily on userdebug devices.
                             if (testingMode.isTestDevice) {
