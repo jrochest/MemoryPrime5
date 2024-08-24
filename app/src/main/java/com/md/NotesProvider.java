@@ -145,11 +145,9 @@ public class NotesProvider extends ContentProvider {
 			}
 
 			if (oldVersion == 25) {
-
-
 				oldVersion++;
 				try {
-					// TODOJ change tablet and field of this.
+					// TODOJ change table and field of this.
 					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN "  + PRIORITY +  " INTEGER DEFAULT 100");
 				} catch (Exception e) {
 					String message = e.getMessage();
