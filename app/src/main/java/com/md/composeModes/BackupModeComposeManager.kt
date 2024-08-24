@@ -1,10 +1,16 @@
 package com.md.composeModes
 
 import android.content.Context
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.lifecycle.lifecycleScope
 import com.md.SpacedRepeaterActivity
 import com.md.utils.KeepScreenOn
@@ -20,6 +26,8 @@ import javax.inject.Inject
 class BackupModeStateModel @Inject constructor() {
     val summary = MutableStateFlow("Starting backup...")
     val remainingItems = MutableStateFlow("")
+    val pendingZipDirSets = mutableSetOf <String>()
+    val remainingZipsToWriteCount = MutableStateFlow(0)
     val errorMessage = MutableStateFlow("")
     val backupInProgress = MutableStateFlow(false)
 }
@@ -57,22 +65,42 @@ class BackupModeComposeManager @Inject constructor(
     }
 
     @Composable
+    fun KeepScreenOn() {
+        val currentView = LocalView.current
+        DisposableEffect(Unit) {
+            currentView.keepScreenOn = true
+            onDispose {
+                currentView.keepScreenOn = false
+            }
+        }
+    }
+
+    @Composable
     fun compose() {
-        ShowUiForState()
+        // Don't interrupt the backup.
+        KeepScreenOn()
+        Column (modifier = Modifier.verticalScroll(rememberScrollState())) {
+          ShowUiForState()
+        }
     }
 
     @Composable
     fun ShowUiForState() {
+
+
         val summary = backupModeStateModel.summary.collectAsState()
         val errorMessage = backupModeStateModel.errorMessage.collectAsState()
-        val remainingItems = backupModeStateModel.remainingItems.collectAsState()
+        val writtenItemsLog = backupModeStateModel.remainingItems.collectAsState()
+
+        val remainingZipsToWriteCount = backupModeStateModel.remainingZipsToWriteCount.collectAsState()
         val inProgress = backupModeStateModel.backupInProgress.collectAsState()
         if (inProgress.value) {
             Text(text = "Backup in progress... ", style = MaterialTheme.typography.headlineSmall)
         }
         Text(text = "Backup status: ", style = MaterialTheme.typography.headlineSmall)
         Text(text = summary.value, style = MaterialTheme.typography.bodyLarge)
-        Text(text = remainingItems.value, style = MaterialTheme.typography.bodyMedium)
+        Text(text = "Zips to write: ${remainingZipsToWriteCount.value}", style = MaterialTheme.typography.bodyLarge)
+        Text(text = writtenItemsLog.value, style = MaterialTheme.typography.bodyMedium)
         Text(text = errorMessage.value, style = MaterialTheme.typography.bodyLarge)
     }
 }

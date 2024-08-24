@@ -21,6 +21,11 @@ object MemPrimeManager {
         return absoluteFile.path.replaceBefore("com.md.MemoryPrime", "")
     }
 
+    /**
+     * Writes a zip file with the given files and directories. Write to the given [dest].
+     *
+     * @return Whether the write was successfully completed.
+     */
     fun zip(files: List<File>, dirs: List<File>, dest: FileOutputStream) : Boolean {
         try {
 

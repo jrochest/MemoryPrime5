@@ -325,6 +325,11 @@ object IncrementalBackupManager {
                             }
                         }
 
+                        if (backupModeStateModel != null) {
+                            backupModeStateModel.pendingZipDirSets.add(dirName)
+                            backupModeStateModel.remainingZipsToWriteCount.value = backupModeStateModel.pendingZipDirSets.size
+                        }
+
                         // Create the specific audio directory's zip.
                         val dirZip =
                                 backupRoot.createFile("application/zip", "$dirName.zip")
@@ -334,12 +339,15 @@ object IncrementalBackupManager {
                             val descriptor = contentResolver.openFileDescriptor(dirZip.uri, "w")
                             descriptor?.use {
                                 val output = FileOutputStream(it.fileDescriptor)
-                                if (MemPrimeManager.zip(fileList, dirsToZip, output)) {
+                                val successfullyWroteZip = MemPrimeManager.zip(fileList, dirsToZip, output)
+                                if (successfullyWroteZip) {
                                     GlobalScope.launch(Dispatchers.Main) {
                                         ToastSingleton.getInstance()
                                                 .msg("Memprime backed up $dirName")
                                         val backupModeStateModel = backupModeStateModel
                                         if (backupModeStateModel != null) {
+                                            backupModeStateModel.pendingZipDirSets.remove(dirName)
+                                            backupModeStateModel.remainingZipsToWriteCount.value = backupModeStateModel.pendingZipDirSets.size
                                             backupModeStateModel.remainingItems.value = backupModeStateModel.remainingItems.value + "\nBackup dir: $dirName"
                                         }
                                     }
