@@ -1,9 +1,13 @@
 package com.md.composeModes
 
 import android.content.Context
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -11,12 +15,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import com.md.AudioRecorder
 import com.md.DbNoteEditor
 import com.md.DefaultDeckToAddNewNotesToSharedPreference
@@ -75,12 +85,15 @@ class AddNoteComposeManager @Inject constructor(
 
     @Composable
     fun ShowUiForState(state: State) {
+        val edges = remember { mutableStateListOf<UserDoodleArea.Edge>() }
         val buttonModifier = Modifier.fillMaxHeight()
         val firstButtonModifier = buttonModifier.fillMaxWidth(.5f)
         val secondButtonModifier = buttonModifier.fillMaxWidth(1f)
-
         Column {
-            Row(Modifier.fillMaxHeight(.33f)) {
+            Row(Modifier.fillMaxHeight(.25f)) {
+                UserDoodleArea.DrawingCanvas(edges = edges)
+            }
+            Row(Modifier.fillMaxHeight(.35f)) {
                 AudioRecordForPart(
                     firstButtonModifier, notePart = notePartQuestion,
                     audioRecorderProvider
@@ -90,7 +103,7 @@ class AddNoteComposeManager @Inject constructor(
                     hasSavable = state.hasQuestion
                 )
             }
-            Row(Modifier.fillMaxHeight(.5f)) {
+            Row(Modifier.fillMaxHeight(.60f)) {
                 AudioRecordForPart(
                     firstButtonModifier, notePart = notePartAnswer, audioRecorderProvider
                 )
@@ -99,7 +112,7 @@ class AddNoteComposeManager @Inject constructor(
                     hasSavable = state.hasAnswer
                 )
             }
-            Row(Modifier.fillMaxHeight(1f)) {
+            Row(Modifier.fillMaxHeight(100f)) {
                 OutlinedButton(modifier = firstButtonModifier,
                     onClick = {
                         notePartQuestion.pendingRecorder?.deleteFile()
@@ -110,6 +123,7 @@ class AddNoteComposeManager @Inject constructor(
                         notePartAnswer.pendingRecorder = null
                         notePartAnswer.savableRecorder?.deleteFile()
                         notePartAnswer.savableRecorder = null
+                        edges.clear()
                     }) {
                     RecorderButtonText(text = "Reset")
                 }
@@ -154,7 +168,6 @@ class AddNoteComposeManager @Inject constructor(
             }
         }
     }
-
 }
 
 
@@ -165,7 +178,6 @@ fun AudioRecordForPart(
     audioRecorderProvider: Provider<AudioRecorder>
 ) {
     val isRecording = remember { mutableStateOf(false) }
-
     if (!isRecording.value) {
         val text = "Tap to record ${notePart.name}"
         OutlinedButton(modifier = modifier.semantics(mergeDescendants = true) {
