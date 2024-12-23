@@ -244,8 +244,6 @@ class PracticeModeStateHandler @Inject constructor(
         }
 
         val metrics = practiceModeViewModel.metricsFlow.value
-        // TODOJSOON Deprecated the size copy and instead use the focused queue
-        // as the single source of truth.
         practiceModeViewModel.metricsFlow.value = metrics.copy(
             remainingInQueue = nonEmptyDeck.revisionQueue.getSize()
         )
