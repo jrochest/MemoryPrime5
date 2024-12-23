@@ -83,7 +83,7 @@ class DbNoteEditor {
         values.put(AbstractNote.GRADE, note.grade)
         values.put(AbstractNote.QUESTION, note.question)
         values.put(AbstractNote.ANSWER, note.answer)
-        values.put(AbstractNote.CATEGORY, note.category)
+        values.put(AbstractNote.CATEGORY, note.categoryAkaDeckId)
         values.put(AbstractNote.EASINESS, note.easiness)
         values.put(AbstractNote.ACQ_REPS, note.acq_reps)
         values.put(AbstractNote.RET_REPS, note.ret_reps)
@@ -284,13 +284,12 @@ class DbNoteEditor {
     private fun queryGetOneNote(query: Cursor?): Note {
         val question = query!!.getString(query.getColumnIndex(Note.QUESTION))
         val answer = query.getString(query.getColumnIndex(Note.ANSWER))
-        note = Note(question, answer)
+        val category = query.getString(query.getColumnIndex(Note.CATEGORY))
+        note = Note(question, answer, category.toInt())
         val id = query.getInt(query.getColumnIndex(Note._ID))
         note!!.id = id
         val grade = query.getInt(query.getColumnIndex(Note.GRADE))
         note!!.grade = grade
-        val category = query.getString(query.getColumnIndex(Note.CATEGORY))
-        note!!.category = category.toInt()
         val unseenString = query
                 .getString(query.getColumnIndex(Note.UNSEEN))
         var unseen = false

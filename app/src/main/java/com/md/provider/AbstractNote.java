@@ -61,7 +61,8 @@ public class AbstractNote {
 
 	protected String question;
 	protected String answer;
-	protected int category;
+
+	protected int categoryAkaDeckId;
 	protected boolean unseen;
 	protected boolean marked;
 	
@@ -103,12 +104,12 @@ public class AbstractNote {
 		this.answer = answer;
 	}
 
-	public int getCategory() {
-		return category;
+	public int getCategoryAkaDeckId() {
+		return categoryAkaDeckId;
 	}
 
-	public void setCategory(int category) {
-		this.category = category;
+	public void setCategoryAkaDeckId(int categoryAkaDeckId) {
+		this.categoryAkaDeckId = categoryAkaDeckId;
 	}
 
 	public boolean isUnseen() {

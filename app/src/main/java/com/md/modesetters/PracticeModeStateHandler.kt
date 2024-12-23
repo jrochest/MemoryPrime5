@@ -221,33 +221,37 @@ class PracticeModeStateHandler @Inject constructor(
                     }
                 })
             } else {
-                val nonEmptyDeck = if (focusedDeck == null || focusedDeck.revisionQueue.isEmpty()) {
-                    val decks = deckLoadManager.decks.value ?: return@launch
-                    val nonEmptyDeckLocal = decks.firstOrNull { deck ->
-                        deck.isActive && !deck.revisionQueue.isEmpty()
-                    }
-                    if (nonEmptyDeckLocal == null) {
-                        TtsSpeaker.speak("All decks done.")
-                        return@launch
-                    }
-                    TtsSpeaker.speak("Loading deck " + nonEmptyDeckLocal.name + " items to study " + nonEmptyDeckLocal.revisionQueue.getSize())
-                    nonEmptyDeckLocal
-                } else {
-                    focusedDeck
-                }
-
-                val metrics = practiceModeViewModel.metricsFlow.value
-                // TODOJSOON Deprecated the size copy and instead use the focused queue
-                // as the single source of truth.
-                practiceModeViewModel.metricsFlow.value = metrics.copy(
-                    remainingInQueue = nonEmptyDeck.revisionQueue.getSize()
-                )
-                val note = nonEmptyDeck.revisionQueue.peekQueue()
-                focusedQueueStateModel.deck.value = nonEmptyDeck
-                CategorySingleton.getInstance().setDeckInfo(nonEmptyDeck)
-                currentNotePartManager.changeCurrentNotePart(note, partIsAnswer = false)
+                loadTheDefaultDeck(focusedDeck)
             }
         }
+    }
+
+    private fun loadTheDefaultDeck(focusedDeck: DeckInfo?) {
+        val nonEmptyDeck = if (focusedDeck == null || focusedDeck.revisionQueue.isEmpty()) {
+            val decks = deckLoadManager.decks.value ?: return
+            val nonEmptyDeckLocal = decks.firstOrNull { deck ->
+                deck.isActive && !deck.revisionQueue.isEmpty()
+            }
+            if (nonEmptyDeckLocal == null) {
+                TtsSpeaker.speak("All decks done.")
+                return
+            }
+            TtsSpeaker.speak("Loading deck " + nonEmptyDeckLocal.name + " items to study " + nonEmptyDeckLocal.revisionQueue.getSize())
+            nonEmptyDeckLocal
+        } else {
+            focusedDeck
+        }
+
+        val metrics = practiceModeViewModel.metricsFlow.value
+        // TODOJSOON Deprecated the size copy and instead use the focused queue
+        // as the single source of truth.
+        practiceModeViewModel.metricsFlow.value = metrics.copy(
+            remainingInQueue = nonEmptyDeck.revisionQueue.getSize()
+        )
+        val note = nonEmptyDeck.revisionQueue.peekQueue()
+        focusedQueueStateModel.deck.value = nonEmptyDeck
+        CategorySingleton.getInstance().setDeckInfo(nonEmptyDeck)
+        currentNotePartManager.changeCurrentNotePart(note, partIsAnswer = false)
     }
 
     private fun shouldProceed(): Boolean {

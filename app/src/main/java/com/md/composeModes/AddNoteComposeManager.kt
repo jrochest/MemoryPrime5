@@ -19,14 +19,17 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.md.AudioRecorder
 import com.md.DbNoteEditor
+import com.md.DefaultDeckToAddNewNotesToSharedPreference
 import com.md.RecordingTooQuiet
 import com.md.RecordingTooSmallException
-import com.md.RevisionQueue
 import com.md.SpacedRepeaterActivity
 import com.md.composeStyles.ButtonStyles.ImportantButtonColor
 import com.md.composeStyles.ButtonStyles.MediumImportanceButtonColor
+import com.md.modesetters.DeckLoadManager
 import com.md.modesetters.TtsSpeaker
 import com.md.provider.Note
+import com.md.viewmodel.TopModeFlowProvider
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +41,11 @@ import javax.inject.Provider
 @ActivityScoped
 class AddNoteComposeManager @Inject constructor(
     @ActivityContext val context: Context,
-    private val audioRecorderProvider: Provider<AudioRecorder>
+    private val audioRecorderProvider: Provider<AudioRecorder>,
+    private val topModeFlowProvider: TopModeFlowProvider,
+    private val workingModeSetter: Lazy<ComposeModeSetter>,
+    private val deckModeStateModel: DeckModeStateModel,
+    private val deckLoadManager: DeckLoadManager,
 ) {
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
@@ -112,19 +119,28 @@ class AddNoteComposeManager @Inject constructor(
                                                                              contentDescription = text
                     },
                         onClick = {
-                            val currentDeckReviewQueue = RevisionQueue.currentDeckReviewQueueDeleteThisTODOJSOON
-                            if (currentDeckReviewQueue == null) {
-                                TtsSpeaker.error("No revision queue. Make and or select a deck.")
+                            val deck = DefaultDeckToAddNewNotesToSharedPreference.getDeck(activity)
+                            if (deck == null) {
+                                TtsSpeaker.error("Choose a default deck to save to")
+                                deckModeStateModel.modeModel.value = DeckMode.ChooseDeckToAddNewItemsTo
+                                topModeFlowProvider.modeModel.value = Mode.DeckChooser
+                                workingModeSetter.get().switchMode(context = activity)
                                 return@OutlinedButton
                             }
+
                             val questionFile =
                                 checkNotNull(notePartQuestion.savableRecorder).generatedAudioFileNameWithExtension
                             val answerFile =
                                 checkNotNull(notePartAnswer.savableRecorder).generatedAudioFileNameWithExtension
                             val noteEditor = checkNotNull(DbNoteEditor.instance)
-                            var note = Note(questionFile, answerFile)
+                            var note = Note(questionFile, answerFile, deck.id)
+
                             note = noteEditor.insert(note) as Note
-                            currentDeckReviewQueue.add(note)
+
+                            val decks = deckLoadManager.decks.value
+                            decks?.firstOrNull { it.id == deck.id }?.let {
+                                it.revisionQueue.add(note)
+                            }
 
                             notePartQuestion.pendingRecorder = null
                             notePartQuestion.savableRecorder = null
@@ -138,6 +154,7 @@ class AddNoteComposeManager @Inject constructor(
             }
         }
     }
+
 }
 
 

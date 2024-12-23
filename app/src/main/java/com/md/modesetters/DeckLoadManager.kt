@@ -36,13 +36,6 @@ class DeckLoadManager @Inject constructor(
         }
     }
 
-    private fun setDeck(deckInfo: DeckInfo) {
-        CategorySingleton.getInstance().setDeckInfo(deckInfo)
-        focusedQueueStateModel.deck.value = deckInfo
-        val note = deckInfo.revisionQueue.peekQueue()
-        currentNotePartManager.changeCurrentNotePart(note, partIsAnswer = false)
-    }
-
     suspend fun refreshDeckListAndFocusFirstActiveNonemptyQueue() {
         withContext(Dispatchers.Main) {
             // Load deck just once and afterward make the in memory the source of truth and keep

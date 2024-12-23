@@ -8,6 +8,7 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 
 import com.md.CategorySingleton;
+import com.md.modesetters.DeckInfo;
 
 /**
  * Notes table
@@ -25,7 +26,7 @@ public final class Note extends AbstractNote implements BaseColumns, Cloneable {
         this.id = id;
         this.question = question;
         this.answer = answer;
-        this.category = category;
+        this.categoryAkaDeckId = category;
         this.unseen = unseen;
         this.marked = marked;
         this.easiness = easiness;
@@ -47,7 +48,7 @@ public final class Note extends AbstractNote implements BaseColumns, Cloneable {
     }
 
     public Note clone() {
-        return new Note(grade, id, question, answer, category, unseen, marked,
+        return new Note(grade, id, question, answer, categoryAkaDeckId, unseen, marked,
                 easiness, acq_reps, ret_reps, lapses, acq_reps_since_lapse,
                 ret_reps_since_lapse, last_rep, next_rep);
 
@@ -62,7 +63,7 @@ public final class Note extends AbstractNote implements BaseColumns, Cloneable {
 
         return "Note [marked=" + marked + ", grade=" + grade + ", id=" + id
                 + ", question=" + question + ", answer=" + answer
-                + ", category=" + category + ", unseen=" + unseen
+                + ", category=" + categoryAkaDeckId + ", unseen=" + unseen
                 + ", easiness=" + easiness + ", acq_reps=" + acq_reps
                 + ", ret_reps=" + ret_reps + ", lapses=" + lapses
                 + ", acq_reps_since_lapse=" + acq_reps_since_lapse
@@ -292,11 +293,14 @@ public final class Note extends AbstractNote implements BaseColumns, Cloneable {
         return (int) (new_interval + noise);
     }
 
-    public Note(String question, String answer) {
+    public Note(String question, String answer, DeckInfo deck) {
+        this(question, answer, deck.getId());
+    }
 
+    public Note(String question, String answer, int deckId) {
         this.question = question;
         this.answer = answer;
-        this.category = CategorySingleton.getInstance().getCurrentDeck();
+        this.categoryAkaDeckId = deckId;
 
         resetLearningData();
     }

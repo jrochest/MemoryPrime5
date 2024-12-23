@@ -21,6 +21,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import com.md.DefaultDeckToAddNewNotesToSharedPreference
 import com.md.SpacedRepeaterActivity
 import com.md.modesetters.TtsSpeaker
 import com.md.viewmodel.TopModeFlowProvider
@@ -54,8 +55,9 @@ class SettingsModeStateModel @Inject constructor() {
 class SettingsModeComposeManager @Inject constructor(
     @ActivityContext val context: Context,
     private val topModeFlowProvider: TopModeFlowProvider,
-    private val stateModel: SettingsModeStateModel
-
+    private val stateModel: SettingsModeStateModel,
+    private val workingModeSetter: dagger.Lazy<ComposeModeSetter> ,
+    private val deckModeStateModel: DeckModeStateModel
 ) {
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
@@ -93,7 +95,7 @@ class SettingsModeComposeManager @Inject constructor(
 
     @Composable
     fun SpaceBetweenSettings() {
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(30.dp))
     }
 
     @Composable
@@ -102,23 +104,46 @@ class SettingsModeComposeManager @Inject constructor(
     }
 
     @Composable
+    private fun DefaultDeckPicker() {
+        val currentDeckName = DefaultDeckToAddNewNotesToSharedPreference.getDeck(activity)?.name ?: "(no deck selected yet)"
+        val currentDeckLabel = "Deck to add notes to: \'$currentDeckName\'"
+        Text(
+            text = currentDeckLabel,
+        )
+        SpaceLabelAndValue()
+        Button(onClick = {
+            deckModeStateModel.modeModel.value = DeckMode.ChooseDeckToAddNewItemsTo
+            topModeFlowProvider.modeModel.value = Mode.DeckChooser
+            workingModeSetter.get().switchMode(context = activity)
+        }) {
+            Text(
+                text = "Choose a default deck to add notes to",
+            )
+        }
+    }
+
+
+    @Composable
     fun ShowUiForState() {
         Column(modifier = Modifier.verticalScroll(state = rememberScrollState())) {
             Text(text = "Settings", style = MaterialTheme.typography.headlineSmall)
             SpaceBetweenSettings()
-            Text(
-                text = "Incremental backup locations",
-                style = MaterialTheme.typography.titleMedium
-            )
+
+            SectionHeading("Incremental backup locations")
 
             BackLocationForIndex(IncrementalBackupPreferences.location1) { stateModel.backupLocationName1 }
             BackLocationForIndex(IncrementalBackupPreferences.location2) { stateModel.backupLocationName2 }
             BackLocationForIndex(IncrementalBackupPreferences.location3) { stateModel.backupLocationName3 }
             BackLocationForIndex(IncrementalBackupPreferences.location4) { stateModel.backupLocationName4 }
 
+            SectionHeading("Default deck")
+
+            DefaultDeckPicker()
+
+
             SpaceBetweenSettings()
 
-            Text(text = "Activity settings", style = MaterialTheme.typography.titleMedium)
+            SectionHeading("Activity lifetime settings")
 
             SpaceBetweenSettings()
             PlaybackSpeedSetting()
@@ -132,6 +157,14 @@ class SettingsModeComposeManager @Inject constructor(
             SpaceBetweenSettings()
             MicrophoneSetting()
         }
+    }
+
+    @Composable
+    private fun SectionHeading(sectionText: String) {
+        Text(
+            text = sectionText,
+            style = MaterialTheme.typography.titleLarge
+        )
     }
 
     @Composable

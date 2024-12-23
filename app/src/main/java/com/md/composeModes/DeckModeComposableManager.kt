@@ -34,6 +34,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.lifecycleScope
 import com.md.CategorySingleton
 import com.md.DbNoteEditor.Companion.instance
+import com.md.DefaultDeckToAddNewNotesToSharedPreference
 import com.md.FocusedQueueStateModel
 import com.md.SpacedRepeaterActivity
 import com.md.modesetters.DeckInfo
@@ -50,7 +51,8 @@ import javax.inject.Inject
 
 enum class DeckMode {
     Default,
-    AddingDeck
+    AddingDeck,
+    ChooseDeckToAddNewItemsTo
 }
 
 @ActivityScoped
@@ -79,28 +81,42 @@ class DeckModeComposableManager @Inject constructor(
     @Composable
     fun DeckModeComposable() {
         val decks = deckLoadManager.decks.collectAsState().value
-        
+
         if (decks == null) {
             Text(text = "Waiting for decks...")
             return
         }
-        val deckMode  = if (decks.isEmpty()) {
+        val deckMode = if (decks.isEmpty()) {
             // Force adding mode to guide the user to a place where decks can be added.
             DeckMode.AddingDeck
         } else {
             deckModeStateModel.modeModel.collectAsState().value
         }
 
+
         Row {
-            OutlinedButton(onClick = {
-                deckModeStateModel.modeModel.value = DeckMode.AddingDeck
-            }) {
-                Text(text = "Add deck")
+            if (deckMode == DeckMode.ChooseDeckToAddNewItemsTo) {
+                OutlinedButton(
+                    modifier = Modifier.semantics {
+                        this.contentDescription = "Cancel"
+                    },
+                    onClick = {
+                        deckModeStateModel.modeModel.value = DeckMode.Default
+                    }) {
+                    Text(text = "Tap to cancel " + DeckMode.ChooseDeckToAddNewItemsTo)
+                }
+            } else {
+                OutlinedButton(onClick = {
+                    deckModeStateModel.modeModel.value = DeckMode.AddingDeck
+                }) {
+                    Text(text = "Add deck")
+                }
             }
         }
+
         when (deckMode) {
             DeckMode.Default -> {
-                DeckList(decks)
+                DeckList(decks, deckMode)
             }
             DeckMode.AddingDeck -> {
                 var textValue by remember { mutableStateOf(TextFieldValue("")) }
@@ -127,11 +143,15 @@ class DeckModeComposableManager @Inject constructor(
                     Text(text = "Save deck")
                 }
             }
+
+            DeckMode.ChooseDeckToAddNewItemsTo -> DeckList(decks, deckMode)
+
+
         }
     }
 
     @Composable
-    private fun DeckList(decks: List<DeckInfo>) {
+    private fun DeckList(decks: List<DeckInfo>, deckMode: DeckMode) {
         Column(modifier = Modifier.verticalScroll(state = rememberScrollState())) {
             decks.forEach { deckInfo: DeckInfo ->
                 Divider()
@@ -142,8 +162,8 @@ class DeckModeComposableManager @Inject constructor(
                         style = MaterialTheme.typography.headlineMedium
                     )
                     Row {
-
-                        val deckIdToDeckSize = deckLoadManager.deckIdToDeckSize.collectAsState().value
+                        val deckIdToDeckSize =
+                            deckLoadManager.deckIdToDeckSize.collectAsState().value
                         var description = "Queue: " + deckInfo.revisionQueue.getSize()
                         if (deckIdToDeckSize != null) {
                             description += "\nTotal: " + deckIdToDeckSize[deckInfo.id]
@@ -154,48 +174,61 @@ class DeckModeComposableManager @Inject constructor(
                         )
 
                         VerticalDivider()
-                        TextButton(onClick = {
-                            focusedQueueStateModel.deck.value = deckInfo
-                            CategorySingleton.getInstance().setDeckInfo(deckInfo)
-                            topModeFlowProvider.modeModel.value = Mode.Practice
-                        }) {
-                            Text(text = "Practice", style = MaterialTheme.typography.labelLarge)
-                        }
-                        VerticalDivider()
-                        TextButton(onClick = {
-                            focusedQueueStateModel.deck.value = deckInfo
-                            CategorySingleton.getInstance().setDeckInfo(deckInfo)
-                            topModeFlowProvider.modeModel.value = Mode.NewNote
-                        }) {
-                            Text(
-                                text = "Add to deck",
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        }
-                        var expanded by remember { mutableStateOf(false) }
-                        IconButton(onClick = { expanded = !expanded }) {
-                            Icon(
-                                imageVector = Icons.Default.MoreVert,
-                                contentDescription = "More"
-                            )
-                        }
-                        val name = deckInfo.name
-                        DropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Rename") },
-                                onClick = {
+
+                        if (deckMode == DeckMode.ChooseDeckToAddNewItemsTo) {
+                            TextButton(onClick = {
+                                deckModeStateModel.modeModel.value = DeckMode.Default
+                                topModeFlowProvider.modeModel.value = Mode.Settings
+                                DefaultDeckToAddNewNotesToSharedPreference.set(activity, DefaultDeckToAddNewNotesToSharedPreference.DeckNameAndId(id = deckInfo.id, name = deckInfo.name))
+                            }) {
+                                Text(text = "Tap select " + DeckMode.ChooseDeckToAddNewItemsTo)
+                            }
+
+                        } else if (deckMode == DeckMode.Default) {
+                            TextButton(onClick = {
+                                focusedQueueStateModel.deck.value = deckInfo
+
+                                CategorySingleton.getInstance().setDeckInfo(deckInfo)
+                                topModeFlowProvider.modeModel.value = Mode.Practice
+                            }) {
+                                Text(text = "Practice", style = MaterialTheme.typography.labelLarge)
+                            }
+                            VerticalDivider()
+                            TextButton(onClick = {
+                                focusedQueueStateModel.deck.value = deckInfo
+                                CategorySingleton.getInstance().setDeckInfo(deckInfo)
+                                topModeFlowProvider.modeModel.value = Mode.NewNote
+                            }) {
+                                Text(
+                                    text = "Add to deck",
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                            }
+                            var expanded by remember { mutableStateOf(false) }
+                            IconButton(onClick = { expanded = !expanded }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "More"
+                                )
+                            }
+                            val name = deckInfo.name
+                            DropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Rename") },
+                                    onClick = {
                                         handleDeckRename(deckInfo)
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Delete deck: $name") },
-                                onClick = {
-                                    handleDeckDelete(deckInfo)
-                                }
-                            )
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Delete deck: $name") },
+                                    onClick = {
+                                        handleDeckDelete(deckInfo)
+                                    }
+                                )
+                            }
                         }
                     }
                 }
