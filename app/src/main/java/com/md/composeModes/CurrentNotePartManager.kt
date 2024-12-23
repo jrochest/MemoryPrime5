@@ -10,14 +10,12 @@ import dagger.Lazy
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.firstOrNull
 import javax.inject.Inject
 
 @ActivityScoped
 class CurrentNotePartManager @Inject constructor(
     private val deckLoadManager: Lazy<DeckLoadManager>,
     @ActivityContext val context: Context,
-    val practiceModeComposerManager: Lazy<PracticeModeComposerManager>,
 ) {
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
