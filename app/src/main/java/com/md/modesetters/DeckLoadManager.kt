@@ -5,6 +5,7 @@ import androidx.lifecycle.lifecycleScope
 import com.md.*
 import com.md.composeModes.CurrentNotePartManager
 import com.md.provider.Deck
+import com.md.provider.Note
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.Dispatchers
@@ -19,8 +20,7 @@ import javax.inject.Provider
 class DeckLoadManager @Inject constructor(
     @ActivityContext val context: Context,
     private val revisionQueueProvider: Provider<RevisionQueue>,
-    val currentNotePartManager: CurrentNotePartManager,
-    private val focusedQueueStateModel: FocusedQueueStateModel,) {
+    val currentNotePartManager: CurrentNotePartManager,) {
     val decks = MutableStateFlow<List<DeckInfo>?>(null)
     val deckIdToDeckSize = MutableStateFlow<Map<Int, Int>?>(null)
 
@@ -33,6 +33,12 @@ class DeckLoadManager @Inject constructor(
     init {
         activity.lifecycleScope.launch {
             refreshDeckListAndFocusFirstActiveNonemptyQueue()
+        }
+    }
+
+    fun updateNote(note: Note, keepQueueLocation: Boolean) {
+        decks.value?.firstOrNull { it.id == note.categoryAkaDeckId }?.let {
+            it.revisionQueue.updateNote(note, keepQueueLocation = keepQueueLocation)
         }
     }
 

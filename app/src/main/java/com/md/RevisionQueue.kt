@@ -83,19 +83,11 @@ class RevisionQueue
 
     }
 
-    companion object {
-        // use the FocusedQueueStateModel instead.
-        @JvmStatic
-		var currentDeckReviewQueueDeleteThisTODOJSOON: RevisionQueue? = null
-    }
 
     suspend fun preload() {
         val preloadAble = notesToReview.getOrNull(1) ?: return
-        println("TODOJ preloading question")
         audioPlayer.preload(preloadAble.question)
-        println("TODOJ preloading answer")
         audioPlayer.preload(preloadAble.answer)
-        println("TODOJ preloaded both!")
     }
 }
 

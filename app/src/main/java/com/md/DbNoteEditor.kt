@@ -5,7 +5,6 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
-import com.md.RevisionQueue.Companion.currentDeckReviewQueueDeleteThisTODOJSOON
 import com.md.provider.AbstractDeck
 import com.md.provider.AbstractNote
 import com.md.provider.Deck
@@ -44,17 +43,14 @@ class DbNoteEditor {
     }
 
     fun update(note: AbstractNote) {
-        // If it's in there update it.
-        currentDeckReviewQueueDeleteThisTODOJSOON!!.updateNote((note as Note), true)
         val values = ContentValues()
 
         // Bump the modification time to now.
         noteToContentValues(note, values)
 
-        // TODO figure out how to get the ID URI
         try {
             contextForDbAccess.contentResolver.update(AbstractNote.CONTENT_URI,
-                    values, Note._ID + "=" + note.getId(), null)
+                    values, Note._ID + "=" + note.id, null)
         } catch (e: Exception) {
             val message = e.message
             println(message)
@@ -98,29 +94,6 @@ class DbNoteEditor {
         values.put(AbstractNote.MARKED, note.isMarked)
         values.put(AbstractNote.PRIORITY, note.priority)
     }
-
-    val first: Note?
-        get() {
-            var returnValue: Note? = null
-            var query: Cursor? = null
-            var queryString = ("SELECT MIN(" + Note._ID + ") FROM "
-                    + NotesProvider.NOTES_TABLE_NAME + " WHERE "
-                    + categoryCriteria())
-            if (isMarkedMode) {
-                queryString += " AND " + Note.MARKED + " = 1"
-            }
-            val result = rawQuery(queryString) ?: return null
-            query = result.cursor
-            if (query.moveToNext()) {
-                if (query.getInt(0) != 0) {
-                    currentNoteId = "" + query.getInt(0)
-                    returnValue = loadDataCurrentId()
-                }
-            }
-            query.close()
-            result.database.close()
-            return returnValue
-        }
 
     fun queryDeck(): List<Deck> {
         val activateList = ArrayList<Deck>()
@@ -206,51 +179,9 @@ class DbNoteEditor {
         return notes
     }
 
-    val JUST_ID_PROJECTION = arrayOf(Note._ID)
     var note: Note? = null
         private set
     var isMarkedMode = false
-    val next: Note?
-        get() = getNext(0)
-
-    fun getNext(howFarToGo: Int): Note? {
-        var returnVal: Note? = null
-        var query: DatabaseResult? = null
-        if (currentNoteId == null) {
-            return null
-        }
-        var queryString = ("SELECT MIN(" + Note._ID + ") FROM "
-                + NotesProvider.NOTES_TABLE_NAME + " WHERE " + Note._ID + " > "
-                + (currentNoteId!!.toInt() + howFarToGo) + " AND "
-                + categoryCriteria())
-        if (isMarkedMode) {
-            queryString += " AND " + Note.MARKED + " = 1"
-        }
-        query = rawQuery(queryString) ?: return null
-
-        // If we found nothing just go to the max.
-        if (!query.cursor.moveToFirst() || query.cursor.getInt(0) == 0) {
-            queryString = ("SELECT MAX(" + Note._ID + ") FROM "
-                    + NotesProvider.NOTES_TABLE_NAME + " WHERE "
-                    + categoryCriteria())
-            if (isMarkedMode) {
-                queryString += " AND " + Note.MARKED + " = 1"
-            }
-            var query2 = rawQuery(queryString) ?: return null
-            if (query2.cursor.moveToFirst()) {
-                if (query2.cursor.getInt(0) != 0) {
-                    currentNoteId = "" + query2.cursor.getInt(0)
-                    returnVal = loadDataCurrentId()
-                }
-            }
-            query2.cursor.close()
-            query2.database.close()
-        }
-
-        query.cursor.close()
-        query.database.close()
-        return returnVal
-    }
 
     private fun loadDataCurrentId(): Note? {
         if (currentNoteId != null) {
@@ -379,55 +310,17 @@ class DbNoteEditor {
         return " " + Note.CATEGORY + " = '" + category + "' "
     }
 
-    fun deleteCurrent(context: Activity, note: Note?): Note? {
-        return deleteNote(context, note)
-    }
-
-    fun deleteNote(context: Activity, note: Note?): Note? {
-        var returnVal: Note? = null
-        if (note == null) {
-            return null
-        }
+    fun deleteNote(note: Note) {
         contextForDbAccess.contentResolver.delete(AbstractNote.CONTENT_URI,
                 Note._ID + " = " + note.id, null)
-        if (note != null) {
-            if (!AudioRecorder.deleteFile(note.answer)) {
-                Log.e(this.javaClass.toString(), "Couldn't answer question "
-                        + note.answer)
-            }
-            if (!AudioRecorder.deleteFile(note.question)) {
-                Log.e(this.javaClass.toString(), "Couldn't delete question "
-                        + note.question)
-            }
+
+        if (!AudioRecorder.deleteFile(note.answer)) {
+            Log.e(this.javaClass.toString(), "Couldn't answer question "
+                    + note.answer)
         }
-        if (currentNoteId != null) {
-            val intCurrentId = currentNoteId!!.toInt()
-
-            currentDeckReviewQueueDeleteThisTODOJSOON!!.removeNote(intCurrentId)
-        }
-        if (this.note == note) {
-            returnVal = next
-
-            // If double fail then clear the data.
-            if (returnVal == null) {
-                returnVal = last
-
-                // Double fail no more items.
-                if (returnVal == null) {
-                    currentNoteId = null
-                    loadDataCurrentId()
-                }
-            }
-        }
-        return returnVal
-    }
-
-    fun debugDeleteAll() {
-        contextForDbAccess.contentResolver.delete(AbstractNote.CONTENT_URI, null,
-                null)
-        if (currentNoteId != null) {
-            val intCurrentId = currentNoteId!!.toInt()
-            currentDeckReviewQueueDeleteThisTODOJSOON!!.removeNote(intCurrentId)
+        if (!AudioRecorder.deleteFile(note.question)) {
+            Log.e(this.javaClass.toString(), "Couldn't delete question "
+                    + note.question)
         }
     }
 

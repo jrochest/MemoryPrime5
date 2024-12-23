@@ -9,7 +9,6 @@ import com.md.CategorySingleton
 import com.md.DbNoteEditor
 import com.md.DbRepEditor
 import com.md.FocusedQueueStateModel
-import com.md.RevisionQueue.Companion.currentDeckReviewQueueDeleteThisTODOJSOON
 import com.md.SpacedRepeaterActivity
 import com.md.application.MainDispatcher
 import com.md.composeModes.CurrentNotePartManager
@@ -51,7 +50,6 @@ class PracticeModeStateHandler @Inject constructor(
     private var lastNoteRep: AbstractRep? = null
 
     private var originalSize = 0
-    var repCounter = 0
     private var missCounter = 0
 
     fun onSwitchToMode() {
@@ -92,7 +90,8 @@ class PracticeModeStateHandler @Inject constructor(
                             while (!activity.isAtLeastResumed()) {
                                 delay(1000)
                             }
-                            val noteState = currentNotePartManager.noteStateFlow.value ?: return@launch
+                            val noteState =
+                                currentNotePartManager.noteStateFlow.value ?: return@launch
 
                             val part = noteState.notePart
                             val note = checkNotNull(noteState.currentNote)
@@ -176,16 +175,17 @@ class PracticeModeStateHandler @Inject constructor(
             val currentNote = noteState.currentNote
             if (shouldQueue) {
                 // Place at end of queue.
-                currentDeckReviewQueueDeleteThisTODOJSOON!!.updateNote(currentNote, false)
+                deckLoadManager.updateNote(currentNote, keepQueueLocation = false)
             } else {
                 val editor = DbNoteEditor.instance
                 if (editor != null) {
                     currentNote.decreasePriority()
                     editor.update(currentNote)
+                    deckLoadManager.updateNote(currentNote, keepQueueLocation = true)
                 } else {
                     TtsSpeaker.speak("Error decreasing priority")
                 }
-                currentDeckReviewQueueDeleteThisTODOJSOON!!.hardPostpone(currentNote)
+                checkNotNull(focusedQueueStateModel.deck.value).revisionQueue.hardPostpone(currentNote)
             }
             // Prepare the next note in the queue.
             setupQuestionMode()
@@ -194,7 +194,8 @@ class PracticeModeStateHandler @Inject constructor(
 
     private fun handlePracticeNoteState(
         noFocusedNoteHandler: () -> Unit = {},
-        focusedNoteExistsHandler: (noteState: CurrentNotePartManager.NoteState) -> Unit) {
+        focusedNoteExistsHandler: (noteState: CurrentNotePartManager.NoteState) -> Unit
+    ) {
         val noteState = currentNotePartManager.noteStateFlow.value
         if (noteState == null) {
             noFocusedNoteHandler()
@@ -267,7 +268,7 @@ class PracticeModeStateHandler @Inject constructor(
     private fun setupQuestionMode(
         shouldUpdateQuestion: Boolean = true
     ) {
-        handlePracticeNoteState (noFocusedNoteHandler = {
+        handlePracticeNoteState(noFocusedNoteHandler = {
             setupFirstReviewableDeckInQuestionMode()
         }) {
             if (shouldUpdateQuestion) {
@@ -285,13 +286,19 @@ class PracticeModeStateHandler @Inject constructor(
     }
 
     private fun updateStartingInQuestionMode() {
-        val currentNote = currentDeckReviewQueueDeleteThisTODOJSOON!!.peekQueue()
+        val focusedDeck = focusedQueueStateModel.deck.value
+        if (focusedDeck == null) {
+            TtsSpeaker.error("updateStartingInQuestionMode null focused deck")
+            return
+        }
+
+        val currentNote = focusedDeck.revisionQueue.peekQueue()
         currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = false)
         if (currentNote != null) {
             val metrics = practiceModeViewModel.metricsFlow.value
             practiceModeViewModel.metricsFlow.value = metrics.copy(
                 notesPracticed = metrics.notesPracticed + 1,
-                remainingInQueue = currentDeckReviewQueueDeleteThisTODOJSOON?.getSize() ?: 0
+                remainingInQueue = focusedDeck.revisionQueue.getSize()
             )
         }
     }
@@ -320,23 +327,24 @@ class PracticeModeStateHandler @Inject constructor(
         )
         currentNote.process_answer(newGrade)
         noteEditor!!.update(currentNote)
+        val deck = checkNotNull(focusedQueueStateModel.deck.value)
 
         // If you scored too low review it again, at the end.
         if (currentNote.is_due_for_acquisition_rep) {
-            currentDeckReviewQueueDeleteThisTODOJSOON!!.updateNote(currentNote, false)
+            deck.revisionQueue.updateNote(currentNote, keepQueueLocation = false)
             missCounter++
         } else {
-            currentDeckReviewQueueDeleteThisTODOJSOON!!.removeNote(currentNote.id)
+            deck.revisionQueue.removeNote(currentNote.id)
         }
     }
 
     fun deleteNote() {
-        handlePracticeNoteState {
-            noteState ->
+        handlePracticeNoteState { noteState ->
             val noteEditor = DbNoteEditor.instance
             val note = noteState.currentNote
-            noteEditor!!.deleteCurrent(activity, note)
-            currentDeckReviewQueueDeleteThisTODOJSOON!!.removeNote(note.id)
+            val deck = checkNotNull(focusedQueueStateModel.deck.value)
+            noteEditor!!.deleteNote(note)
+            deck.revisionQueue.removeNote(note.id)
             currentNotePartManager.onDelete()
             setupQuestionMode()
         }
@@ -351,43 +359,36 @@ class PracticeModeStateHandler @Inject constructor(
         }
     }
 
-    private fun proceedToAnswerIfNoteExistsElseNextDeck() {
-        setupAnswerMode()
-    }
-
     private fun undoFromQuestionToAnswerMode() {
-        if (!lastNoteList.isEmpty()) {
-            val currentNote = lastNoteList.removeLast()
-            currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = true)
-
-            val metrics = practiceModeViewModel.metricsFlow.value
-            practiceModeViewModel.metricsFlow.value = metrics.copy(
-                notesPracticed = metrics.notesPracticed - 1,
-                remainingInQueue = currentDeckReviewQueueDeleteThisTODOJSOON?.getSize() ?: 0
-            )
-
-            val noteEditor = DbNoteEditor.instance
-            noteEditor!!.update(currentNote)
-            // In case the grade was bad take it out of revision queue.
-            currentDeckReviewQueueDeleteThisTODOJSOON!!.removeNote(currentNote.id)
-            currentDeckReviewQueueDeleteThisTODOJSOON!!.addToFront(currentNote)
-            setupAnswerMode()
-        } else {
+        if (lastNoteList.isEmpty()) {
             TtsSpeaker.speak("Nothing to undo")
         }
+        val currentNote = lastNoteList.removeLast()
+        currentNotePartManager.changeCurrentNotePart(currentNote, partIsAnswer = true)
+
+        val metrics = practiceModeViewModel.metricsFlow.value
+        practiceModeViewModel.metricsFlow.value = metrics.copy(
+            notesPracticed = metrics.notesPracticed - 1,
+            remainingInQueue = focusedQueueStateModel.deck.value?.revisionQueue?.getSize() ?: 0
+        )
+
+        val noteEditor = DbNoteEditor.instance
+        noteEditor!!.update(currentNote)
+        deckLoadManager.updateNote(currentNote, keepQueueLocation = false)
+        val focusedQueue = focusedQueueStateModel.deck.value?.revisionQueue
+        if (focusedQueue != null) {
+            // In case the grade was bad take it out of revision queue.
+            focusedQueue.removeNote(currentNote.id)
+            focusedQueue.addToFront(currentNote)
+        } else {
+            TtsSpeaker.speak("Focused queue was empty in undo")
+        }
+
+        setupAnswerMode()
     }
 
     private fun undoFromAnswerToQuestion() {
         setupQuestionMode(false)
     }
 
-    fun mark() {
-        handlePracticeNoteState { noteState ->
-            val currentNote = noteState.currentNote
-            currentNote.isMarked = true
-            val noteEditor = DbNoteEditor.instance
-            noteEditor!!.update(currentNote)
-            ToastSingleton.getInstance().msg("Marked note")
-        }
-    }
 }

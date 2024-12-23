@@ -16,12 +16,11 @@ class ActivityHelper @Inject constructor(
         if (!parentFile.exists()) {
             parentFile.mkdirs()
         }
+
+        // Init the db with this:
         DbNoteEditor.instance!!.setContext(activity)
         // TODO Convert ToastSingleton to use dagger injection.
         ToastSingleton.getInstance().context = activity
-
-        // Init the db with this:
-        DbNoteEditor.instance!!.first
     }
 
 

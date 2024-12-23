@@ -4,15 +4,18 @@ import android.content.Context
 import androidx.compose.runtime.mutableStateOf
 import com.md.DbNoteEditor
 import com.md.SpacedRepeaterActivity
+import com.md.modesetters.DeckLoadManager
 import com.md.provider.Note
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import javax.inject.Inject
 
 @ActivityScoped
 class CurrentNotePartManager @Inject constructor(
+    private val deckLoadManager: Lazy<DeckLoadManager>,
     @ActivityContext val context: Context,
     val practiceModeComposerManager: Lazy<PracticeModeComposerManager>,
 ) {
@@ -78,7 +81,7 @@ class CurrentNotePartManager @Inject constructor(
         notePart.clearRecordings()
      }
 
-    fun updateAudioFilename(filename: String) {
+    private fun updateAudioFilename(filename: String) {
         val noteState = checkNotNull(noteStateFlow.value)
         val note = checkNotNull(noteState.currentNote)
        val partIsAnswer = checkNotNull(noteState.notePart.partIsAnswer)
@@ -87,6 +90,7 @@ class CurrentNotePartManager @Inject constructor(
         } else {
             note.question = filename
         }
+        deckLoadManager.get().updateNote(note, keepQueueLocation = true)
         DbNoteEditor.instance!!.update(note)
     }
 }
