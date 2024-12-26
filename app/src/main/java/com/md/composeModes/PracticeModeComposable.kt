@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.md.AudioRecorder
 import com.md.ExternalClickCounter
-import com.md.FocusedQueueStateModel
 import com.md.SpacedRepeaterActivity
 import com.md.modesetters.PracticeModeStateHandler
 import com.md.composeModes.WorkingMemoryScreen.LARGE_TAP_AREA_LABEL
@@ -106,7 +105,6 @@ class PracticeModeComposerManager @Inject constructor(
     private val topModeProvider: TopModeFlowProvider,
     private val interactionProvider: InteractionModelFlowProvider,
     val currentNotePartManager: CurrentNotePartManager,
-    val focusedQueueStateModel: FocusedQueueStateModel,
     private val deckLoadManager: DeckLoadManager,
     private val keepScreenOn: KeepScreenOn,
     private var externalClickCounter: ExternalClickCounter,
