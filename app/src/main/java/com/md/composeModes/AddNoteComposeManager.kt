@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -90,7 +91,7 @@ class AddNoteComposeManager @Inject constructor(
         val firstButtonModifier = buttonModifier.fillMaxWidth(.5f)
         val secondButtonModifier = buttonModifier.fillMaxWidth(1f)
         Column {
-            Row(Modifier.fillMaxHeight(.25f)) {
+            Row(Modifier.fillMaxHeight(.25f).padding(top = 8.dp)) {
                 UserDoodleArea.DrawingCanvas(edges = edges)
             }
             Row(Modifier.fillMaxHeight(.35f)) {

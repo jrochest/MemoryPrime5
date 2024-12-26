@@ -3,16 +3,20 @@ package com.md.composeModes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import com.md.uiTheme.ColorsMore.VeryDarkGray
 
 object UserDoodleArea {
     data class Edge(
@@ -21,9 +25,10 @@ object UserDoodleArea {
     )
 
     @Composable
-    fun DrawingCanvas(modifier: Modifier = Modifier.height(96.dp), edges: SnapshotStateList<Edge>) {
+    fun DrawingCanvas(modifier: Modifier = Modifier.fillMaxHeight(), edges: SnapshotStateList<Edge>) {
         Canvas(modifier = modifier.fillMaxWidth()
-            .background(Color.Black)
+            .clip(shape = RoundedCornerShape(20.dp))
+            .background(VeryDarkGray)
             .pointerInput(Unit) {
                 detectDragGestures { change, dragAmount ->
                     change.consume()
