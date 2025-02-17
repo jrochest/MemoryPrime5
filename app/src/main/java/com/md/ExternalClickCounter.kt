@@ -5,7 +5,6 @@ import android.os.SystemClock
 import androidx.lifecycle.lifecycleScope
 import com.md.modesetters.PracticeModeStateHandler
 import com.md.modesetters.TtsSpeaker
-import com.md.utils.KeepScreenOn
 import com.md.utils.ClickToKeepAwakeProvider
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
@@ -70,15 +69,26 @@ class ExternalClickCounter
 
         val pressGroupCount = pressGroupInstanceDataLocal.pressGroupCount
 
+        val maxClickValueBeforeCancel = 8
+
         // Allow larger gaps for larger counts.
        val pressGroupMaxGapMsOverride: Long = when {
-           pressGroupCount > 5 -> {
+           pressGroupCount == maxClickValueBeforeCancel -> {
+               TtsSpeaker.speak("cancelling")
+               2000L
+           }
+           pressGroupCount > maxClickValueBeforeCancel -> {
+               // Just let the "cancelling message above continue to play"
+               1000L
+           }
+           pressGroupCount > 4 -> {
                TtsSpeaker.speak(pressGroupCount.toString())
                2000L
            }
-           pressGroupCount > 3 -> {
-               TtsSpeaker.speak(pressGroupCount.toString())
-               1500L
+           pressGroupCount == 4 -> {
+               // Let 4 be a staging area for the other presses.
+               TtsSpeaker.speak("4 staging")
+               5000L
            }
            pressGroupCount == 3 -> {
                TtsSpeaker.speak(pressGroupCount.toString())
@@ -130,6 +140,10 @@ class ExternalClickCounter
                     handler.undo()
                     deleteMode = false
                 }
+                4 -> {
+                    message = "cancel"
+                    deleteMode = false
+                }
                 5 -> {
                     handler.postponeNote(true)
                     message = "$pressGroupCount postpone"
@@ -150,13 +164,9 @@ class ExternalClickCounter
                         message = "Delete mode"
                     }
                 }
-                9, 10 -> {
-                    message = "repeat off"
-                    deleteMode = false
-                }
                 else -> {
                     deleteMode = false
-                    message = "unrecognized count"
+                    message = "cancelled"
                 }
             }
             message?.let { TtsSpeaker.speak(it) }
