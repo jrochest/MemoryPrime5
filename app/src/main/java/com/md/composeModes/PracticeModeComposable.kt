@@ -111,7 +111,6 @@ class PracticeModeComposerManager @Inject constructor(
     private val audioRecorderProvider: Provider<AudioRecorder>,
 ) {
 
-    private var lastNotePracticedValue: Int? = null
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
     }
