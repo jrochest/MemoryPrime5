@@ -230,6 +230,7 @@ class PracticeModeStateHandler @Inject constructor(
     private fun loadTheDefaultDeck(focusedDeck: DeckInfo?) {
         val nonEmptyDeck = if (focusedDeck == null || focusedDeck.revisionQueue.isEmpty()) {
             val decks = deckLoadManager.decks.value ?: return
+
             val nonEmptyDeckLocal = decks.firstOrNull { deck ->
                 deck.isActive && !deck.revisionQueue.isEmpty()
             }
@@ -237,7 +238,12 @@ class PracticeModeStateHandler @Inject constructor(
                 TtsSpeaker.speak("All decks done.")
                 return
             }
-            TtsSpeaker.speak("Loading deck " + nonEmptyDeckLocal.name + " items to study " + nonEmptyDeckLocal.revisionQueue.getSize())
+
+            // Only announce a switch to a new deck. Announcing the first deck is overly spammy.
+            if (nonEmptyDeckLocal != decks.firstOrNull()) {
+                TtsSpeaker.speak("Loading deck " + nonEmptyDeckLocal.name + " items to study " + nonEmptyDeckLocal.revisionQueue.getSize())
+            }
+
             nonEmptyDeckLocal
         } else {
             focusedDeck
