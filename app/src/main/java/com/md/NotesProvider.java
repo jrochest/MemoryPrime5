@@ -1,6 +1,6 @@
 package com.md;
 
-import static com.md.provider.AbstractNote.PRIORITY;
+import  com.md.provider.AbstractNote;
 
 import java.util.HashMap;
 
@@ -27,7 +27,8 @@ import com.md.provider.Note;
 
 public class NotesProvider extends ContentProvider {
 
-	public static final String AUTHORITY = BuildConfig.APPLICATION_ID;
+	// Keep this in sync with the build.grade.
+	public static final String AUTHORITY = "com.jrochest.mp.debug";
 
 	private static final String TAG = "DbInteraction";
 
@@ -75,7 +76,7 @@ public class NotesProvider extends ContentProvider {
 						+ AbstractNote.RET_REPS_SINCE_LAPSE + " INTEGER, "
 						+ AbstractNote.NEXT_REP + " INTEGER, "
 						+ AbstractNote.LAST_REP + " INTEGER, "
-						+ PRIORITY + " INTEGER DEFAULT 100 "
+						+ AbstractNote.PRIORITY + " INTEGER DEFAULT 100 "
 						+ ");");
 			} catch (Exception e) {
 				String message = e.getMessage();
@@ -148,7 +149,7 @@ public class NotesProvider extends ContentProvider {
 				oldVersion++;
 				try {
 					// TODOJ change table and field of this.
-					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN "  + PRIORITY +  " INTEGER DEFAULT 100");
+					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN "  + AbstractNote.PRIORITY +  " INTEGER DEFAULT 100");
 				} catch (Exception e) {
 					String message = e.getMessage();
 					System.out.println(message);
@@ -384,7 +385,7 @@ public class NotesProvider extends ContentProvider {
 		sMDProjectionMap.put(AbstractNote.LAPSES, AbstractNote.LAPSES);
 		sMDProjectionMap.put(AbstractNote.LAST_REP, AbstractNote.LAST_REP);
 		sMDProjectionMap.put(AbstractNote.NEXT_REP, AbstractNote.NEXT_REP);
-		sMDProjectionMap.put(PRIORITY, AbstractNote.PRIORITY);
+		sMDProjectionMap.put(AbstractNote.PRIORITY, AbstractNote.PRIORITY);
 
 		// Support for Live Folders.
 		sLiveFolderProjectionMap = new HashMap<String, String>();
