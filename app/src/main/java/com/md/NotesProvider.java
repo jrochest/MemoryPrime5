@@ -388,7 +388,7 @@ public class NotesProvider extends ContentProvider {
 		sMDProjectionMap.put(AbstractNote.PRIORITY, AbstractNote.PRIORITY);
 
 		// Support for Live Folders.
-		sLiveFolderProjectionMap = new HashMap<String, String>();
+		sLiveFolderProjectionMap = new HashMap<>();
 		sLiveFolderProjectionMap.put(LiveFolders._ID, Note._ID + " AS "
 				+ LiveFolders._ID);
 		sLiveFolderProjectionMap.put(LiveFolders.NAME, AbstractNote.GRADE
