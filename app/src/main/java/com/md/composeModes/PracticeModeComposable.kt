@@ -184,7 +184,7 @@ class PracticeModeComposerManager @Inject constructor(
         ) {
 
             val largeButtonModifier = Modifier
-                .fillMaxHeight(fraction = .85f)
+                .fillMaxHeight(fraction = .7f)
                 .fillMaxWidth()
                 .heightIn(min = 48.dp)
                 .padding(4.dp)
@@ -267,7 +267,7 @@ class PracticeModeComposerManager @Inject constructor(
             // END LARGE BUTTON.
 
             // START Medium button row.
-            val bottomButtonHeight = 180.dp
+            val bottomButtonHeight = 270.dp
             val bottomButtonModifier = Modifier
                 .heightIn(min = bottomButtonHeight)
                 .padding(4.dp)
