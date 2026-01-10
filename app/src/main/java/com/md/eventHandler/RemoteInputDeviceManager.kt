@@ -4,7 +4,6 @@ import android.content.Context
 import android.hardware.input.InputManager
 import android.view.InputDevice
 import android.view.KeyEvent
-import android.util.Log
 import com.md.AudioPlayer
 import com.md.ExternalClickCounter
 import com.md.SpacedRepeaterActivity
@@ -68,10 +67,16 @@ class RemoteInputDeviceManager @Inject constructor(
 
     /** Used to indicate a remote control device send a click event. */
     fun onClick(event: KeyEvent): Boolean {
-        if (!isFromMemprimeDevice(event)) {
+        return handleRemoteClick(event.eventTime)
+    }
+
+    /** Returns true if the event is a remote click (Volume Up/Down from a shutter). */
+    fun isRemoteClickEvent(event: KeyEvent): Boolean {
+        val keyCode = event.keyCode
+        if (keyCode != KeyEvent.KEYCODE_VOLUME_DOWN && keyCode != KeyEvent.KEYCODE_VOLUME_UP) {
             return false
         }
-        return handleRemoteClick(event.eventTime)
+        return isFromMemprimeDevice(event)
     }
 
     fun handleRemoteClick(eventTimeMs: Long): Boolean {

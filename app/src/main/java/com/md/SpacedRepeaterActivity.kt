@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.media.AudioAttributes
-import android.util.Log
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.Bundle
@@ -21,7 +20,6 @@ import com.md.composeModes.CurrentNotePartManager
 import com.md.composeModes.SettingsModeComposeManager
 import com.md.eventHandler.RemoteInputDeviceManager
 import com.md.viewmodel.TopModeFlowProvider
-import com.md.utils.KeepScreenOn
 import com.md.viewmodel.InteractionModelFlowProvider
 import com.md.viewmodel.InteractionType
 import dagger.Lazy
@@ -64,9 +62,6 @@ class SpacedRepeaterActivity
 
     @Inject
     lateinit var remoteInputDeviceManager: Lazy<RemoteInputDeviceManager>
-
-    @Inject
-    lateinit var keepScreenOn: Lazy<KeepScreenOn>
 
     @Inject
     lateinit var currentNotePartManager: Lazy<CurrentNotePartManager>
@@ -156,39 +151,19 @@ class SpacedRepeaterActivity
         maybeStopTone()
     }
 
-    private fun isFromMemprimeDevice(keyCode: Int, event: KeyEvent?): Boolean {
-        if (event == null) {
-            return false
-        }
-        return remoteInputDeviceManager.get().isFromMemprimeDevice(event)
-    }
-
-    private fun isFromMultiButtonMemprimeDevice(keyCode: Int, event: KeyEvent?): Boolean {
-        if (event == null) {
-            return false
-        }
-        val device = event.device ?: return false
-        val name = device.name
-        return name.contains("Shutter Camera")
-    }
-
     // These never happen with mpop override:
     // fun onKeyMultiple(keyCode: Int, repeatCount: Int, event: KeyEvent?): Boolean
     // fun onKeyLongPress(keyCode: Int, event: KeyEvent?): Boolean {
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-        val modeBackStack = modeHandler.get()
-        val modeSetter = modeBackStack.whoseOnTop()
         // BR301 sends an enter command, which we want to ignore.
         if (keyCode == KeyEvent.KEYCODE_ENTER) {
             return true
         }
-        if (keyCode != KeyEvent.KEYCODE_VOLUME_DOWN && keyCode != KeyEvent.KEYCODE_VOLUME_UP) {
-            return super.onKeyUp(keyCode, event)
+        if (remoteInputDeviceManager.get().isRemoteClickEvent(event)) {
+             return true
         }
-        return if (modeSetter == null || !isFromMemprimeDevice(keyCode, event)) {
-            super.onKeyUp(keyCode, event)
-        } else true
+        return super.onKeyUp(keyCode, event)
     }
 
     /**
@@ -201,13 +176,10 @@ class SpacedRepeaterActivity
         if (keyCode == KeyEvent.KEYCODE_ENTER) {
             return true
         }
-        if (keyCode != KeyEvent.KEYCODE_VOLUME_DOWN && keyCode != KeyEvent.KEYCODE_VOLUME_UP) {
-            return super.onKeyDown(keyCode, event)
+        if (remoteInputDeviceManager.get().isRemoteClickEvent(event)) {
+            return remoteInputDeviceManager.get().onClick(event)
         }
-        if (!isFromMemprimeDevice(keyCode, event)) {
-            return super.onKeyDown(keyCode, event)
-        }
-        return remoteInputDeviceManager.get().onClick(event)
+        return super.onKeyDown(keyCode, event)
     }
 
     fun maybeChangeAudioFocus(shouldHaveFocus: Boolean) {
