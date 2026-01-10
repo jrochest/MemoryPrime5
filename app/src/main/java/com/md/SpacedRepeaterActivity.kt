@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.media.AudioAttributes
+import android.util.Log
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.Bundle
@@ -18,10 +19,11 @@ import com.md.workers.IncrementalBackupPreferences
 import com.md.composeModes.ComposeModeSetter
 import com.md.composeModes.CurrentNotePartManager
 import com.md.composeModes.SettingsModeComposeManager
-import com.md.eventHandler.RemoteInputDeviceClickHandler
+import com.md.eventHandler.RemoteInputDeviceManager
 import com.md.viewmodel.TopModeFlowProvider
 import com.md.utils.KeepScreenOn
 import com.md.viewmodel.InteractionModelFlowProvider
+import com.md.viewmodel.InteractionType
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.scopes.ActivityScoped
@@ -61,7 +63,7 @@ class SpacedRepeaterActivity
     lateinit var interactionProvider: InteractionModelFlowProvider
 
     @Inject
-    lateinit var remoteInputDeviceClickHandler: Lazy<RemoteInputDeviceClickHandler>
+    lateinit var remoteInputDeviceManager: Lazy<RemoteInputDeviceManager>
 
     @Inject
     lateinit var keepScreenOn: Lazy<KeepScreenOn>
@@ -97,6 +99,9 @@ class SpacedRepeaterActivity
 
         immersiveModelManager.get()
 
+
+        remoteInputDeviceManager.get().register()
+
         checkPermission()
     }
 
@@ -108,7 +113,6 @@ class SpacedRepeaterActivity
         val modeSetter = modeBackStack.whoseOnTop() ?: return
         // Take back media session focus if we lost it.
         modeSetter.handleReplay()
-
     }
 
     // Function to check and request permission.
@@ -132,12 +136,12 @@ class SpacedRepeaterActivity
 
     override fun onDestroy() {
         super.onDestroy()
+        remoteInputDeviceManager.get().unregister()
         playbackServiceOnDestroy()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        TtsSpeaker.speak("Config change")
     }
 
     override fun onStart() {
@@ -156,53 +160,7 @@ class SpacedRepeaterActivity
         if (event == null) {
             return false
         }
-
-
-        // On Pixel 7 Pro in 2022 Android T
-
-        // Real volume Up button Volume Button:
-        // KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_VOLUME_UP, scanCode=115, metaState=0, flags=0x8, repeatCount=0, eventTime=1532328658000, downTime=1532328658000, deviceId=2, source=0x101, displayId=-1 }
-        // KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_VOLUME_UP, scanCode=115, metaState=0, flags=0x8, repeatCount=0, eventTime=1532328658000, downTime=1532328658000, deviceId=2, source=0x101, displayId=-1 }
-        // Phone's Real volume down button:
-        // KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_VOLUME_DOWN, scanCode=114, metaState=0, flags=0x8, repeatCount=0, eventTime=3061704102000, downTime=3061704102000, deviceId=2, source=0x101, displayId=-1 }
-
-        // Bluetooth 5 AB shutter:
-        // KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_VOLUME_UP, scanCode=115, metaState=0, flags=0x8, repeatCount=0, eventTime=1459039036000, downTime=1459039036000, deviceId=10, source=0x101, displayId=-1 }
-        // Bluetooth 5 AB shutter same device after reconnect (deviceId=11,):
-        // KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_VOLUME_UP, scanCode=115, metaState=0, flags=0x8, repeatCount=0, eventTime=3119110978000, downTime=3119110978000, deviceId=11, source=0x101, displayId=-1 }
-        // MPow
-        // KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_VOLUME_UP, scanCode=115, metaState=0, flags=0x8, repeatCount=0, eventTime=3304164273000, downTime=3304164273000, deviceId=12, source=0x301, displayId=-1 }
-        // After reboot
-        // Pixel 7 Pro volume button (deviceId = 2): KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_VOLUME_UP, scanCode=115, metaState=0, flags=0x8, repeatCount=0, eventTime=96892264000, downTime=96892264000, deviceId=2, source=0x101, displayId=-1 }
-        // Mpow
-        // KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_VOLUME_UP, scanCode=115, metaState=0, flags=0x8, repeatCount=0, eventTime=166876092000, downTime=166876092000, deviceId=5, source=0x301, displayId=-1 }
-        // ab shutter:
-        // KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_VOLUME_UP, scanCode=115, metaState=0, flags=0x8, repeatCount=0, eventTime=226887697000, downTime=226887697000, deviceId=6, source=0x101, displayId=-1 }
-        // So Heuristic:
-        if (event.deviceId >= 5) {
-            return true
-        }
-
-        val device = event.device ?: return false
-
-        // Perhaps delete all of this?
-        // On Android 12 the Mpow device is:
-        // Mpow isnap X2 Mouse
-        val name = device.name
-        if (name.contains("Virtual") ||
-                name.contains("Mpow") ||
-                name.contains("AB Shutter3") ||
-                name.contains("AK LIFE BT") ||
-                name.contains("BLE") ||
-                name.contains("BR301") ||
-                name.contains("memprime") ||
-                name.contains("STRIM-BTN10") ||  // MARREX.
-                name.contains("Button Jack") ||
-                name.contains("PhotoShot")) {
-            return true
-        }
-
-        return isFromMultiButtonMemprimeDevice(keyCode, event)
+        return remoteInputDeviceManager.get().isFromMemprimeDevice(event)
     }
 
     private fun isFromMultiButtonMemprimeDevice(keyCode: Int, event: KeyEvent?): Boolean {
@@ -239,8 +197,6 @@ class SpacedRepeaterActivity
      * press. There's a repeat count:
      */
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        println("TODOJ key down event$event")
-        println("TODOJ event$event")
         // BR301 sends an enter command, which we want to ignore.
         if (keyCode == KeyEvent.KEYCODE_ENTER) {
             return true
@@ -251,7 +207,7 @@ class SpacedRepeaterActivity
         if (!isFromMemprimeDevice(keyCode, event)) {
             return super.onKeyDown(keyCode, event)
         }
-        return remoteInputDeviceClickHandler.get().onClick(event.eventTime)
+        return remoteInputDeviceManager.get().onClick(event)
     }
 
     fun maybeChangeAudioFocus(shouldHaveFocus: Boolean) {

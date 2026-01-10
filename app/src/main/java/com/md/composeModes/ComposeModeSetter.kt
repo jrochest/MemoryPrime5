@@ -16,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -23,10 +24,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import com.md.ModeHandler
 import com.md.FocusedQueueStateModel
 import com.md.SpacedRepeaterActivity
-import com.md.eventHandler.RemoteInputDeviceClickHandler
+import com.md.eventHandler.RemoteInputDeviceManager
 import com.md.modesetters.DeckLoadManager
 import com.md.modesetters.ItemDeletedHandler
 import com.md.modesetters.ModeSetter
@@ -67,7 +72,7 @@ class ComposeModeSetter @Inject constructor(
     private val keepScreenOn: KeepScreenOn,
     private val interactionProvider: InteractionModelFlowProvider,
     private val testingMode: TestingMode,
-    private val remoteInputDeviceClickHandler: RemoteInputDeviceClickHandler
+    private val remoteInputDeviceManager: RemoteInputDeviceManager
 ) : ModeSetter(), ItemDeletedHandler {
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
@@ -94,13 +99,33 @@ class ComposeModeSetter @Inject constructor(
                         ) {
                             // This is for testing easily on userdebug devices.
                             if (testingMode.isTestDevice) {
-                                Button(onClick = {
-                                    remoteInputDeviceClickHandler.onClick(SystemClock.uptimeMillis())
-                                }) {
+                                var isConnected by remember { mutableStateOf(false) }
+                                Button(
+                                    enabled = isConnected,
+                                    onClick = {
+                                        remoteInputDeviceManager.handleRemoteClick(SystemClock.uptimeMillis())
+                                    }) {
                                     Text(
                                         textAlign = TextAlign.Center,
                                         text = "Fake BT button for testing",
                                         modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                                androidx.compose.foundation.layout.Row(
+                                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                                    modifier = Modifier.padding(8.dp)
+                                ) {
+                                    Switch(
+                                        checked = isConnected,
+                                        onCheckedChange = {
+                                            isConnected = it
+                                            remoteInputDeviceManager.simulateShutterConnection(it)
+                                        }
+                                    )
+                                    Text(
+                                        text = "Simulate BT Shutter Connected",
+                                        modifier = Modifier.padding(start = 8.dp),
+                                        color = MaterialTheme.colorScheme.onBackground
                                     )
                                 }
                             }
