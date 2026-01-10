@@ -11,6 +11,7 @@ import com.md.SpacedRepeaterActivity
 import com.md.composeModes.Mode
 import com.md.viewmodel.TopModeFlowProvider
 import com.md.modesetters.TtsSpeaker
+import com.md.composeModes.CurrentNotePartManager
 import dagger.hilt.android.qualifiers.ActivityContext
 
 import dagger.hilt.android.scopes.ActivityScoped
@@ -44,6 +45,7 @@ class KeepScreenOn @Inject constructor(
     @ActivityContext private val context: Context,
     private val clickToKeepAwakeProvider: ClickToKeepAwakeProvider,
     private val topModeFlowProvider: TopModeFlowProvider,
+    private val currentNotePartManager: CurrentNotePartManager,
 ) {
     val activity: SpacedRepeaterActivity by lazy {
         context as SpacedRepeaterActivity
@@ -100,6 +102,14 @@ class KeepScreenOn @Inject constructor(
                 }
 
                 delay(DURATION_UNTIL_WARNING.toMillis())
+
+                // In staging mode (no active note), we don't want to show the "stay awake"
+                // alert, and we want to allow the screen to turn off naturally.
+                if (currentNotePartManager.noteStateFlow.value == null) {
+                    activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    return@repeatOnLifecycle
+                }
+
                 TtsSpeaker.speak(
                     "Click to stay awake.",
                     lowVolume = false
