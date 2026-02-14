@@ -184,11 +184,11 @@ class ExternalClickCounter
         when (pressGroupCount) {
             1 -> {
                 clickMode = ClickMode.PendingPostpone
-                TtsSpeaker.speak("triple click to confirm postpone")
+                TtsSpeaker.speak("postpone pending triple tap to confirm")
             }
             2 -> {
                 clickMode = ClickMode.PendingDelete
-                TtsSpeaker.speak("triple click to confirm delete")
+                TtsSpeaker.speak("delete pending triple tap to confirm")
             }
             else -> {
                 // 3, 4, 5 clicks do nothing in secondary mode.
