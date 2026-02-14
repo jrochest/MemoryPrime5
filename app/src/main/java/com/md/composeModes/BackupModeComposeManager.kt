@@ -2,6 +2,8 @@ package com.md.composeModes
 
 import android.content.Context
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -79,7 +81,7 @@ class BackupModeComposeManager @Inject constructor(
     fun compose() {
         // Don't interrupt the backup.
         KeepScreenOn()
-        Column (modifier = Modifier.verticalScroll(rememberScrollState())) {
+        Column (modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
           ShowUiForState()
         }
     }
@@ -95,12 +97,12 @@ class BackupModeComposeManager @Inject constructor(
         val remainingZipsToWriteCount = backupModeStateModel.remainingZipsToWriteCount.collectAsState()
         val inProgress = backupModeStateModel.backupInProgress.collectAsState()
         if (inProgress.value) {
-            Text(text = "Backup in progress... ", style = MaterialTheme.typography.headlineSmall)
+            Text(text = "Backup in progress... ", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.fillMaxWidth())
         }
-        Text(text = "Backup status: ", style = MaterialTheme.typography.headlineSmall)
-        Text(text = summary.value, style = MaterialTheme.typography.bodyLarge)
-        Text(text = "Zips to write: ${remainingZipsToWriteCount.value}", style = MaterialTheme.typography.bodyLarge)
-        Text(text = writtenItemsLog.value, style = MaterialTheme.typography.bodyMedium)
-        Text(text = errorMessage.value, style = MaterialTheme.typography.bodyLarge)
+        Text(text = "Backup status: ", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.fillMaxWidth())
+        Text(text = summary.value, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth())
+        Text(text = "Zips to write: ${remainingZipsToWriteCount.value}", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth())
+        Text(text = writtenItemsLog.value, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.fillMaxWidth())
+        Text(text = errorMessage.value, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth())
     }
 }
