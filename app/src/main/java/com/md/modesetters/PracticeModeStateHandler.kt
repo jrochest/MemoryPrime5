@@ -205,7 +205,18 @@ class PracticeModeStateHandler @Inject constructor(
         focusedNoteExistsHandler(noteState)
     }
 
-    fun proceed() {
+    /**
+     * Proceed with an FSRS-style grade.
+     * Grade mapping to Note.java:
+     *   1 = Again (failed recall)
+     *   2 = Hard (difficult recall)
+     *   4 = Good (normal recall)
+     *   5 = Easy (effortless recall)
+     *
+     * On questions: flips to the answer (grade is not applied).
+     * On answers: applies the grade and moves to the next note.
+     */
+    fun proceedWithGrade(grade: Int) {
         activity.lifecycleScope.launch {
             val focusedDeck = focusedQueueStateModel.deck.value
             val noteState = currentNotePartManager.noteStateFlow.value
@@ -216,7 +227,7 @@ class PracticeModeStateHandler @Inject constructor(
                 }, focusedNoteExistsHandler = { noteState ->
                     if (shouldProceed()) return@handlePracticeNoteState
                     if (noteState.notePart.partIsAnswer) {
-                        updateScoreAndMoveToNext(4, noteState.currentNote)
+                        updateScoreAndMoveToNext(grade, noteState.currentNote)
                     } else {
                         setupAnswerMode()
                     }
@@ -225,6 +236,10 @@ class PracticeModeStateHandler @Inject constructor(
                 loadTheDefaultDeck(focusedDeck)
             }
         }
+    }
+
+    fun proceed() {
+        proceedWithGrade(4)
     }
 
     private fun loadTheDefaultDeck(focusedDeck: DeckInfo?) {

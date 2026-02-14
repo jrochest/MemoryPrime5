@@ -59,21 +59,17 @@ object WorkingMemoryScreen {
     const val MAX_FONT_SIZE = 36
     const val MAX_TAP_GAP_DURATION_TO_DELETE_MILLIS = 300
     val LARGE_TAP_AREA_LABEL = """
-Tap counts
-1: Remembered
-(User remembered note / proceed)
-2: Forgot
-(User forgot note / proceed)
-3: Back
-(Back, to previous question or previous answer. )
-5: Short Postpone
-Postpone note to later in the queue.
-6: Long Postpone
-(Postpone note to next time app is opened)
-7: Archive.
-Remove note from review queue. must be done twice.
-8: Delete.
-Remove note from storage. Must be done twice.
+Tap counts (Default Mode)
+1: Good (normal recall)
+2: Again (failed recall)
+3: Easy (effortless recall)
+4: Hard (difficult recall)
+5: Back / Undo
+6: Secondary Mode
+
+Secondary Mode
+1: Postpone (triple click to confirm)
+2: Delete (triple click to confirm)
 
 """.trimMargin()
 }
