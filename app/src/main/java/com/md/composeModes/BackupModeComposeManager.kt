@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -13,6 +14,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.md.SpacedRepeaterActivity
 import com.md.utils.KeepScreenOn
@@ -97,12 +99,43 @@ class BackupModeComposeManager @Inject constructor(
         val remainingZipsToWriteCount = backupModeStateModel.remainingZipsToWriteCount.collectAsState()
         val inProgress = backupModeStateModel.backupInProgress.collectAsState()
         if (inProgress.value) {
-            Text(text = "Backup in progress... ", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.fillMaxWidth())
+            Text(
+                text = "Backup in progress… ",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+            )
         }
-        Text(text = "Backup status: ", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.fillMaxWidth())
-        Text(text = summary.value, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth())
-        Text(text = "Zips to write: ${remainingZipsToWriteCount.value}", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth())
-        Text(text = writtenItemsLog.value, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.fillMaxWidth())
-        Text(text = errorMessage.value, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth())
+        Text(
+            text = "Backup status:",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
+        )
+        Text(
+            text = summary.value,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp)
+        )
+        Text(
+            text = "Zips to write: ${remainingZipsToWriteCount.value}",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp)
+        )
+        Text(
+            text = writtenItemsLog.value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp)
+        )
+        if (errorMessage.value.isNotBlank()) {
+            Text(
+                text = errorMessage.value,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
+            )
+        }
     }
 }

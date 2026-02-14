@@ -10,8 +10,9 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -114,7 +115,8 @@ class AddNoteComposeManager @Inject constructor(
                 )
             }
             Row(Modifier.fillMaxHeight(100f)) {
-                OutlinedButton(modifier = firstButtonModifier,
+                FilledTonalButton(modifier = firstButtonModifier,
+                    shape = RoundedCornerShape(28.dp),
                     onClick = {
                         notePartQuestion.pendingRecorder?.deleteFile()
                         notePartQuestion.pendingRecorder = null
@@ -130,9 +132,11 @@ class AddNoteComposeManager @Inject constructor(
                 }
                 if (state.hasAnswer.value && state.hasQuestion.value) {
                     val text = "Save note"
-                    OutlinedButton(modifier = secondButtonModifier.semantics {
+                    FilledTonalButton(modifier = secondButtonModifier.semantics {
                                                                              contentDescription = text
                     },
+                        shape = RoundedCornerShape(28.dp),
+                        colors = ImportantButtonColor(),
                         onClick = {
                             val deck = DefaultDeckToAddNewNotesToSharedPreference.getDeck(activity)
                             if (deck == null) {
@@ -140,7 +144,7 @@ class AddNoteComposeManager @Inject constructor(
                                 deckModeStateModel.modeModel.value = DeckMode.ChooseDeckToAddNewItemsTo
                                 topModeFlowProvider.modeModel.value = Mode.DeckChooser
                                 workingModeSetter.get().switchMode(context = activity)
-                                return@OutlinedButton
+                                return@FilledTonalButton
                             }
 
                             val questionFile =
@@ -181,9 +185,10 @@ fun AudioRecordForPart(
     val isRecording = remember { mutableStateOf(false) }
     if (!isRecording.value) {
         val text = "Tap to record ${notePart.name}"
-        OutlinedButton(modifier = modifier.semantics(mergeDescendants = true) {
+        FilledTonalButton(modifier = modifier.semantics(mergeDescendants = true) {
             contentDescription = text
         },
+            shape = RoundedCornerShape(28.dp),
             colors = MediumImportanceButtonColor(),
             onClick = {
                 if (notePart.pendingRecorder == null) {
@@ -198,10 +203,11 @@ fun AudioRecordForPart(
         }
     } else {
         val text = "Tap to stop recording ${notePart.name}"
-        OutlinedButton(modifier = modifier
+        FilledTonalButton(modifier = modifier
             .semantics(mergeDescendants = true) {
                                                 contentDescription = text
             },
+            shape = RoundedCornerShape(28.dp),
             colors = ImportantButtonColor(),
             onClick = {
                 fun handleFailedPendingRecording() {
@@ -255,7 +261,8 @@ fun PlayButtonForRecorderIfPending(
     // Create a CoroutineScope that follows this composable's lifecycle
     val coroutineScope = rememberCoroutineScope()
     if (hasSavable.value) {
-        OutlinedButton(modifier = modifier,
+        FilledTonalButton(modifier = modifier,
+            shape = RoundedCornerShape(28.dp),
             onClick = {
                 coroutineScope.launch(context = Dispatchers.Main) {
                     notePart.savableRecorder?.playFile()
@@ -274,7 +281,8 @@ fun SaveButtonForPendingNotePartRecording(
     hasSavable: MutableState<Boolean> = mutableStateOf(false),
 ) {
     if (hasSavable.value) {
-        OutlinedButton(modifier = modifier,
+        FilledTonalButton(modifier = modifier,
+            shape = RoundedCornerShape(28.dp),
             colors = ImportantButtonColor(),
             onClick = { onSaveTap() }) {
             RecorderButtonText(text = "Save")
@@ -285,5 +293,5 @@ fun SaveButtonForPendingNotePartRecording(
 
 @Composable
 fun RecorderButtonText(text: String) {
-    Text(text = text, style = MaterialTheme.typography.labelLarge)
+    Text(text = text, style = MaterialTheme.typography.titleMedium)
 }
