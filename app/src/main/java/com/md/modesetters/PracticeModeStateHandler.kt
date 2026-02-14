@@ -324,8 +324,7 @@ class PracticeModeStateHandler @Inject constructor(
 
     private fun updateScoreAndMoveToNext(newGrade: Int, currentNote: Note) {
         applyGradeStatic(newGrade, currentNote)
-        ToastSingleton.getInstance()
-            .msg("Easiness: " + currentNote.easiness + " Interval " + currentNote!!.interval)
+
         setupQuestionMode()
     }
 
@@ -344,12 +343,44 @@ class PracticeModeStateHandler @Inject constructor(
             currentNote.id,
             currentNote.interval, newGrade, System.currentTimeMillis()
         )
-        currentNote.process_answer(newGrade)
+        // Use FSRS for migrated cards, SM-2 fallback for unmigrated ones
+        // Calculate intervals
+        val newInterval: Int
+        var sm2Interval = -1
+
+        if (currentNote.isFsrsMigrated) {
+            // Visualize what SM-2 would have done
+            try {
+                val clone = currentNote.clone()
+                sm2Interval = clone.process_answer(newGrade)
+            } catch (e: CloneNotSupportedException) {
+                e.printStackTrace()
+            }
+            newInterval = currentNote.processFsrsAnswer(newGrade)
+        } else {
+            newInterval = currentNote.process_answer(newGrade)
+        }
+
+        ToastSingleton.getInstance()
+            .msg(
+                "Easiness: " + currentNote.easiness + " Interval: " + newInterval +
+                        if (sm2Interval != -1) " (SM-2: $sm2Interval)" else ""
+            )
         noteEditor!!.update(currentNote)
         val deck = checkNotNull(focusedQueueStateModel.deck.value)
 
         // If you scored too low review it again, at the end.
-        if (currentNote.is_due_for_acquisition_rep) {
+        // For FSRS: re-queue if in Learning or Relearning state.
+        // For SM-2 fallback: re-queue if grade < 2 (acquisition phase).
+        val shouldRequeue = if (currentNote.isFsrsMigrated) {
+            val fsrsState = com.md.fsrs.FsrsScheduler.CardState.fromInt(currentNote.fsrsState)
+            fsrsState == com.md.fsrs.FsrsScheduler.CardState.Learning
+                    || fsrsState == com.md.fsrs.FsrsScheduler.CardState.Relearning
+        } else {
+            currentNote.is_due_for_acquisition_rep
+        }
+
+        if (shouldRequeue) {
             deck.revisionQueue.updateNote(currentNote, keepQueueLocation = false)
             missCounter++
         } else {

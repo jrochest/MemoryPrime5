@@ -1,6 +1,6 @@
 package com.md;
 
-import  com.md.provider.AbstractNote;
+import com.md.provider.AbstractNote;
 
 import java.util.HashMap;
 
@@ -32,7 +32,7 @@ public class NotesProvider extends ContentProvider {
 
 	private static final String TAG = "DbInteraction";
 
-	private static final int DATABASE_VERSION = 26;
+	private static final int DATABASE_VERSION = 27;
 	public static final String NOTES_TABLE_NAME = "notes";
 	public static final String DECKS_TABLE_NAME = "decks";
 	public static final String REPS_TABLE_NAME = "reps";
@@ -45,7 +45,6 @@ public class NotesProvider extends ContentProvider {
 	private static final int LIVE_FOLDER_NOTES = 3;
 
 	private static final UriMatcher sUriMatcher;
-
 
 	/**
 	 * This class helps open, create, and upgrade the database file.
@@ -76,7 +75,10 @@ public class NotesProvider extends ContentProvider {
 						+ AbstractNote.RET_REPS_SINCE_LAPSE + " INTEGER, "
 						+ AbstractNote.NEXT_REP + " INTEGER, "
 						+ AbstractNote.LAST_REP + " INTEGER, "
-						+ AbstractNote.PRIORITY + " INTEGER DEFAULT 100 "
+						+ AbstractNote.PRIORITY + " INTEGER DEFAULT 100, "
+						+ AbstractNote.FSRS_STABILITY + " REAL DEFAULT -1, "
+						+ AbstractNote.FSRS_DIFFICULTY + " REAL DEFAULT -1, "
+						+ AbstractNote.FSRS_STATE + " INTEGER DEFAULT 0 "
 						+ ");");
 			} catch (Exception e) {
 				String message = e.getMessage();
@@ -149,7 +151,23 @@ public class NotesProvider extends ContentProvider {
 				oldVersion++;
 				try {
 					// TODOJ change table and field of this.
-					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN "  + AbstractNote.PRIORITY +  " INTEGER DEFAULT 100");
+					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN " + AbstractNote.PRIORITY
+							+ " INTEGER DEFAULT 100");
+				} catch (Exception e) {
+					String message = e.getMessage();
+					System.out.println(message);
+				}
+			}
+
+			if (oldVersion == 26) {
+				oldVersion++;
+				try {
+					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN " + AbstractNote.FSRS_STABILITY
+							+ " REAL DEFAULT -1");
+					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN " + AbstractNote.FSRS_DIFFICULTY
+							+ " REAL DEFAULT -1");
+					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN " + AbstractNote.FSRS_STATE
+							+ " INTEGER DEFAULT 0");
 				} catch (Exception e) {
 					String message = e.getMessage();
 					System.out.println(message);
@@ -185,21 +203,21 @@ public class NotesProvider extends ContentProvider {
 		qb.setTables(NOTES_TABLE_NAME);
 
 		switch (sUriMatcher.match(uri)) {
-		case NOTES:
-			qb.setProjectionMap(sMDProjectionMap);
-			break;
+			case NOTES:
+				qb.setProjectionMap(sMDProjectionMap);
+				break;
 
-		case NOTE_ID:
-			qb.setProjectionMap(sMDProjectionMap);
-			qb.appendWhere(Note._ID + "=" + uri.getPathSegments().get(1));
-			break;
+			case NOTE_ID:
+				qb.setProjectionMap(sMDProjectionMap);
+				qb.appendWhere(Note._ID + "=" + uri.getPathSegments().get(1));
+				break;
 
-		case LIVE_FOLDER_NOTES:
-			qb.setProjectionMap(sLiveFolderProjectionMap);
-			break;
+			case LIVE_FOLDER_NOTES:
+				qb.setProjectionMap(sLiveFolderProjectionMap);
+				break;
 
-		default:
-			throw new IllegalArgumentException("Unknown URI " + uri);
+			default:
+				throw new IllegalArgumentException("Unknown URI " + uri);
 		}
 
 		// If no sort order is specified use the default
@@ -222,15 +240,15 @@ public class NotesProvider extends ContentProvider {
 	@Override
 	public String getType(Uri uri) {
 		switch (sUriMatcher.match(uri)) {
-		case NOTES:
-		case LIVE_FOLDER_NOTES:
-			return AbstractNote.CONTENT_TYPE;
+			case NOTES:
+			case LIVE_FOLDER_NOTES:
+				return AbstractNote.CONTENT_TYPE;
 
-		case NOTE_ID:
-			return AbstractNote.CONTENT_ITEM_TYPE;
+			case NOTE_ID:
+				return AbstractNote.CONTENT_ITEM_TYPE;
 
-		default:
-			throw new IllegalArgumentException("Unknown URI " + uri);
+			default:
+				throw new IllegalArgumentException("Unknown URI " + uri);
 		}
 	}
 
@@ -247,7 +265,7 @@ public class NotesProvider extends ContentProvider {
 		} else {
 			values = new ContentValues();
 		}
-		
+
 		if (values.containsKey(AbstractNote.GRADE) == false) {
 			Resources r = Resources.getSystem();
 			values.put(AbstractNote.GRADE, r
@@ -311,22 +329,23 @@ public class NotesProvider extends ContentProvider {
 		SQLiteDatabase db = getOpenHelper().getWritableDatabase();
 		int count;
 		switch (sUriMatcher.match(uri)) {
-		case NOTES:
-			count = db.delete(NOTES_TABLE_NAME, where, whereArgs);
-			break;
+			case NOTES:
+				count = db.delete(NOTES_TABLE_NAME, where, whereArgs);
+				break;
 
-		case NOTE_ID:
-			String noteId = uri.getPathSegments().get(1);
-			count = db.delete(NOTES_TABLE_NAME,
-					Note._ID
-							+ "="
-							+ noteId
-							+ (!TextUtils.isEmpty(where) ? " AND (" + where
-									+ ')' : ""), whereArgs);
-			break;
+			case NOTE_ID:
+				String noteId = uri.getPathSegments().get(1);
+				count = db.delete(NOTES_TABLE_NAME,
+						Note._ID
+								+ "="
+								+ noteId
+								+ (!TextUtils.isEmpty(where) ? " AND (" + where
+										+ ')' : ""),
+						whereArgs);
+				break;
 
-		default:
-			throw new IllegalArgumentException("Unknown URI " + uri);
+			default:
+				throw new IllegalArgumentException("Unknown URI " + uri);
 		}
 
 		getContext().getContentResolver().notifyChange(uri, null);
@@ -339,22 +358,23 @@ public class NotesProvider extends ContentProvider {
 		SQLiteDatabase db = getOpenHelper().getWritableDatabase();
 		int count;
 		switch (sUriMatcher.match(uri)) {
-		case NOTES:
-			count = db.update(NOTES_TABLE_NAME, values, where, whereArgs);
-			break;
+			case NOTES:
+				count = db.update(NOTES_TABLE_NAME, values, where, whereArgs);
+				break;
 
-		case NOTE_ID:
-			String noteId = uri.getPathSegments().get(1);
-			count = db.update(NOTES_TABLE_NAME, values,
-					Note._ID
-							+ "="
-							+ noteId
-							+ (!TextUtils.isEmpty(where) ? " AND (" + where
-									+ ')' : ""), whereArgs);
-			break;
+			case NOTE_ID:
+				String noteId = uri.getPathSegments().get(1);
+				count = db.update(NOTES_TABLE_NAME, values,
+						Note._ID
+								+ "="
+								+ noteId
+								+ (!TextUtils.isEmpty(where) ? " AND (" + where
+										+ ')' : ""),
+						whereArgs);
+				break;
 
-		default:
-			throw new IllegalArgumentException("Unknown URI " + uri);
+			default:
+				throw new IllegalArgumentException("Unknown URI " + uri);
 		}
 
 		getContext().getContentResolver().notifyChange(uri, null);
@@ -386,6 +406,9 @@ public class NotesProvider extends ContentProvider {
 		sMDProjectionMap.put(AbstractNote.LAST_REP, AbstractNote.LAST_REP);
 		sMDProjectionMap.put(AbstractNote.NEXT_REP, AbstractNote.NEXT_REP);
 		sMDProjectionMap.put(AbstractNote.PRIORITY, AbstractNote.PRIORITY);
+		sMDProjectionMap.put(AbstractNote.FSRS_STABILITY, AbstractNote.FSRS_STABILITY);
+		sMDProjectionMap.put(AbstractNote.FSRS_DIFFICULTY, AbstractNote.FSRS_DIFFICULTY);
+		sMDProjectionMap.put(AbstractNote.FSRS_STATE, AbstractNote.FSRS_STATE);
 
 		// Support for Live Folders.
 		sLiveFolderProjectionMap = new HashMap<>();

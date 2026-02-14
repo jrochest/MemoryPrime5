@@ -10,7 +10,7 @@ public class AbstractNote {
 	 * The content:// style URL for this table
 	 */
 	public static final Uri CONTENT_URI = Uri.parse("content://"
-				+ NotesProvider.AUTHORITY + "/notes");
+			+ NotesProvider.AUTHORITY + "/notes");
 	/**
 	 * The MIME type of {@link #CONTENT_URI} providing a directory of notes.
 	 */
@@ -44,13 +44,15 @@ public class AbstractNote {
 	public static final String NEXT_REP = "next_rep";
 	public static final String PRIORITY = "priority";
 	public static final String MARKED = "marked";
+	public static final String FSRS_STABILITY = "fsrs_stability";
+	public static final String FSRS_DIFFICULTY = "fsrs_difficulty";
+	public static final String FSRS_STATE = "fsrs_state";
 	protected int grade;
-	
 
-	
 	// TODO did you ever do the population of one of these from the database.
-	
+
 	protected int id;
+
 	public int getId() {
 		return id;
 	}
@@ -65,7 +67,7 @@ public class AbstractNote {
 	protected int categoryAkaDeckId;
 	protected boolean unseen;
 	protected boolean marked;
-	
+
 	public boolean isMarked() {
 		return marked;
 	}
@@ -183,7 +185,7 @@ public class AbstractNote {
 	public int interval() {
 		return getNext_rep() - getLast_rep();
 	}
-	
+
 	public void setNext_rep(int next_rep) {
 		this.next_rep = next_rep;
 	}
@@ -195,8 +197,43 @@ public class AbstractNote {
 	protected int ret_reps_since_lapse;
 	protected int last_rep;
 	protected int next_rep;
-	// This is mostly used for tasks. Starts at 100 and can be decreased via 6 presses.
+	// This is mostly used for tasks. Starts at 100 and can be decreased via 6
+	// presses.
 	public int priority;
+
+	// FSRS fields. -1 means not yet migrated.
+	protected float fsrsStability = -1f;
+	protected float fsrsDifficulty = -1f;
+	// 0=New, 1=Learning, 2=Review, 3=Relearning
+	protected int fsrsState = 0;
+
+	public float getFsrsStability() {
+		return fsrsStability;
+	}
+
+	public void setFsrsStability(float fsrsStability) {
+		this.fsrsStability = fsrsStability;
+	}
+
+	public float getFsrsDifficulty() {
+		return fsrsDifficulty;
+	}
+
+	public void setFsrsDifficulty(float fsrsDifficulty) {
+		this.fsrsDifficulty = fsrsDifficulty;
+	}
+
+	public int getFsrsState() {
+		return fsrsState;
+	}
+
+	public void setFsrsState(int fsrsState) {
+		this.fsrsState = fsrsState;
+	}
+
+	public boolean isFsrsMigrated() {
+		return fsrsStability >= 0;
+	}
 
 	public AbstractNote() {
 		super();

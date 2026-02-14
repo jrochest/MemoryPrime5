@@ -93,6 +93,9 @@ class DbNoteEditor {
         values.put(AbstractNote.UNSEEN, note.isUnseen)
         values.put(AbstractNote.MARKED, note.isMarked)
         values.put(AbstractNote.PRIORITY, note.priority)
+        values.put(AbstractNote.FSRS_STABILITY, note.fsrsStability)
+        values.put(AbstractNote.FSRS_DIFFICULTY, note.fsrsDifficulty)
+        values.put(AbstractNote.FSRS_STATE, note.fsrsState)
     }
 
     fun queryDeck(): List<Deck> {
@@ -258,6 +261,18 @@ class DbNoteEditor {
             note!!.priority = DEFAULT_PRIORITY
         } else {
             note!!.priority = query.getInt(priorityColumnIndex)
+        }
+        val fsrsStabilityIndex = query.getColumnIndex(Note.FSRS_STABILITY)
+        if (fsrsStabilityIndex != -1) {
+            note!!.fsrsStability = query.getFloat(fsrsStabilityIndex)
+        }
+        val fsrsDifficultyIndex = query.getColumnIndex(Note.FSRS_DIFFICULTY)
+        if (fsrsDifficultyIndex != -1) {
+            note!!.fsrsDifficulty = query.getFloat(fsrsDifficultyIndex)
+        }
+        val fsrsStateIndex = query.getColumnIndex(Note.FSRS_STATE)
+        if (fsrsStateIndex != -1) {
+            note!!.fsrsState = query.getInt(fsrsStateIndex)
         }
         return note!!
     }

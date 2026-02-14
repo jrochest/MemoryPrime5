@@ -8,6 +8,7 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 
 import com.md.CategorySingleton;
+import com.md.fsrs.FsrsScheduler;
 import com.md.modesetters.DeckInfo;
 
 /**
@@ -18,9 +19,10 @@ public final class Note extends AbstractNote implements BaseColumns, Cloneable {
     private static final String TAG = "NOTE";
 
     public Note(int grade, int id, String question, String answer,
-                int category, boolean unseen, boolean marked, float easiness,
-                int acq_reps, int ret_reps, int lapses, int acq_reps_since_lapse,
-                int ret_reps_since_lapse, int last_rep, int next_rep) {
+            int category, boolean unseen, boolean marked, float easiness,
+            int acq_reps, int ret_reps, int lapses, int acq_reps_since_lapse,
+            int ret_reps_since_lapse, int last_rep, int next_rep,
+            float fsrsStability, float fsrsDifficulty, int fsrsState) {
         super();
         this.grade = grade;
         this.id = id;
@@ -37,6 +39,9 @@ public final class Note extends AbstractNote implements BaseColumns, Cloneable {
         this.ret_reps_since_lapse = ret_reps_since_lapse;
         this.last_rep = last_rep;
         this.next_rep = next_rep;
+        this.fsrsStability = fsrsStability;
+        this.fsrsDifficulty = fsrsDifficulty;
+        this.fsrsState = fsrsState;
     }
 
     @Override
@@ -50,7 +55,8 @@ public final class Note extends AbstractNote implements BaseColumns, Cloneable {
     public Note clone() {
         return new Note(grade, id, question, answer, categoryAkaDeckId, unseen, marked,
                 easiness, acq_reps, ret_reps, lapses, acq_reps_since_lapse,
-                ret_reps_since_lapse, last_rep, next_rep);
+                ret_reps_since_lapse, last_rep, next_rep,
+                fsrsStability, fsrsDifficulty, fsrsState);
 
     }
 
@@ -136,7 +142,7 @@ public final class Note extends AbstractNote implements BaseColumns, Cloneable {
         // TODO what is this days_since_start
         return (grade >= 2)
                 && (CategorySingleton.getInstance().getDaysSinceStart() >= next_rep
-                - days);
+                        - days);
     }
 
     public boolean is_overdue() {
@@ -149,7 +155,7 @@ public final class Note extends AbstractNote implements BaseColumns, Cloneable {
     int calculate_initial_interval(int grade) {
         // If this is the first time we grade this item, allow for slightly
         // longer scheduled intervals, as we might know this item from before.
-        int[] initialGrade = {0, 0, 1, 3, 4, 5};
+        int[] initialGrade = { 0, 0, 1, 3, 4, 5 };
 
         int interval = initialGrade[grade];
         return interval;
@@ -291,6 +297,75 @@ public final class Note extends AbstractNote implements BaseColumns, Cloneable {
 
         // Don't schedule inverse or identical questions on the same day.
         return (int) (new_interval + noise);
+    }
+
+    /**
+     * Process a review using the FSRS algorithm.
+     * This replaces process_answer() for cards that have been migrated to FSRS.
+     *
+     * @param newGrade SM-2 style grade (0-5), will be converted to FSRS Rating.
+     * @return The new interval in days.
+     */
+    public int processFsrsAnswer(int newGrade) {
+        FsrsScheduler.Rating rating = FsrsScheduler.Rating.Companion.fromSm2Grade(newGrade);
+
+        // Compute elapsed days since last review
+        int daysSinceStart = CategorySingleton.getInstance().getDaysSinceStart();
+        double elapsedDays;
+        if (last_rep == 0) {
+            elapsedDays = 0;
+        } else {
+            elapsedDays = Math.max(0, daysSinceStart - last_rep);
+        }
+
+        // Build current FSRS state (or null for new/unmigrated cards)
+        FsrsScheduler.FsrsState currentState;
+        if (isFsrsMigrated()) {
+            currentState = new FsrsScheduler.FsrsState(
+                    fsrsStability, fsrsDifficulty,
+                    FsrsScheduler.CardState.Companion.fromInt(fsrsState));
+        } else {
+            // First FSRS review — treat as new
+            currentState = null;
+        }
+
+        // Compute next FSRS state
+        FsrsScheduler.FsrsState nextState = FsrsScheduler.INSTANCE.nextState(
+                currentState, rating, elapsedDays);
+
+        // Update FSRS fields
+        fsrsStability = (float) nextState.getStability();
+        fsrsDifficulty = (float) nextState.getDifficulty();
+        fsrsState = nextState.getState().getValue();
+
+        // Compute interval from stability
+        int newInterval = FsrsScheduler.INSTANCE.nextInterval(
+                nextState.getStability(), FsrsScheduler.DEFAULT_RETENTION);
+
+        // If in learning/relearning, use short intervals
+        if (nextState.getState() == FsrsScheduler.CardState.Learning
+                || nextState.getState() == FsrsScheduler.CardState.Relearning) {
+            newInterval = 0; // Review again today
+        }
+
+        // Map FSRS state back to SM-2 grade for backward compat
+        if (rating == FsrsScheduler.Rating.Again) {
+            grade = 1;
+            lapses++;
+            acq_reps_since_lapse = 0;
+            ret_reps_since_lapse = 0;
+        } else {
+            grade = 4; // Passed
+            ret_reps++;
+            ret_reps_since_lapse++;
+        }
+
+        // Update scheduling fields
+        last_rep = daysSinceStart;
+        next_rep = daysSinceStart + newInterval;
+        unseen = false;
+
+        return newInterval;
     }
 
     public Note(String question, String answer, DeckInfo deck) {
