@@ -57,8 +57,11 @@ class ExternalClickCounter
     private var currentJob: Job? = null
     private var previousPressGroupGapMillis: Long = 0
 
-    /** Current interaction mode. */
-    private var clickMode: ClickMode = ClickMode.Default
+    /** Current interaction mode, exposed as a flow for UI observation. */
+    val clickModeFlow = kotlinx.coroutines.flow.MutableStateFlow(ClickMode.Default)
+    private var clickMode: ClickMode
+        get() = clickModeFlow.value
+        set(value) { clickModeFlow.value = value }
 
     /**
      * Rapid-succession gap for triple-click confirmation in pending modes.

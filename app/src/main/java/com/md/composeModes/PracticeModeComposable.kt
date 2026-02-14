@@ -14,9 +14,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.md.AudioRecorder
+import com.md.ClickMode
 import com.md.ExternalClickCounter
 import com.md.SpacedRepeaterActivity
 import com.md.modesetters.PracticeModeStateHandler
@@ -124,6 +126,7 @@ class PracticeModeComposerManager @Inject constructor(
 
     @Composable
     fun compose() {
+        val clickMode = externalClickCounter.clickModeFlow.collectAsState().value
         PracticeModeComposable(
             onEnableRecordMode = {
                 activity.lifecycleScope.launch {
@@ -155,7 +158,7 @@ class PracticeModeComposerManager @Inject constructor(
                 )
             },
             practiceMode = practiceModeViewModel.practiceStateFlow.collectAsState().value,
-
+            clickMode = clickMode,
             currentNotePartManager = currentNotePartManager
         )
     }
@@ -168,12 +171,20 @@ class PracticeModeComposerManager @Inject constructor(
         onDeleteTap: () -> Unit = {},
         onMiddleButtonTapInPracticeMode: () -> Unit = {},
         practiceMode: PracticeMode,
+        clickMode: ClickMode = ClickMode.Default,
         currentNotePartManager: CurrentNotePartManager
     ) {
 
         val noteState = currentNotePartManager.noteStateFlow.collectAsState()
         val notePart = noteState.value?.notePart
 
+        // Choose button color based on click mode for visual feedback
+        val modeColor = when (clickMode) {
+            ClickMode.Default -> ButtonStyles.MediumImportanceButtonColor()
+            ClickMode.Secondary -> ButtonStyles.SecondaryModeButtonColor()
+            ClickMode.PendingPostpone -> ButtonStyles.SecondaryModeButtonColor()
+            ClickMode.PendingDelete -> ButtonStyles.DangerButtonColor()
+        }
 
         Column(
             verticalArrangement = Arrangement.Top,
@@ -196,14 +207,15 @@ class PracticeModeComposerManager @Inject constructor(
                 )
                 Text(
                     text = "Remaining: ${metrics.remainingInQueue}",
-                    style = MaterialTheme.typography.headlineSmall
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
             if (notePart == null) {
                 MiddlePracticeButton(
                     largeButtonModifier, onMiddleButtonTapInPracticeMode,
-                    colors = ButtonStyles.MediumImportanceButtonColor()
+                    colors = modeColor
                 ) {
                     showRepState()
                     Text(
@@ -219,18 +231,20 @@ class PracticeModeComposerManager @Inject constructor(
                 PracticeMode.Practicing -> {
                     MiddlePracticeButton(
                         largeButtonModifier, onMiddleButtonTapInPracticeMode,
-                        colors = ButtonStyles.MediumImportanceButtonColor()
+                        colors = modeColor
                     ) {
                         showRepState()
                         val isAnswer =
                             currentNotePartManager.noteStateFlow.collectAsState().value?.notePart?.partIsAnswer
                         Text(
                             text = if (isAnswer == true) "Answer" else "Question",
-                            style = MaterialTheme.typography.headlineSmall
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.primary
                         )
                         Text(
                             text = LARGE_TAP_AREA_LABEL,
-                            style = MaterialTheme.typography.labelSmall
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -251,11 +265,11 @@ class PracticeModeComposerManager @Inject constructor(
                         {
                             practiceModeViewModel.practiceStateFlow.value = PracticeMode.Practicing
                         },
-                        colors = ButtonStyles.MediumImportanceButtonColor()
+                        colors = ButtonStyles.DangerButtonColor()
                     ) {
                         Text(
                             text = "Exit delete mode",
-                            style = MaterialTheme.typography.labelLarge
+                            style = MaterialTheme.typography.titleLarge
                         )
                     }
                 }
@@ -274,7 +288,9 @@ class PracticeModeComposerManager @Inject constructor(
                 val bottomLeftButtonModifier = bottomButtonModifier.fillMaxWidth(fraction = .5f)
                 when (practiceMode) {
                     PracticeMode.Deleting -> {
-                        OutlinedButton(modifier = bottomLeftButtonModifier,
+                        FilledTonalButton(
+                            modifier = bottomLeftButtonModifier,
+                            shape = RoundedCornerShape(28.dp),
                             colors = ButtonStyles.MediumImportanceButtonColor(),
                             onClick = {
                                 practiceModeViewModel.practiceStateFlow.value =
@@ -427,10 +443,11 @@ private fun MiddlePracticeButton(
     colors: ButtonColors = ButtonStyles.MediumImportanceButtonColor(),
     content: @Composable () -> Unit,
 ) {
-    OutlinedButton(
+    FilledTonalButton(
         modifier = modifier,
         onClick = { onMiddleButtonTap() },
         colors = colors,
+        shape = RoundedCornerShape(28.dp),
     ) {
         Column(
             Modifier.fillMaxWidth(),
@@ -453,8 +470,10 @@ fun NTapButton(
     var tapCount = 0
     var previousTapTimeMillis = 0L
     val maxTimeBetweenTapsMillis = 1000
-    OutlinedButton(
-        modifier = modifier, onClick = {
+    FilledTonalButton(
+        modifier = modifier,
+        shape = RoundedCornerShape(28.dp),
+        onClick = {
             val currentTime = SystemClock.uptimeMillis()
             if (currentTime - previousTapTimeMillis <= maxTimeBetweenTapsMillis) {
                 tapCount++
