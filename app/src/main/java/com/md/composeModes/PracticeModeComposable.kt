@@ -62,9 +62,9 @@ object WorkingMemoryScreen {
 Tap counts (Default Mode)
 1: Good (normal recall)
 2: Again (failed recall)
-3: Easy (effortless recall)
-4: Hard (difficult recall)
-5: Back / Undo
+3: Back / Undo
+4: Easy (effortless recall)
+5: Hard (difficult recall)
 6: Secondary Mode
 
 Secondary Mode

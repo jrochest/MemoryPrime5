@@ -137,7 +137,7 @@ class ExternalClickCounter
 
     /**
      * Default mode: FSRS-style ratings.
-     * 1=Good, 2=Again, 3=Easy, 4=Hard, 5=Back, 6=Secondary, 7+=Cancel
+     * 1=Good, 2=Again, 3=Back, 4=Easy, 5=Hard, 6+=Secondary
      */
     private fun handleDefaultMode(pressGroupCount: Int, handler: PracticeModeStateHandler) {
         val message: String?
@@ -153,19 +153,19 @@ class ExternalClickCounter
                 handler.proceedWithGrade(1)
             }
             3 -> {
+                // Back/Undo
+                message = "back"
+                handler.undo()
+            }
+            4 -> {
                 // Easy — effortless recall (grade 5)
                 message = "easy"
                 handler.proceedWithGrade(5)
             }
-            4 -> {
+            5 -> {
                 // Hard — difficult recall (grade 2)
                 message = "hard"
                 handler.proceedWithGrade(2)
-            }
-            5 -> {
-                // Back/Undo
-                message = "back"
-                handler.undo()
             }
             else -> {
                 // 6 or more clicks: enter secondary mode

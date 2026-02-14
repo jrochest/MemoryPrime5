@@ -8,9 +8,9 @@ MemoryPrime uses a **two-mode click system** for practicing notes. Clicks are co
 |--------|--------|-------------|
 | 1 | **Good** | Normal recall. Proceeds to next note. |
 | 2 | **Again** | Failed to recall. Note re-enters the queue. |
-| 3 | **Easy** | Effortless recall. Longer interval before next review. |
-| 4 | **Hard** | Difficult recall. Shorter interval / decreased easiness. |
-| 5 | **Back** | Undo — go back to previous question ↔ answer. |
+| 3 | **Back** | Undo — go back to previous question ↔ answer. |
+| 4 | **Easy** | Effortless recall. Longer interval before next review. |
+| 5 | **Hard** | Difficult recall. Shorter interval / decreased easiness. |
 | 6+ | **Secondary** | Enter secondary mode for destructive actions. |
 
 **On questions:** Clicks 1–4 flip to the answer side. Ratings are only applied when viewing the answer.
@@ -52,9 +52,9 @@ After confirmation or cancellation, the system returns to Default mode.
 Default Mode
   ├── 1 click → Good (proceed)
   ├── 2 clicks → Again (failed)
-  ├── 3 clicks → Easy (easy recall)
-  ├── 4 clicks → Hard (difficult)
-  ├── 5 clicks → Back/Undo
+  ├── 3 clicks → Back/Undo
+  ├── 4 clicks → Easy (easy recall)
+  ├── 5 clicks → Hard (difficult)
   └── 6+ clicks → Secondary Mode
                     ├── 1 click → Pending Postpone
                     │               ├── 1 click → Cancel → Default
