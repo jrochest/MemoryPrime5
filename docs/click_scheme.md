@@ -11,8 +11,7 @@ MemoryPrime uses a **two-mode click system** for practicing notes. Clicks are co
 | 3 | **Easy** | Effortless recall. Longer interval before next review. |
 | 4 | **Hard** | Difficult recall. Shorter interval / decreased easiness. |
 | 5 | **Back** | Undo — go back to previous question ↔ answer. |
-| 6 | **Secondary** | Enter secondary mode for destructive actions. |
-| 7+ | Cancel | No action taken. |
+| 6+ | **Secondary** | Enter secondary mode for destructive actions. |
 
 **On questions:** Clicks 1–4 flip to the answer side. Ratings are only applied when viewing the answer.
 
@@ -33,7 +32,7 @@ Entered via 6 clicks in Default mode. Used for destructive actions that require 
 |--------|--------|
 | 1 | **Pending Postpone** — requeue note to end of queue |
 | 2 | **Pending Delete** — delete note from storage |
-| 3–5 | No action |
+| 3+ | **Back to Default** — exit secondary mode |
 
 ### Confirmation Flow
 
@@ -56,11 +55,12 @@ Default Mode
   ├── 3 clicks → Easy (easy recall)
   ├── 4 clicks → Hard (difficult)
   ├── 5 clicks → Back/Undo
-  └── 6 clicks → Secondary Mode
+  └── 6+ clicks → Secondary Mode
                     ├── 1 click → Pending Postpone
                     │               ├── 1 click → Cancel → Default
                     │               └── 3 clicks → Confirm → Default
-                    └── 2 clicks → Pending Delete
-                                    ├── 1 click → Cancel → Default
-                                    └── 3 clicks → Confirm → Default
+                    ├── 2 clicks → Pending Delete
+                    │               ├── 1 click → Cancel → Default
+                    │               └── 3 clicks → Confirm → Default
+                    └── 3+ clicks → Back to Default
 ```

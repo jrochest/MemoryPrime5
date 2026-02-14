@@ -191,7 +191,9 @@ class ExternalClickCounter
                 TtsSpeaker.speak("delete pending triple tap to confirm")
             }
             else -> {
-                // 3, 4, 5 clicks do nothing in secondary mode.
+                // 3 or more clicks: back to default mode
+                clickMode = ClickMode.Default
+                TtsSpeaker.speak("back to default")
             }
         }
     }
