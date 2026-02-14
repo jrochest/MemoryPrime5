@@ -125,7 +125,7 @@ class ExternalClickCounter
                     pressGroupCount, handler,
                     onConfirm = {
                         handler.deleteNote()
-                        TtsSpeaker.speak("deleted")
+                        TtsSpeaker.speak("deleted, tap to continue")
                     },
                     actionName = "delete"
                 )
