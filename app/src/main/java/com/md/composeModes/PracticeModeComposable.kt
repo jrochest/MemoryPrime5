@@ -65,11 +65,12 @@ Tap counts (Default Mode)
 3: Back / Undo
 4: Easy (effortless recall)
 5: Hard (difficult recall)
-6: Secondary Mode
+6+: Secondary Mode
 
 Secondary Mode
 1: Postpone (triple click to confirm)
 2: Delete (triple click to confirm)
+3+: Exit Secondary Mode
 
 """.trimMargin()
 }
