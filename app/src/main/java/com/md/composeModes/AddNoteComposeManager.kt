@@ -95,7 +95,7 @@ class AddNoteComposeManager @Inject constructor(
             Row(Modifier.fillMaxHeight(.25f).padding(top = 8.dp)) {
                 UserDoodleArea.DrawingCanvas(edges = edges)
             }
-            Row(Modifier.fillMaxHeight(.35f)) {
+            Row(Modifier.fillMaxHeight(.35f).padding(top = 8.dp)) {
                 AudioRecordForPart(
                     firstButtonModifier, notePart = notePartQuestion,
                     audioRecorderProvider
@@ -105,7 +105,7 @@ class AddNoteComposeManager @Inject constructor(
                     hasSavable = state.hasQuestion
                 )
             }
-            Row(Modifier.fillMaxHeight(.60f)) {
+            Row(Modifier.fillMaxHeight(.60f).padding(top = 8.dp)) {
                 AudioRecordForPart(
                     firstButtonModifier, notePart = notePartAnswer, audioRecorderProvider
                 )
@@ -114,7 +114,7 @@ class AddNoteComposeManager @Inject constructor(
                     hasSavable = state.hasAnswer
                 )
             }
-            Row(Modifier.fillMaxHeight(100f)) {
+            Row(Modifier.fillMaxHeight(100f).padding(top = 8.dp)) {
                 FilledTonalButton(modifier = firstButtonModifier,
                     shape = RoundedCornerShape(28.dp),
                     onClick = {
