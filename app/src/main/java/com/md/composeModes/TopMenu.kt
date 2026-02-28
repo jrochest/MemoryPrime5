@@ -127,7 +127,11 @@ fun TopMenu(
                             )
                             showMenu = false
                         })
-                        DropdownMenuItem({ Text("Download High-Fidelity Model") }, onClick = {
+                        DropdownMenuItem({ Text("Transcription Stats") }, onClick = {
+                            topModeFlowProvider.modeModel.value = Mode.TranscriptionStats
+                            showMenu = false
+                        })
+                        DropdownMenuItem({ Text("Download High-Fidelity STT Model") }, onClick = {
                             topModeFlowProvider.modeModel.value = Mode.HighFidelityModel
                             showMenu = false
                         })

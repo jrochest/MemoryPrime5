@@ -53,7 +53,8 @@ enum class Mode {
     Restore,
     Backup,
     Search,
-    HighFidelityModel
+    HighFidelityModel,
+    TranscriptionStats
 }
 
 @ActivityScoped
@@ -68,6 +69,7 @@ class ComposeModeSetter @Inject constructor(
     private val backupModeComposeManager: BackupModeComposeManager,
     private val searchModeComposeManager: SearchModeComposeManager,
     private val highFidelityModelComposeManager: HighFidelityModelComposeManager,
+    private val transcriptionStatsComposeManager: TranscriptionStatsComposeManager,
 
     private val settingsModeComposeManager: SettingsModeComposeManager,
     private val practiceModeComposerManager: PracticeModeComposerManager,
@@ -197,6 +199,10 @@ class ComposeModeSetter @Inject constructor(
 
                                         Mode.HighFidelityModel -> {
                                             highFidelityModelComposeManager.compose()
+                                        }
+
+                                        Mode.TranscriptionStats -> {
+                                            transcriptionStatsComposeManager.compose()
                                         }
 
                                         else -> {}

@@ -13,6 +13,16 @@ import com.md.provider.Note.DEFAULT_PRIORITY
 import com.md.utils.ToastSingleton
 import java.util.*
 
+data class TranscriptionStats(
+    val totalNotes: Int,
+    val totalAudioQuestions: Int,
+    val totalAudioAnswers: Int,
+    val transcribedQuestions: Int,
+    val transcribedAnswers: Int,
+    val averageQuestionConfidence: Float,
+    val averageAnswerConfidence: Float
+)
+
 /**
  * A generic activity for editing a note in a database. This can be used either
  * to simply view a note [Intent.ACTION_VIEW], view and edit a note
@@ -381,6 +391,79 @@ class DbNoteEditor {
     fun setNullNote() {
         currentNoteId = null
         loadDataCurrentId()
+    }
+
+    fun getTranscriptionStats(): TranscriptionStats {
+        var totalNotes = 0
+        var totalAudioQuestions = 0
+        var totalAudioAnswers = 0
+        var transcribedQuestions = 0
+        var transcribedAnswers = 0
+        var qConfSum = 0f
+        var qConfCount = 0
+        var aConfSum = 0f
+        var aConfCount = 0
+
+        val queryString = "SELECT ${Note.QUESTION}, ${Note.ANSWER}, ${Note.QUESTION_TRANSCRIPT}, ${Note.ANSWER_TRANSCRIPT}, ${Note.QUESTION_TRANSCRIPT_CONFIDENCE}, ${Note.ANSWER_TRANSCRIPT_CONFIDENCE} FROM ${NotesProvider.NOTES_TABLE_NAME}"
+        val result = rawQuery(queryString) ?: return TranscriptionStats(0, 0, 0, 0, 0, 0f, 0f)
+        val query = result.cursor
+
+        val qIdx = query.getColumnIndex(Note.QUESTION)
+        val aIdx = query.getColumnIndex(Note.ANSWER)
+        val qtIdx = query.getColumnIndex(Note.QUESTION_TRANSCRIPT)
+        val atIdx = query.getColumnIndex(Note.ANSWER_TRANSCRIPT)
+        val qtcIdx = query.getColumnIndex(Note.QUESTION_TRANSCRIPT_CONFIDENCE)
+        val atcIdx = query.getColumnIndex(Note.ANSWER_TRANSCRIPT_CONFIDENCE)
+
+        while (query.moveToNext()) {
+            totalNotes++
+            val q = if (qIdx != -1) query.getString(qIdx) else null
+            val a = if (aIdx != -1) query.getString(aIdx) else null
+            
+            val hasQAudio = !q.isNullOrBlank()
+            val hasAAudio = !a.isNullOrBlank()
+
+            if (hasQAudio) totalAudioQuestions++
+            if (hasAAudio) totalAudioAnswers++
+
+            val qTrans = if (qtIdx != -1) query.getString(qtIdx) else null
+            val aTrans = if (atIdx != -1) query.getString(atIdx) else null
+
+            if (hasQAudio && !qTrans.isNullOrBlank()) transcribedQuestions++
+            if (hasAAudio && !aTrans.isNullOrBlank()) transcribedAnswers++
+
+            if (qtcIdx != -1) {
+                val qConf = query.getFloat(qtcIdx)
+                if (qConf > 0f) {
+                    qConfSum += qConf
+                    qConfCount++
+                }
+            }
+
+            if (atcIdx != -1) {
+                val aConf = query.getFloat(atcIdx)
+                if (aConf > 0f) {
+                    aConfSum += aConf
+                    aConfCount++
+                }
+            }
+        }
+
+        query.close()
+        result.database.close()
+
+        val avgQConf = if (qConfCount > 0) qConfSum / qConfCount else 0f
+        val avgAConf = if (aConfCount > 0) aConfSum / aConfCount else 0f
+
+        return TranscriptionStats(
+            totalNotes = totalNotes,
+            totalAudioQuestions = totalAudioQuestions,
+            totalAudioAnswers = totalAudioAnswers,
+            transcribedQuestions = transcribedQuestions,
+            transcribedAnswers = transcribedAnswers,
+            averageQuestionConfidence = avgQConf,
+            averageAnswerConfidence = avgAConf
+        )
     }
 
     fun insertDeck(deck: Deck?) {
