@@ -53,4 +53,23 @@ interface ApplicationComponent {
 class MemPrimeApplication : Application() {
     // See https://developer.android.com/training/dependency-injection/dagger-android
     val unused = DaggerApplicationComponent.create()
+
+    override fun onCreate() {
+        super.onCreate()
+        
+        val workRequest = androidx.work.PeriodicWorkRequestBuilder<com.md.workers.TranscriptionWorker>(
+            1, java.util.concurrent.TimeUnit.DAYS
+        ).setConstraints(
+            androidx.work.Constraints.Builder()
+                .setRequiresDeviceIdle(true)
+                .setRequiresCharging(true)
+                .build()
+        ).build()
+        
+        androidx.work.WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "TranscriptionWorker",
+            androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+            workRequest
+        )
+    }
 }

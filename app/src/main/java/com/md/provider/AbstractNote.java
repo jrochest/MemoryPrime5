@@ -47,6 +47,10 @@ public class AbstractNote {
 	public static final String FSRS_STABILITY = "fsrs_stability";
 	public static final String FSRS_DIFFICULTY = "fsrs_difficulty";
 	public static final String FSRS_STATE = "fsrs_state";
+	public static final String QUESTION_TRANSCRIPT = "question_transcript";
+	public static final String ANSWER_TRANSCRIPT = "answer_transcript";
+	public static final String QUESTION_TRANSCRIPT_CONFIDENCE = "question_transcript_confidence";
+	public static final String ANSWER_TRANSCRIPT_CONFIDENCE = "answer_transcript_confidence";
 	protected int grade;
 
 	// TODO did you ever do the population of one of these from the database.
@@ -63,6 +67,10 @@ public class AbstractNote {
 
 	protected String question;
 	protected String answer;
+	protected String questionTranscript;
+	protected String answerTranscript;
+	protected float questionTranscriptConfidence;
+	protected float answerTranscriptConfidence;
 
 	protected int categoryAkaDeckId;
 	protected boolean unseen;
@@ -104,6 +112,38 @@ public class AbstractNote {
 
 	public void setAnswer(String answer) {
 		this.answer = answer;
+	}
+
+	public String getQuestionTranscript() {
+		return questionTranscript;
+	}
+
+	public void setQuestionTranscript(String questionTranscript) {
+		this.questionTranscript = questionTranscript;
+	}
+
+	public String getAnswerTranscript() {
+		return answerTranscript;
+	}
+
+	public void setAnswerTranscript(String answerTranscript) {
+		this.answerTranscript = answerTranscript;
+	}
+
+	public float getQuestionTranscriptConfidence() {
+		return questionTranscriptConfidence;
+	}
+
+	public void setQuestionTranscriptConfidence(float questionTranscriptConfidence) {
+		this.questionTranscriptConfidence = questionTranscriptConfidence;
+	}
+
+	public float getAnswerTranscriptConfidence() {
+		return answerTranscriptConfidence;
+	}
+
+	public void setAnswerTranscriptConfidence(float answerTranscriptConfidence) {
+		this.answerTranscriptConfidence = answerTranscriptConfidence;
 	}
 
 	public int getCategoryAkaDeckId() {

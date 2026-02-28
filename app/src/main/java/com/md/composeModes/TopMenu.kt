@@ -13,6 +13,8 @@ import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material.icons.outlined.LibraryBooks
 import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -63,8 +65,8 @@ fun TopMenu(
         NavItem(Mode.DeckChooser, "Decks", Icons.Outlined.LibraryBooks) {
             onDeckChooseMode()
         },
-        NavItem(Mode.Backup, "Backup", Icons.Outlined.Backup) {
-            topModeFlowProvider.modeModel.value = Mode.Backup
+        NavItem(Mode.Search, "Search", Icons.Outlined.Search) {
+            topModeFlowProvider.modeModel.value = Mode.Search
         },
     )
 
@@ -108,8 +110,25 @@ fun TopMenu(
                         expanded = showMenu,
                         onDismissRequest = { showMenu = false }
                     ) {
+                        DropdownMenuItem({ Text("Backup") }, onClick = {
+                            topModeFlowProvider.modeModel.value = Mode.Backup
+                            showMenu = false
+                        })
                         DropdownMenuItem({ Text("Settings") }, onClick = {
                             topModeFlowProvider.modeModel.value = Mode.Settings
+                            showMenu = false
+                        })
+                        DropdownMenuItem({ Text("Transcribe Audio (Manual)") }, onClick = {
+                            val workRequest = androidx.work.OneTimeWorkRequestBuilder<com.md.workers.TranscriptionWorker>().build()
+                            androidx.work.WorkManager.getInstance(activity).enqueueUniqueWork(
+                                "ManualTranscription", 
+                                androidx.work.ExistingWorkPolicy.REPLACE, 
+                                workRequest
+                            )
+                            showMenu = false
+                        })
+                        DropdownMenuItem({ Text("Download High-Fidelity Model") }, onClick = {
+                            topModeFlowProvider.modeModel.value = Mode.HighFidelityModel
                             showMenu = false
                         })
                         DropdownMenuItem({ Text("Restore from incremental directory") }, onClick = {

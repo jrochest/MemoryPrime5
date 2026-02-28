@@ -79,6 +79,10 @@ class DbNoteEditor {
         values.put(AbstractNote.GRADE, note.grade)
         values.put(AbstractNote.QUESTION, note.question)
         values.put(AbstractNote.ANSWER, note.answer)
+        values.put(AbstractNote.QUESTION_TRANSCRIPT, note.questionTranscript)
+        values.put(AbstractNote.ANSWER_TRANSCRIPT, note.answerTranscript)
+        values.put(AbstractNote.QUESTION_TRANSCRIPT_CONFIDENCE, note.questionTranscriptConfidence)
+        values.put(AbstractNote.ANSWER_TRANSCRIPT_CONFIDENCE, note.answerTranscriptConfidence)
         values.put(AbstractNote.CATEGORY, note.categoryAkaDeckId)
         values.put(AbstractNote.EASINESS, note.easiness)
         values.put(AbstractNote.ACQ_REPS, note.acq_reps)
@@ -224,6 +228,25 @@ class DbNoteEditor {
         note!!.id = id
         val grade = query.getInt(query.getColumnIndex(Note.GRADE))
         note!!.grade = grade
+        
+        val questionTranscriptIndex = query.getColumnIndex(Note.QUESTION_TRANSCRIPT)
+        if (questionTranscriptIndex != -1) {
+            note!!.questionTranscript = query.getString(questionTranscriptIndex)
+        }
+        val answerTranscriptIndex = query.getColumnIndex(Note.ANSWER_TRANSCRIPT)
+        if (answerTranscriptIndex != -1) {
+            note!!.answerTranscript = query.getString(answerTranscriptIndex)
+        }
+        
+        val questionTranscriptConfIndex = query.getColumnIndex(Note.QUESTION_TRANSCRIPT_CONFIDENCE)
+        if (questionTranscriptConfIndex != -1) {
+            note!!.questionTranscriptConfidence = query.getFloat(questionTranscriptConfIndex)
+        }
+        val answerTranscriptConfIndex = query.getColumnIndex(Note.ANSWER_TRANSCRIPT_CONFIDENCE)
+        if (answerTranscriptConfIndex != -1) {
+            note!!.answerTranscriptConfidence = query.getFloat(answerTranscriptConfIndex)
+        }
+        
         val unseenString = query
                 .getString(query.getColumnIndex(Note.UNSEEN))
         var unseen = false

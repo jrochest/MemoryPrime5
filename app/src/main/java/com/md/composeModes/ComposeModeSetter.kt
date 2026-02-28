@@ -51,7 +51,9 @@ enum class Mode {
     DeckChooser,
     Settings,
     Restore,
-    Backup
+    Backup,
+    Search,
+    HighFidelityModel
 }
 
 @ActivityScoped
@@ -64,6 +66,8 @@ class ComposeModeSetter @Inject constructor(
     private val deckModeComposableManager: DeckModeComposableManager,
     private val addNoteComposeManager: AddNoteComposeManager,
     private val backupModeComposeManager: BackupModeComposeManager,
+    private val searchModeComposeManager: SearchModeComposeManager,
+    private val highFidelityModelComposeManager: HighFidelityModelComposeManager,
 
     private val settingsModeComposeManager: SettingsModeComposeManager,
     private val practiceModeComposerManager: PracticeModeComposerManager,
@@ -183,8 +187,16 @@ class ComposeModeSetter @Inject constructor(
                                             backupModeComposeManager.compose()
                                         }
 
+                                        Mode.Search -> {
+                                            searchModeComposeManager.compose()
+                                        }
+
                                         Mode.Settings -> {
                                             settingsModeComposeManager.compose()
+                                        }
+
+                                        Mode.HighFidelityModel -> {
+                                            highFidelityModelComposeManager.compose()
                                         }
 
                                         else -> {}

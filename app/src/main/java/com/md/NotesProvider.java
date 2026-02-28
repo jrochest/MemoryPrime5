@@ -32,7 +32,7 @@ public class NotesProvider extends ContentProvider {
 
 	private static final String TAG = "DbInteraction";
 
-	private static final int DATABASE_VERSION = 27;
+	private static final int DATABASE_VERSION = 29;
 	public static final String NOTES_TABLE_NAME = "notes";
 	public static final String DECKS_TABLE_NAME = "decks";
 	public static final String REPS_TABLE_NAME = "reps";
@@ -78,7 +78,11 @@ public class NotesProvider extends ContentProvider {
 						+ AbstractNote.PRIORITY + " INTEGER DEFAULT 100, "
 						+ AbstractNote.FSRS_STABILITY + " REAL DEFAULT -1, "
 						+ AbstractNote.FSRS_DIFFICULTY + " REAL DEFAULT -1, "
-						+ AbstractNote.FSRS_STATE + " INTEGER DEFAULT 0 "
+						+ AbstractNote.FSRS_STATE + " INTEGER DEFAULT 0, "
+						+ AbstractNote.QUESTION_TRANSCRIPT + " TEXT, "
+						+ AbstractNote.ANSWER_TRANSCRIPT + " TEXT, "
+						+ AbstractNote.QUESTION_TRANSCRIPT_CONFIDENCE + " REAL DEFAULT 0, "
+						+ AbstractNote.ANSWER_TRANSCRIPT_CONFIDENCE + " REAL DEFAULT 0 "
 						+ ");");
 			} catch (Exception e) {
 				String message = e.getMessage();
@@ -168,6 +172,34 @@ public class NotesProvider extends ContentProvider {
 							+ " REAL DEFAULT -1");
 					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN " + AbstractNote.FSRS_STATE
 							+ " INTEGER DEFAULT 0");
+				} catch (Exception e) {
+					String message = e.getMessage();
+					System.out.println(message);
+				}
+			}
+
+			if (oldVersion == 27) {
+				oldVersion++;
+				try {
+					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN " + AbstractNote.QUESTION_TRANSCRIPT
+							+ " TEXT");
+					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN " + AbstractNote.ANSWER_TRANSCRIPT
+							+ " TEXT");
+				} catch (Exception e) {
+					String message = e.getMessage();
+					System.out.println(message);
+				}
+			}
+
+			if (oldVersion == 28) {
+				oldVersion++;
+				try {
+					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN "
+							+ AbstractNote.QUESTION_TRANSCRIPT_CONFIDENCE
+							+ " REAL DEFAULT 0");
+					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN "
+							+ AbstractNote.ANSWER_TRANSCRIPT_CONFIDENCE
+							+ " REAL DEFAULT 0");
 				} catch (Exception e) {
 					String message = e.getMessage();
 					System.out.println(message);
@@ -409,6 +441,10 @@ public class NotesProvider extends ContentProvider {
 		sMDProjectionMap.put(AbstractNote.FSRS_STABILITY, AbstractNote.FSRS_STABILITY);
 		sMDProjectionMap.put(AbstractNote.FSRS_DIFFICULTY, AbstractNote.FSRS_DIFFICULTY);
 		sMDProjectionMap.put(AbstractNote.FSRS_STATE, AbstractNote.FSRS_STATE);
+		sMDProjectionMap.put(AbstractNote.QUESTION_TRANSCRIPT, AbstractNote.QUESTION_TRANSCRIPT);
+		sMDProjectionMap.put(AbstractNote.ANSWER_TRANSCRIPT, AbstractNote.ANSWER_TRANSCRIPT);
+		sMDProjectionMap.put(AbstractNote.QUESTION_TRANSCRIPT_CONFIDENCE, AbstractNote.QUESTION_TRANSCRIPT_CONFIDENCE);
+		sMDProjectionMap.put(AbstractNote.ANSWER_TRANSCRIPT_CONFIDENCE, AbstractNote.ANSWER_TRANSCRIPT_CONFIDENCE);
 
 		// Support for Live Folders.
 		sLiveFolderProjectionMap = new HashMap<>();
