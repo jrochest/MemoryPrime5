@@ -30,7 +30,8 @@ class VoskSttEngine(private val context: Context) : SttEngine {
         try {
             // Vosk Recognizer requires 16000Hz model
             val recognizer = Recognizer(currentModel, 16000f)
-            
+            recognizer.setWords(true)
+
             // Recognizer accepts short array
             val isFinal = recognizer.acceptWaveForm(pcmData, pcmData.size)
             

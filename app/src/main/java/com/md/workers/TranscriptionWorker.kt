@@ -12,6 +12,7 @@ import com.md.provider.Note
 import com.md.stt.SttEngine
 import com.md.stt.VoskSttEngine
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 
 class TranscriptionWorker(
@@ -23,6 +24,10 @@ class TranscriptionWorker(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         Log.d("TranscriptionWorker", "Starting transcription batch")
+        
+        setProgress(androidx.work.workDataOf(
+            "statusMessage" to "Initializing Speech-to-Text Engine..."
+        ))
 
         val sttEngine: SttEngine = VoskSttEngine(applicationContext)
         val initialized = sttEngine.initialize()
@@ -49,13 +54,20 @@ class TranscriptionWorker(
                 return@withContext Result.success()
             }
 
+            val totalCount = cursor.count
             var processedCount = 0
             val maxBatchSize = 1000 // Process up to 1000 at a time to prevent timeout
+            
+            setProgress(androidx.work.workDataOf(
+                "statusMessage" to "Found $totalCount notes needing transcription.",
+                "totalCount" to totalCount,
+                "processedCount" to 0
+            ))
             
             var sessionConfSum = 0f
             var sessionConfCount = 0
 
-            while (cursor.moveToNext() && processedCount < maxBatchSize) {
+            while (isActive && !isStopped && cursor.moveToNext() && processedCount < maxBatchSize) {
                 val id = cursor.getInt(cursor.getColumnIndexOrThrow(Note._ID))
                 val question = cursor.getString(cursor.getColumnIndexOrThrow(Note.QUESTION))
                 val answer = cursor.getString(cursor.getColumnIndexOrThrow(Note.ANSWER))
@@ -117,9 +129,16 @@ class TranscriptionWorker(
                     if (questionTranscriptConf > 0) { sessionConfSum += questionTranscriptConf; sessionConfCount++ }
                     if (answerTranscriptConf > 0) { sessionConfSum += answerTranscriptConf; sessionConfCount++ }
                     
-                    if (processedCount % 100 == 0) {
+                    if (processedCount % 1 == 0) {
                         val avg = if (sessionConfCount > 0) sessionConfSum / sessionConfCount else 0f
                         Log.i("TranscriptionWorker", "Progress Update: Transcribed $processedCount notes. Current Average Confidence: ${"%.2f".format(avg * 100)}%")
+                        
+                        setProgress(androidx.work.workDataOf(
+                            "statusMessage" to "Transcribing... ($processedCount / $totalCount)",
+                            "totalCount" to totalCount,
+                            "processedCount" to processedCount,
+                            "averageConfidence" to avg
+                        ))
                     }
                 }
             }
@@ -127,6 +146,17 @@ class TranscriptionWorker(
             cursor.close()
             sttEngine.release()
             
+            if (isStopped || !isActive) {
+                Log.d("TranscriptionWorker", "Transcription batch cancelled. Processed: $processedCount")
+                return@withContext Result.success()
+            }
+            
+            setProgress(androidx.work.workDataOf(
+                "statusMessage" to "Finished transcription batch. Processed: $processedCount notes.",
+                "totalCount" to totalCount,
+                "processedCount" to processedCount
+            ))
+
             Log.d("TranscriptionWorker", "Finished transcription batch. Processed: $processedCount")
             return@withContext Result.success()
             

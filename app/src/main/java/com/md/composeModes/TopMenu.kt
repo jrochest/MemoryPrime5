@@ -118,13 +118,8 @@ fun TopMenu(
                             topModeFlowProvider.modeModel.value = Mode.Settings
                             showMenu = false
                         })
-                        DropdownMenuItem({ Text("Transcribe Audio (Manual)") }, onClick = {
-                            val workRequest = androidx.work.OneTimeWorkRequestBuilder<com.md.workers.TranscriptionWorker>().build()
-                            androidx.work.WorkManager.getInstance(activity).enqueueUniqueWork(
-                                "ManualTranscription", 
-                                androidx.work.ExistingWorkPolicy.REPLACE, 
-                                workRequest
-                            )
+                        DropdownMenuItem({ Text("Manual Transcription Logger") }, onClick = {
+                            topModeFlowProvider.modeModel.value = Mode.ManualTranscription
                             showMenu = false
                         })
                         DropdownMenuItem({ Text("Transcription Stats") }, onClick = {

@@ -234,18 +234,46 @@ class PracticeModeComposerManager @Inject constructor(
                         colors = modeColor
                     ) {
                         showRepState()
-                        val isAnswer =
-                            currentNotePartManager.noteStateFlow.collectAsState().value?.notePart?.partIsAnswer
+                        
+                        var showTapCounts by remember { mutableStateOf(false) }
+                        val isAnswer = notePart.partIsAnswer
+                        val currentNote = currentNotePartManager.noteStateFlow.collectAsState().value?.currentNote
+                        val transcription = if (isAnswer) currentNote?.answerTranscript else currentNote?.questionTranscript
+
                         Text(
-                            text = if (isAnswer == true) "Answer" else "Question",
+                            text = if (isAnswer) "Answer" else "Question",
                             style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.primary
                         )
-                        Text(
-                            text = LARGE_TAP_AREA_LABEL,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        
+                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.weight(1f))
+
+                        if (showTapCounts) {
+                            Text(
+                                text = LARGE_TAP_AREA_LABEL,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else {
+                            if (!transcription.isNullOrBlank()) {
+                                Text(
+                                    text = transcription,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                        
+                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.weight(1f))
+
+                        androidx.compose.material3.TextButton(
+                            onClick = { showTapCounts = !showTapCounts },
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        ) {
+                            Text(if (showTapCounts) "Show Transcription" else "Show Tap Counts Key")
+                        }
                     }
                 }
 
