@@ -83,7 +83,7 @@ object IncrementalBackupManager {
     private fun backupToUris(
         context: Context,
         contentResolver: ContentResolver,
-        backupUrisFromPrefs: MutableMap<String, Uri>,
+        backupUrisFromPrefs: MutableMap<String, Pair<Uri, String>>,
         shouldSpeak: Boolean = false,
         runExtraValidation: Boolean,
         onFinished: ((Boolean) -> Unit)?,
@@ -116,7 +116,7 @@ object IncrementalBackupManager {
 
     private suspend fun backupOnBackground(
         contentResolver: ContentResolver,
-        backupUrisFromPrefs: MutableMap<String, Uri>,
+        backupUrisFromPrefs: MutableMap<String, Pair<Uri, String>>,
         appStorageRoot: File,
         shouldSpeak: Boolean,
         context: Context,
@@ -124,17 +124,17 @@ object IncrementalBackupManager {
         backupModeStateModel: BackupModeStateModel?
     ) : Boolean {
         var success = false
-        val validBackupUris = backupUrisFromPrefs.filter { uri ->
+        val validBackupUris = backupUrisFromPrefs.filter { uriMapEntry ->
             try {
-                if (DocumentFile.fromTreeUri(context, uri.value)?.isDirectory == true) {
-                    TtsSpeaker.speak("Backup needed for: " + (uri.value.lastPathSegment))
-                    backupModeStateModel?.summary?.value = "Backup needed for: " + (uri.value.lastPathSegment)
+                if (DocumentFile.fromTreeUri(context, uriMapEntry.value.first)?.isDirectory == true) {
+                    TtsSpeaker.speak("Backup needed for: " + (uriMapEntry.value.first.lastPathSegment))
+                    backupModeStateModel?.summary?.value = "Backup needed for: " + (uriMapEntry.value.first.lastPathSegment)
                     return@filter true
                 }
             } catch (e: FileNotFoundException) {
-                if (shouldSpeak) TtsSpeaker.speak("missing exception for $uri")
+                if (shouldSpeak) TtsSpeaker.speak("missing exception for ${uriMapEntry.key}")
             } catch (e: SecurityException) {
-                if (shouldSpeak) TtsSpeaker.speak("security exception for $uri")
+                if (shouldSpeak) TtsSpeaker.speak("security exception for ${uriMapEntry.key}")
             }
             false
         }
@@ -222,7 +222,7 @@ object IncrementalBackupManager {
     }
 
     private suspend fun zipBackup(
-        validBackupUris: Map<String, Uri>,
+        validBackupUris: Map<String, Pair<Uri, String>>,
         context: Context,
         contentResolver: ContentResolver,
         databaseFilesToZip: MutableList<File>,
@@ -234,14 +234,24 @@ object IncrementalBackupManager {
         backupModeStateModel: BackupModeStateModel?
     ) : Boolean {
         var success = false
-        for (uri: Map.Entry<String, Uri> in validBackupUris) {
+        for (uriMapping in validBackupUris) {
+            val rootUri = uriMapping.value.first
+            val nickname = uriMapping.value.second
+            
             try {
-                val backupRoot = DocumentFile.fromTreeUri(context, uri.value)
+                var backupRoot = DocumentFile.fromTreeUri(context, rootUri)
                 if (backupRoot == null) {
                     TtsSpeaker.error("Couldn't open backup dir")
                     continue
                 }
 
+                // If a nickname was provided, nest inside a subdirectory of that name
+                if (nickname.isNotBlank()) {
+                    val subDir = backupRoot.findFile(nickname) ?: backupRoot.createDirectory(nickname)
+                    if (subDir != null) {
+                        backupRoot = subDir
+                    }
+                }
 
                 val oldOldDatabaseFile = backupRoot.findFile("database.zip.last")
                 if (oldOldDatabaseFile?.exists() == true) {
@@ -264,21 +274,21 @@ object IncrementalBackupManager {
                 }
 
                 if (databaseZip == null) {
-                    TtsSpeaker.error("Database backup failed repeatedly for " + uri.key)
+                    TtsSpeaker.error("Database backup failed repeatedly for " + uriMapping.key)
                     continue
                 }
 
                 contentResolver.openFileDescriptor(databaseZip.uri, "w")!!.use {
                     val descriptor = it.fileDescriptor
                     if (descriptor == null) {
-                        TtsSpeaker.error("Database zipping failed for missing file " + uri.key)
+                        TtsSpeaker.error("Database zipping failed for missing file " + uriMapping.key)
                     } else {
                         val output = FileOutputStream(descriptor)
                         println("zipping database $databaseFilesToZip")
                         if (MemPrimeManager.zip(databaseFilesToZip, dirsToZip, output)) {
                             println("Backed up database successful")
                         } else {
-                            TtsSpeaker.error("Database zipping failed for " + uri.key)
+                            TtsSpeaker.error("Database zipping failed for " + uriMapping.key)
                         }
                     }
                 }
@@ -368,16 +378,16 @@ object IncrementalBackupManager {
                 }
                 taskList.forEach { it.await() }
                 if (shouldSpeak) {
-                    TtsSpeaker.speak("Backup finished for" + (uri.value.lastPathSegment))
+                    TtsSpeaker.speak("Backup finished for" + (rootUri.lastPathSegment))
                 }
                 // consider it a success if one backup finishes without issue.
                 success = true
             } catch (e: FileNotFoundException) {
-                if (shouldSpeak) TtsSpeaker.speak("FileNotFoundException for " + uri.key)
-                System.err.println("Missing file during backup: $uri")
+                if (shouldSpeak) TtsSpeaker.speak("FileNotFoundException for " + uriMapping.key)
+                System.err.println("Missing file during backup: $rootUri")
                 return false
             } catch (e: SecurityException) {
-                if (shouldSpeak) TtsSpeaker.speak("security exception for $uri" + uri.key)
+                if (shouldSpeak) TtsSpeaker.speak("security exception for " + uriMapping.key)
                 return false
             }
         }
