@@ -51,6 +51,8 @@ public class AbstractNote {
 	public static final String ANSWER_TRANSCRIPT = "answer_transcript";
 	public static final String QUESTION_TRANSCRIPT_CONFIDENCE = "question_transcript_confidence";
 	public static final String ANSWER_TRANSCRIPT_CONFIDENCE = "answer_transcript_confidence";
+	public static final String QUESTION_TRANSCRIPT_ATTEMPTED = "question_transcript_attempted";
+	public static final String ANSWER_TRANSCRIPT_ATTEMPTED = "answer_transcript_attempted";
 	protected int grade;
 
 	// TODO did you ever do the population of one of these from the database.
@@ -71,6 +73,8 @@ public class AbstractNote {
 	protected String answerTranscript;
 	protected float questionTranscriptConfidence;
 	protected float answerTranscriptConfidence;
+	protected long questionTranscriptAttempted;
+	protected long answerTranscriptAttempted;
 
 	protected int categoryAkaDeckId;
 	protected boolean unseen;
@@ -144,6 +148,22 @@ public class AbstractNote {
 
 	public void setAnswerTranscriptConfidence(float answerTranscriptConfidence) {
 		this.answerTranscriptConfidence = answerTranscriptConfidence;
+	}
+
+	public long getQuestionTranscriptAttempted() {
+		return questionTranscriptAttempted;
+	}
+
+	public void setQuestionTranscriptAttempted(long questionTranscriptAttempted) {
+		this.questionTranscriptAttempted = questionTranscriptAttempted;
+	}
+
+	public long getAnswerTranscriptAttempted() {
+		return answerTranscriptAttempted;
+	}
+
+	public void setAnswerTranscriptAttempted(long answerTranscriptAttempted) {
+		this.answerTranscriptAttempted = answerTranscriptAttempted;
 	}
 
 	public int getCategoryAkaDeckId() {

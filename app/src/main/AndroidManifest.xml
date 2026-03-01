@@ -9,6 +9,8 @@
     <!-- For writing to USB OTG device -->
     <uses-permission android:name="android.permission.WRITE_MEDIA_STORAGE"
         tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <application
         android:name=".application.MemPrimeApplication"
         android:allowBackup="true"
@@ -17,6 +19,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:enableOnBackInvokedCallback="true"
+        android:largeHeap="true"
         android:theme="@style/AppTheme" >
         <activity
             android:name="SpacedRepeaterActivity"
@@ -48,6 +51,11 @@
                 <action android:name="android.intent.action.MEDIA_BUTTON"/>
             </intent-filter>
         </service>
+        
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            tools:node="merge" />
 
         </application>
 </manifest>

@@ -93,6 +93,8 @@ class DbNoteEditor {
         values.put(AbstractNote.ANSWER_TRANSCRIPT, note.answerTranscript)
         values.put(AbstractNote.QUESTION_TRANSCRIPT_CONFIDENCE, note.questionTranscriptConfidence)
         values.put(AbstractNote.ANSWER_TRANSCRIPT_CONFIDENCE, note.answerTranscriptConfidence)
+        values.put(AbstractNote.QUESTION_TRANSCRIPT_ATTEMPTED, note.questionTranscriptAttempted)
+        values.put(AbstractNote.ANSWER_TRANSCRIPT_ATTEMPTED, note.answerTranscriptAttempted)
         values.put(AbstractNote.CATEGORY, note.categoryAkaDeckId)
         values.put(AbstractNote.EASINESS, note.easiness)
         values.put(AbstractNote.ACQ_REPS, note.acq_reps)
@@ -255,6 +257,15 @@ class DbNoteEditor {
         val answerTranscriptConfIndex = query.getColumnIndex(Note.ANSWER_TRANSCRIPT_CONFIDENCE)
         if (answerTranscriptConfIndex != -1) {
             note!!.answerTranscriptConfidence = query.getFloat(answerTranscriptConfIndex)
+        }
+        
+        val questionTranscriptAttemptedIndex = query.getColumnIndex(Note.QUESTION_TRANSCRIPT_ATTEMPTED)
+        if (questionTranscriptAttemptedIndex != -1) {
+            note!!.questionTranscriptAttempted = query.getLong(questionTranscriptAttemptedIndex)
+        }
+        val answerTranscriptAttemptedIndex = query.getColumnIndex(Note.ANSWER_TRANSCRIPT_ATTEMPTED)
+        if (answerTranscriptAttemptedIndex != -1) {
+            note!!.answerTranscriptAttempted = query.getLong(answerTranscriptAttemptedIndex)
         }
         
         val unseenString = query

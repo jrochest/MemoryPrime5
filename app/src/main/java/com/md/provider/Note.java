@@ -21,6 +21,7 @@ public final class Note extends AbstractNote implements BaseColumns, Cloneable {
     public Note(int grade, int id, String question, String answer,
             String questionTranscript, String answerTranscript,
             float questionTranscriptConfidence, float answerTranscriptConfidence,
+            long questionTranscriptAttempted, long answerTranscriptAttempted,
             int category, boolean unseen, boolean marked, float easiness,
             int acq_reps, int ret_reps, int lapses, int acq_reps_since_lapse,
             int ret_reps_since_lapse, int last_rep, int next_rep,
@@ -34,6 +35,8 @@ public final class Note extends AbstractNote implements BaseColumns, Cloneable {
         this.answerTranscript = answerTranscript;
         this.questionTranscriptConfidence = questionTranscriptConfidence;
         this.answerTranscriptConfidence = answerTranscriptConfidence;
+        this.questionTranscriptAttempted = questionTranscriptAttempted;
+        this.answerTranscriptAttempted = answerTranscriptAttempted;
         this.categoryAkaDeckId = category;
         this.unseen = unseen;
         this.marked = marked;
@@ -61,6 +64,7 @@ public final class Note extends AbstractNote implements BaseColumns, Cloneable {
     public Note clone() {
         return new Note(grade, id, question, answer, questionTranscript, answerTranscript,
                 questionTranscriptConfidence, answerTranscriptConfidence,
+                questionTranscriptAttempted, answerTranscriptAttempted,
                 categoryAkaDeckId, unseen,
                 marked,
                 easiness, acq_reps, ret_reps, lapses, acq_reps_since_lapse,

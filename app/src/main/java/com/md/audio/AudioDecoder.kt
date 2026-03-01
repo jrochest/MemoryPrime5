@@ -14,12 +14,16 @@ class AudioDecoder {
      */
     fun decodeToPcm(filePath: String, targetSampleRate: Int = 16000): ShortArray? {
         val file = File(filePath)
-        if (!file.exists()) return null
+        if (!file.exists()) {
+            android.util.Log.w("AudioDecoder", "File not found: $filePath")
+            return null
+        }
 
         val extractor = MediaExtractor()
         try {
             extractor.setDataSource(file.absolutePath)
         } catch (e: Exception) {
+            android.util.Log.e("AudioDecoder", "Failed to set data source for $filePath", e)
             e.printStackTrace()
             return null
         }
@@ -37,6 +41,7 @@ class AudioDecoder {
         }
 
         if (format == null || trackIndex == -1) {
+            android.util.Log.w("AudioDecoder", "No audio track found in file: $filePath")
             extractor.release()
             return null
         }

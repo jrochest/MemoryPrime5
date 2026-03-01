@@ -11,34 +11,40 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 
 class VoskModelProvider(private val context: Context) {
 
-    private val downloadManager = ModelDownloadManager(context)
+    init {
+        // Clean up any previously downloaded high-fidelity models
+        cleanupOldModels()
+    }
 
-    fun startHighFidelityDownload() {
-        downloadManager.startDownload()
+    private fun cleanupOldModels() {
+        try {
+            // 1. Delete the extracted vosk_models directory
+            val baseTargetDir = File(context.filesDir, "vosk_models")
+            if (baseTargetDir.exists()) {
+                Log.i("VoskModelProvider", "Cleaning up old vosk_models directory")
+                baseTargetDir.deleteRecursively()
+            }
+
+            // 2. Delete the downloaded zip file
+            val zipFile = File(context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS), "vosk-model-en-us-0.42-gigaspeech.zip")
+            if (zipFile.exists()) {
+                Log.i("VoskModelProvider", "Cleaning up old downloaded model zip file")
+                zipFile.delete()
+            }
+
+            // 3. Clear the shared preferences flag
+            val prefs = context.getSharedPreferences("VoskModelPrefs", Context.MODE_PRIVATE)
+            if (prefs.contains("high_fidelity_model_ready")) {
+                Log.i("VoskModelProvider", "Clearing high_fidelity_model_ready preference")
+                prefs.edit().remove("high_fidelity_model_ready").apply()
+            }
+        } catch (e: Exception) {
+            Log.e("VoskModelProvider", "Error cleaning up old models", e)
+        }
     }
 
     suspend fun getModel(): Model? = suspendCancellableCoroutine { continuation ->
-        if (downloadManager.isHighFidelityModelReady()) {
-            try {
-                // The extracted folder is placed in filesDir/vosk_models
-                // and internally contains another folder with the model name.
-                val baseTargetDir = File(context.filesDir, "vosk_models")
-                val targetDir = File(baseTargetDir, ModelDownloadManager.MODEL_DIR_NAME)
-                
-                if (targetDir.exists()) {
-                    Log.i("VoskModelProvider", "Loading high-fidelity downloaded model from ${targetDir.absolutePath}")
-                    val model = Model(targetDir.absolutePath)
-                    continuation.resume(model)
-                    return@suspendCancellableCoroutine
-                } else {
-                    Log.w("VoskModelProvider", "High-fidelity model flagged as ready but directory missing. Falling back.")
-                }
-            } catch (e: Exception) {
-                Log.e("VoskModelProvider", "Failed to load high-fidelity model", e)
-            }
-        }
-
-        // Fallback or default model (bundled asset)
+        // Bundled asset model
         Log.i("VoskModelProvider", "Unpacking bundled asset model")
         StorageService.unpack(context, "model", "model",
             { model: Model ->

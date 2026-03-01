@@ -6,6 +6,7 @@ import org.vosk.Recognizer
 import org.vosk.android.StorageService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.json.JSONObject
 import java.io.IOException
 
@@ -33,8 +34,18 @@ class VoskSttEngine(private val context: Context) : SttEngine {
             recognizer.setWords(true)
 
             // Recognizer accepts short array
-            val isFinal = recognizer.acceptWaveForm(pcmData, pcmData.size)
+            val chunkSize = 4096
+            var offset = 0
+            var isFinal = false
             
+            while (offset < pcmData.size) {
+                yield() // Cooperate with cancellation and prevent blocking single thread
+                val remaining = pcmData.size - offset
+                val size = if (remaining > chunkSize) chunkSize else remaining
+                val chunk = pcmData.copyOfRange(offset, offset + size)
+                isFinal = recognizer.acceptWaveForm(chunk, size)
+                offset += size
+            }
             val resultJson = if (isFinal) {
                 recognizer.result
             } else {

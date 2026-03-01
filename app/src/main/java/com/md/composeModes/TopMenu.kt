@@ -126,10 +126,7 @@ fun TopMenu(
                             topModeFlowProvider.modeModel.value = Mode.TranscriptionStats
                             showMenu = false
                         })
-                        DropdownMenuItem({ Text("Download High-Fidelity STT Model") }, onClick = {
-                            topModeFlowProvider.modeModel.value = Mode.HighFidelityModel
-                            showMenu = false
-                        })
+                        // Removed HighFidelityModel option
                         DropdownMenuItem({ Text("Restore from incremental directory") }, onClick = {
                             RestoreFromIncrementalDirectoryManager.openZipFileDocument(activity)
                             showMenu = false
