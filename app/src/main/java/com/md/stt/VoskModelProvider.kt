@@ -51,4 +51,18 @@ class VoskModelProvider(private val context: Context) {
             }
         )
     }
+    suspend fun getSmallModel(): Model? = suspendCancellableCoroutine { continuation ->
+        // Always use the bundled asset model (smaller, faster, less accurate)
+        Log.i("VoskModelProvider", "Unpacking bundled asset model (small/fallback)")
+        StorageService.unpack(context, "model", "model",
+            { model: Model ->
+                Log.i("VoskModelProvider", "Successfully unpacked bundled model (small/fallback)")
+                continuation.resume(model)
+            },
+            { exception: java.io.IOException ->
+                Log.e("VoskModelProvider", "Failed to unpack bundled model (small/fallback)", exception)
+                continuation.resumeWithException(exception)
+            }
+        )
+    }
 }

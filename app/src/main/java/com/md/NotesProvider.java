@@ -32,7 +32,7 @@ public class NotesProvider extends ContentProvider {
 
 	private static final String TAG = "DbInteraction";
 
-	private static final int DATABASE_VERSION = 30;
+	private static final int DATABASE_VERSION = 31;
 	public static final String NOTES_TABLE_NAME = "notes";
 	public static final String DECKS_TABLE_NAME = "decks";
 	public static final String REPS_TABLE_NAME = "reps";
@@ -84,7 +84,15 @@ public class NotesProvider extends ContentProvider {
 						+ AbstractNote.QUESTION_TRANSCRIPT_CONFIDENCE + " REAL DEFAULT 0, "
 						+ AbstractNote.ANSWER_TRANSCRIPT_CONFIDENCE + " REAL DEFAULT 0, "
 						+ AbstractNote.QUESTION_TRANSCRIPT_ATTEMPTED + " INTEGER DEFAULT 0, "
-						+ AbstractNote.ANSWER_TRANSCRIPT_ATTEMPTED + " INTEGER DEFAULT 0 "
+						+ AbstractNote.ANSWER_TRANSCRIPT_ATTEMPTED + " INTEGER DEFAULT 0, "
+						+ AbstractNote.QUESTION_TRANSCRIPT_FAIL_COUNT + " INTEGER DEFAULT 0, "
+						+ AbstractNote.ANSWER_TRANSCRIPT_FAIL_COUNT + " INTEGER DEFAULT 0, "
+						+ AbstractNote.QUESTION_TRANSCRIPT_GENERATED_AT + " INTEGER DEFAULT 0, "
+						+ AbstractNote.ANSWER_TRANSCRIPT_GENERATED_AT + " INTEGER DEFAULT 0, "
+						+ AbstractNote.QUESTION_TRANSCRIPT_MODEL + " TEXT, "
+						+ AbstractNote.ANSWER_TRANSCRIPT_MODEL + " TEXT, "
+						+ AbstractNote.QUESTION_AUDIO_UPDATED_AT + " INTEGER DEFAULT 0, "
+						+ AbstractNote.ANSWER_AUDIO_UPDATED_AT + " INTEGER DEFAULT 0 "
 						+ ");");
 			} catch (Exception e) {
 				String message = e.getMessage();
@@ -216,6 +224,39 @@ public class NotesProvider extends ContentProvider {
 							+ " INTEGER DEFAULT 0");
 					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN "
 							+ AbstractNote.ANSWER_TRANSCRIPT_ATTEMPTED
+							+ " INTEGER DEFAULT 0");
+				} catch (Exception e) {
+					String message = e.getMessage();
+					System.out.println(message);
+				}
+			}
+
+			if (oldVersion == 30) {
+				oldVersion++;
+				try {
+					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN "
+							+ AbstractNote.QUESTION_TRANSCRIPT_FAIL_COUNT
+							+ " INTEGER DEFAULT 0");
+					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN "
+							+ AbstractNote.ANSWER_TRANSCRIPT_FAIL_COUNT
+							+ " INTEGER DEFAULT 0");
+					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN "
+							+ AbstractNote.QUESTION_TRANSCRIPT_GENERATED_AT
+							+ " INTEGER DEFAULT 0");
+					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN "
+							+ AbstractNote.ANSWER_TRANSCRIPT_GENERATED_AT
+							+ " INTEGER DEFAULT 0");
+					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN "
+							+ AbstractNote.QUESTION_TRANSCRIPT_MODEL
+							+ " TEXT");
+					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN "
+							+ AbstractNote.ANSWER_TRANSCRIPT_MODEL
+							+ " TEXT");
+					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN "
+							+ AbstractNote.QUESTION_AUDIO_UPDATED_AT
+							+ " INTEGER DEFAULT 0");
+					db.execSQL("ALTER TABLE " + NOTES_TABLE_NAME + " ADD COLUMN "
+							+ AbstractNote.ANSWER_AUDIO_UPDATED_AT
 							+ " INTEGER DEFAULT 0");
 				} catch (Exception e) {
 					String message = e.getMessage();
@@ -464,6 +505,15 @@ public class NotesProvider extends ContentProvider {
 		sMDProjectionMap.put(AbstractNote.ANSWER_TRANSCRIPT_CONFIDENCE, AbstractNote.ANSWER_TRANSCRIPT_CONFIDENCE);
 		sMDProjectionMap.put(AbstractNote.QUESTION_TRANSCRIPT_ATTEMPTED, AbstractNote.QUESTION_TRANSCRIPT_ATTEMPTED);
 		sMDProjectionMap.put(AbstractNote.ANSWER_TRANSCRIPT_ATTEMPTED, AbstractNote.ANSWER_TRANSCRIPT_ATTEMPTED);
+		sMDProjectionMap.put(AbstractNote.QUESTION_TRANSCRIPT_FAIL_COUNT, AbstractNote.QUESTION_TRANSCRIPT_FAIL_COUNT);
+		sMDProjectionMap.put(AbstractNote.ANSWER_TRANSCRIPT_FAIL_COUNT, AbstractNote.ANSWER_TRANSCRIPT_FAIL_COUNT);
+		sMDProjectionMap.put(AbstractNote.QUESTION_TRANSCRIPT_GENERATED_AT,
+				AbstractNote.QUESTION_TRANSCRIPT_GENERATED_AT);
+		sMDProjectionMap.put(AbstractNote.ANSWER_TRANSCRIPT_GENERATED_AT, AbstractNote.ANSWER_TRANSCRIPT_GENERATED_AT);
+		sMDProjectionMap.put(AbstractNote.QUESTION_TRANSCRIPT_MODEL, AbstractNote.QUESTION_TRANSCRIPT_MODEL);
+		sMDProjectionMap.put(AbstractNote.ANSWER_TRANSCRIPT_MODEL, AbstractNote.ANSWER_TRANSCRIPT_MODEL);
+		sMDProjectionMap.put(AbstractNote.QUESTION_AUDIO_UPDATED_AT, AbstractNote.QUESTION_AUDIO_UPDATED_AT);
+		sMDProjectionMap.put(AbstractNote.ANSWER_AUDIO_UPDATED_AT, AbstractNote.ANSWER_AUDIO_UPDATED_AT);
 
 		// Support for Live Folders.
 		sLiveFolderProjectionMap = new HashMap<>();

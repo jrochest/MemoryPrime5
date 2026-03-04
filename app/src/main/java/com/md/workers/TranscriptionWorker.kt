@@ -12,8 +12,10 @@ import com.md.provider.Note
 import com.md.stt.SttEngine
 import com.md.stt.VoskSttEngine
 import kotlinx.coroutines.Dispatchers
+import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.yield
 
 class TranscriptionWorker(
@@ -21,197 +23,274 @@ class TranscriptionWorker(
     workerParams: WorkerParameters
 ) : CoroutineWorker(appContext, workerParams) {
 
+    companion object {
+        const val TAG = "TranscriptionWorker"
+        const val KEY_USE_SMALL_MODEL = "use_small_model"
+        const val MAX_FAIL_COUNT = 3
+        const val MIN_TRANSCRIPTION_TIMEOUT_MS = 90_000L // minimum 90 seconds
+        const val TIMEOUT_MULTIPLIER = 3L // allow up to 3x realtime for large models
+    }
+
     private val audioDecoder = AudioDecoder()
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        Log.d("TranscriptionWorker", "Starting transcription batch")
+        val useSmallModel = inputData.getBoolean(KEY_USE_SMALL_MODEL, false)
+        Log.d(TAG, "Starting transcription batch (useSmallModel=$useSmallModel)")
         
         try {
             setForeground(createForegroundInfo())
         } catch (e: Exception) {
-            Log.w("TranscriptionWorker", "Could not set foreground info", e)
+            Log.w(TAG, "Could not set foreground info", e)
         }
         
         setProgress(androidx.work.workDataOf(
             "statusMessage" to "Initializing Speech-to-Text Engine..."
         ))
 
-        val sttEngine: SttEngine = VoskSttEngine(applicationContext)
-        val initialized = sttEngine.initialize()
+        val sttEngine = VoskSttEngine(applicationContext)
+        val initialized = sttEngine.initialize(useSmallModel)
         if (!initialized) {
-            Log.e("TranscriptionWorker", "Failed to initialize STT Engine")
-            // A failure here often means the model assets are missing
+            Log.e(TAG, "Failed to initialize STT Engine (useSmallModel=$useSmallModel)")
             return@withContext Result.failure()
         }
+        
+        val modelName = sttEngine.modelName
+        Log.i(TAG, "STT Engine initialized with model: $modelName")
 
         try {
-            // Find notes missing transcripts that haven't been attempted yet
-            val selection = """
-                ((${Note.QUESTION} IS NOT NULL AND ${Note.QUESTION} != '') AND ${AbstractNote.QUESTION_TRANSCRIPT} IS NULL AND ${AbstractNote.QUESTION_TRANSCRIPT_ATTEMPTED} = 0)
-                OR 
-                ((${Note.ANSWER} IS NOT NULL AND ${Note.ANSWER} != '') AND ${AbstractNote.ANSWER_TRANSCRIPT} IS NULL AND ${AbstractNote.ANSWER_TRANSCRIPT_ATTEMPTED} = 0)
-            """.trimIndent()
-
-            val cursor = applicationContext.contentResolver.query(
-                AbstractNote.CONTENT_URI,
-                null,
-                selection,
-                null,
-                "${Note._ID} DESC" // Process newest first
-            )
-
-            if (cursor == null) {
-                sttEngine.release()
-                return@withContext Result.success()
-            }
-
-            val totalCount = cursor.count
-            var processedCount = 0
-            val maxBatchSize = 1000 // Process up to 1000 at a time to prevent timeout
-            
-            setProgress(androidx.work.workDataOf(
-                "statusMessage" to "Found $totalCount notes needing transcription.",
-                "totalCount" to totalCount,
-                "processedCount" to 0,
-                "skippedCount" to 0
-            ))
-            
-            var sessionConfSum = 0f
-            var sessionConfCount = 0
-            var skippedCount = 0
-
-            while (isActive && !isStopped && cursor.moveToNext() && processedCount < maxBatchSize) {
-                yield()
-                val id = cursor.getInt(cursor.getColumnIndexOrThrow(Note._ID))
-                val question = cursor.getString(cursor.getColumnIndexOrThrow(Note.QUESTION))
-                val answer = cursor.getString(cursor.getColumnIndexOrThrow(Note.ANSWER))
-                var questionTranscript = cursor.getString(cursor.getColumnIndexOrThrow(Note.QUESTION_TRANSCRIPT))
-                var answerTranscript = cursor.getString(cursor.getColumnIndexOrThrow(Note.ANSWER_TRANSCRIPT))
-
-                var questionTranscriptConf = 0f
-                var answerTranscriptConf = 0f
-                var updated = false
-                val now = System.currentTimeMillis()
-
-                // Process Question
-                var questionAttemptedTime = 0L
-                if (!question.isNullOrBlank() && questionTranscript.isNullOrBlank()) {
-                    val path = AudioPlayer.sanitizePath(question)
-                    Log.d("TranscriptionWorker", "Note ID $id: Attempting to decode Question audio from '$path'")
-                    val pcm = audioDecoder.decodeToPcm(path)
-                    if (pcm != null) {
-                        Log.d("TranscriptionWorker", "Note ID $id: Question decoded successfully (${pcm.size} samples). Transcribing...")
-                        val transcriptResult = sttEngine.transcribe(pcm)
-                        if (transcriptResult != null && !transcriptResult.text.isBlank()) {
-                            Log.d("TranscriptionWorker", "Note ID $id: Question transcribed -> '${transcriptResult.text}'")
-                            questionTranscript = transcriptResult.text
-                            questionTranscriptConf = transcriptResult.confidence
-                            updated = true
-                        } else {
-                            Log.w("TranscriptionWorker", "Note ID $id: Question transcription returned null or blank text.")
-                            skippedCount++
-                        }
-                    } else {
-                        Log.w("TranscriptionWorker", "Note ID $id: Question audio decoding failed for '$path'.")
-                        skippedCount++
-                    }
-                    questionAttemptedTime = now
-                }
-
-                // Process Answer
-                var answerAttemptedTime = 0L
-                if (!answer.isNullOrBlank() && answerTranscript.isNullOrBlank()) {
-                    val path = AudioPlayer.sanitizePath(answer)
-                    Log.d("TranscriptionWorker", "Note ID $id: Attempting to decode Answer audio from '$path'")
-                    val pcm = audioDecoder.decodeToPcm(path)
-                    if (pcm != null) {
-                        Log.d("TranscriptionWorker", "Note ID $id: Answer decoded successfully (${pcm.size} samples). Transcribing...")
-                        val transcriptResult = sttEngine.transcribe(pcm)
-                        if (transcriptResult != null && !transcriptResult.text.isBlank()) {
-                            Log.d("TranscriptionWorker", "Note ID $id: Answer transcribed -> '${transcriptResult.text}'")
-                            answerTranscript = transcriptResult.text
-                            answerTranscriptConf = transcriptResult.confidence
-                            updated = true
-                        } else {
-                            Log.w("TranscriptionWorker", "Note ID $id: Answer transcription returned null or blank text.")
-                            skippedCount++
-                        }
-                    } else {
-                        Log.w("TranscriptionWorker", "Note ID $id: Answer audio decoding failed for '$path'.")
-                        skippedCount++
-                    }
-                    answerAttemptedTime = now
-                }
-
-                if (updated || questionAttemptedTime > 0L || answerAttemptedTime > 0L) {
-                    val values = ContentValues().apply {
-                        if (updated) {
-                            put(AbstractNote.QUESTION_TRANSCRIPT, questionTranscript)
-                            put(AbstractNote.ANSWER_TRANSCRIPT, answerTranscript)
-                            if (questionTranscriptConf > 0) {
-                                put(AbstractNote.QUESTION_TRANSCRIPT_CONFIDENCE, questionTranscriptConf)
-                            }
-                            if (answerTranscriptConf > 0) {
-                                put(AbstractNote.ANSWER_TRANSCRIPT_CONFIDENCE, answerTranscriptConf)
-                            }
-                        }
-                        if (questionAttemptedTime > 0L) {
-                            put(AbstractNote.QUESTION_TRANSCRIPT_ATTEMPTED, questionAttemptedTime)
-                        }
-                        if (answerAttemptedTime > 0L) {
-                            put(AbstractNote.ANSWER_TRANSCRIPT_ATTEMPTED, answerAttemptedTime)
-                        }
-                    }
-                    applicationContext.contentResolver.update(
-                        AbstractNote.CONTENT_URI,
-                        values,
-                        "${Note._ID} = ?",
-                        arrayOf(id.toString())
-                    )
-                    processedCount++
-                    
-                    if (questionTranscriptConf > 0) { sessionConfSum += questionTranscriptConf; sessionConfCount++ }
-                    if (answerTranscriptConf > 0) { sessionConfSum += answerTranscriptConf; sessionConfCount++ }
-                    
-                    if (processedCount % 1 == 0) {
-                        val avg = if (sessionConfCount > 0) sessionConfSum / sessionConfCount else 0f
-                        Log.i("TranscriptionWorker", "Progress Update: Processed $processedCount notes ($skippedCount skipped). Current Average Confidence: ${"%.2f".format(avg * 100)}%")
-                        
-                        setProgress(androidx.work.workDataOf(
-                            "statusMessage" to "Transcribing... ($processedCount / $totalCount)\nSkipped: $skippedCount",
-                            "totalCount" to totalCount,
-                            "processedCount" to processedCount,
-                            "skippedCount" to skippedCount,
-                            "averageConfidence" to avg
-                        ))
-                    }
-                }
-            }
-
-            cursor.close()
+            val result = processNotes(sttEngine, modelName, useSmallModel) { isStopped }
             sttEngine.release()
-            
-            if (isStopped || !isActive) {
-                Log.d("TranscriptionWorker", "Transcription batch cancelled. Processed: $processedCount, Skipped: $skippedCount")
-                return@withContext Result.success()
-            }
-            
-            setProgress(androidx.work.workDataOf(
-                "statusMessage" to "Finished batch. Processed: $processedCount notes, Skipped: $skippedCount.",
-                "totalCount" to totalCount,
-                "processedCount" to processedCount,
-                "skippedCount" to skippedCount
-            ))
-
-            Log.d("TranscriptionWorker", "Finished transcription batch. Processed: $processedCount, Skipped: $skippedCount")
-            return@withContext Result.success()
-            
+            return@withContext result
         } catch (e: Exception) {
-            Log.e("TranscriptionWorker", "Worker exception", e)
+            Log.e(TAG, "Worker exception", e)
             e.printStackTrace()
             sttEngine.release()
             return@withContext Result.retry()
         }
+    }
+
+    private suspend fun processNotes(
+        sttEngine: VoskSttEngine,
+        modelName: String,
+        useSmallModel: Boolean,
+        isStoppedCheck: () -> Boolean
+    ): Result {
+        // Build selection:
+        // - Notes that have audio but no transcript
+        // - Haven't been attempted yet OR were attempted but within retry threshold
+        // - Fail count below max for the current model type
+        val maxFails = if (useSmallModel) MAX_FAIL_COUNT else MAX_FAIL_COUNT
+        val selection = """
+            (
+                (${Note.QUESTION} IS NOT NULL AND ${Note.QUESTION} != '' AND ${AbstractNote.QUESTION_TRANSCRIPT} IS NULL AND ${AbstractNote.QUESTION_TRANSCRIPT_FAIL_COUNT} < $maxFails)
+                OR
+                (${Note.ANSWER} IS NOT NULL AND ${Note.ANSWER} != '' AND ${AbstractNote.ANSWER_TRANSCRIPT} IS NULL AND ${AbstractNote.ANSWER_TRANSCRIPT_FAIL_COUNT} < $maxFails)
+            )
+        """.trimIndent()
+
+        val cursor = applicationContext.contentResolver.query(
+            AbstractNote.CONTENT_URI,
+            null,
+            selection,
+            null,
+            "${Note._ID} DESC" // Process newest first
+        )
+
+        if (cursor == null) {
+            return Result.success()
+        }
+
+        val totalCount = cursor.count
+        var processedCount = 0
+        var skippedCount = 0
+        var failedCount = 0
+        val maxBatchSize = 1000
+
+        Log.i(TAG, "Found $totalCount notes needing transcription (model=$modelName)")
+
+        setProgress(androidx.work.workDataOf(
+            "statusMessage" to "Found $totalCount notes needing transcription (model=$modelName).",
+            "totalCount" to totalCount,
+            "processedCount" to 0,
+            "skippedCount" to 0
+        ))
+
+        var sessionConfSum = 0f
+        var sessionConfCount = 0
+
+        while (coroutineContext.isActive && !isStoppedCheck() && cursor.moveToNext() && processedCount < maxBatchSize) {
+            yield()
+            val id = cursor.getInt(cursor.getColumnIndexOrThrow(Note._ID))
+            val question = cursor.getString(cursor.getColumnIndexOrThrow(Note.QUESTION))
+            val answer = cursor.getString(cursor.getColumnIndexOrThrow(Note.ANSWER))
+            var questionTranscript = cursor.getString(cursor.getColumnIndexOrThrow(Note.QUESTION_TRANSCRIPT))
+            var answerTranscript = cursor.getString(cursor.getColumnIndexOrThrow(Note.ANSWER_TRANSCRIPT))
+            val questionFailCount = cursor.getInt(cursor.getColumnIndexOrThrow(Note.QUESTION_TRANSCRIPT_FAIL_COUNT))
+            val answerFailCount = cursor.getInt(cursor.getColumnIndexOrThrow(Note.ANSWER_TRANSCRIPT_FAIL_COUNT))
+
+            var questionTranscriptConf = 0f
+            var answerTranscriptConf = 0f
+            var updated = false
+            val now = System.currentTimeMillis()
+
+            // Process Question
+            var questionAttemptedTime = 0L
+            var questionFailed = false
+            if (!question.isNullOrBlank() && questionTranscript.isNullOrBlank() && questionFailCount < MAX_FAIL_COUNT) {
+                val path = AudioPlayer.sanitizePath(question)
+                Log.d(TAG, "Note ID $id: Attempting to decode Question audio from '$path' (failCount=$questionFailCount)")
+                val decodeStartMs = System.currentTimeMillis()
+                val pcm = audioDecoder.decodeToPcm(path)
+                val decodeElapsedMs = System.currentTimeMillis() - decodeStartMs
+
+                if (pcm != null) {
+                    Log.d(TAG, "Note ID $id: Question decoded in ${decodeElapsedMs}ms (${pcm.size} samples, ~${pcm.size / 16000}s). Transcribing with $modelName...")
+                    
+                    val audioDurationMs = (pcm.size.toLong() * 1000L) / 16000L
+                    val timeoutMs = maxOf(MIN_TRANSCRIPTION_TIMEOUT_MS, audioDurationMs * TIMEOUT_MULTIPLIER)
+                    val transcriptResult = withTimeoutOrNull(timeoutMs) {
+                        sttEngine.transcribe(pcm)
+                    }
+                    
+                    if (transcriptResult == null) {
+                        // Real timeout — Vosk hung on this audio
+                        Log.w(TAG, "Note ID $id: Question transcription TIMED OUT after ${timeoutMs}ms (samples=${pcm.size}, audioDuration=${audioDurationMs}ms)")
+                        questionFailed = true
+                        failedCount++
+                    } else if (transcriptResult.text.isBlank()) {
+                        // Model completed but detected no speech — don't count as failure
+                        Log.i(TAG, "Note ID $id: Question — no speech recognized by $modelName (${pcm.size} samples). Skipping, not counting as failure.")
+                        skippedCount++
+                    } else {
+                        Log.d(TAG, "Note ID $id: Question transcribed -> '${transcriptResult.text}' (conf=${String.format("%.2f", transcriptResult.confidence)})")
+                        questionTranscript = transcriptResult.text
+                        questionTranscriptConf = transcriptResult.confidence
+                        updated = true
+                    }
+                } else {
+                    Log.w(TAG, "Note ID $id: Question audio decoding failed for '$path' (${decodeElapsedMs}ms).")
+                    questionFailed = true
+                    failedCount++
+                }
+                questionAttemptedTime = now
+            }
+
+            // Process Answer
+            var answerAttemptedTime = 0L
+            var answerFailed = false
+            if (!answer.isNullOrBlank() && answerTranscript.isNullOrBlank() && answerFailCount < MAX_FAIL_COUNT) {
+                val path = AudioPlayer.sanitizePath(answer)
+                Log.d(TAG, "Note ID $id: Attempting to decode Answer audio from '$path' (failCount=$answerFailCount)")
+                val decodeStartMs = System.currentTimeMillis()
+                val pcm = audioDecoder.decodeToPcm(path)
+                val decodeElapsedMs = System.currentTimeMillis() - decodeStartMs
+
+                if (pcm != null) {
+                    Log.d(TAG, "Note ID $id: Answer decoded in ${decodeElapsedMs}ms (${pcm.size} samples, ~${pcm.size / 16000}s). Transcribing with $modelName...")
+                    
+                    val audioDurationMs = (pcm.size.toLong() * 1000L) / 16000L
+                    val timeoutMs = maxOf(MIN_TRANSCRIPTION_TIMEOUT_MS, audioDurationMs * TIMEOUT_MULTIPLIER)
+                    val transcriptResult = withTimeoutOrNull(timeoutMs) {
+                        sttEngine.transcribe(pcm)
+                    }
+                    
+                    if (transcriptResult == null) {
+                        // Real timeout — Vosk hung on this audio
+                        Log.w(TAG, "Note ID $id: Answer transcription TIMED OUT after ${timeoutMs}ms (samples=${pcm.size}, audioDuration=${audioDurationMs}ms)")
+                        answerFailed = true
+                        failedCount++
+                    } else if (transcriptResult.text.isBlank()) {
+                        // Model completed but detected no speech — don't count as failure
+                        Log.i(TAG, "Note ID $id: Answer — no speech recognized by $modelName (${pcm.size} samples). Skipping, not counting as failure.")
+                        skippedCount++
+                    } else {
+                        Log.d(TAG, "Note ID $id: Answer transcribed -> '${transcriptResult.text}' (conf=${String.format("%.2f", transcriptResult.confidence)})")
+                        answerTranscript = transcriptResult.text
+                        answerTranscriptConf = transcriptResult.confidence
+                        updated = true
+                    }
+                } else {
+                    Log.w(TAG, "Note ID $id: Answer audio decoding failed for '$path' (${decodeElapsedMs}ms).")
+                    answerFailed = true
+                    failedCount++
+                }
+                answerAttemptedTime = now
+            }
+
+            // Build update values
+            if (updated || questionAttemptedTime > 0L || answerAttemptedTime > 0L || questionFailed || answerFailed) {
+                val values = ContentValues().apply {
+                    if (updated) {
+                        put(AbstractNote.QUESTION_TRANSCRIPT, questionTranscript)
+                        put(AbstractNote.ANSWER_TRANSCRIPT, answerTranscript)
+                        if (questionTranscriptConf > 0) {
+                            put(AbstractNote.QUESTION_TRANSCRIPT_CONFIDENCE, questionTranscriptConf)
+                            put(AbstractNote.QUESTION_TRANSCRIPT_GENERATED_AT, now)
+                            put(AbstractNote.QUESTION_TRANSCRIPT_MODEL, modelName)
+                        }
+                        if (answerTranscriptConf > 0) {
+                            put(AbstractNote.ANSWER_TRANSCRIPT_CONFIDENCE, answerTranscriptConf)
+                            put(AbstractNote.ANSWER_TRANSCRIPT_GENERATED_AT, now)
+                            put(AbstractNote.ANSWER_TRANSCRIPT_MODEL, modelName)
+                        }
+                    }
+                    if (questionAttemptedTime > 0L) {
+                        put(AbstractNote.QUESTION_TRANSCRIPT_ATTEMPTED, questionAttemptedTime)
+                    }
+                    if (answerAttemptedTime > 0L) {
+                        put(AbstractNote.ANSWER_TRANSCRIPT_ATTEMPTED, answerAttemptedTime)
+                    }
+                    if (questionFailed) {
+                        put(AbstractNote.QUESTION_TRANSCRIPT_FAIL_COUNT, questionFailCount + 1)
+                        Log.w(TAG, "Note ID $id: Question fail count incremented to ${questionFailCount + 1}")
+                    }
+                    if (answerFailed) {
+                        put(AbstractNote.ANSWER_TRANSCRIPT_FAIL_COUNT, answerFailCount + 1)
+                        Log.w(TAG, "Note ID $id: Answer fail count incremented to ${answerFailCount + 1}")
+                    }
+                }
+                applicationContext.contentResolver.update(
+                    AbstractNote.CONTENT_URI,
+                    values,
+                    "${Note._ID} = ?",
+                    arrayOf(id.toString())
+                )
+                processedCount++
+
+                if (questionTranscriptConf > 0) { sessionConfSum += questionTranscriptConf; sessionConfCount++ }
+                if (answerTranscriptConf > 0) { sessionConfSum += answerTranscriptConf; sessionConfCount++ }
+
+                val avg = if (sessionConfCount > 0) sessionConfSum / sessionConfCount else 0f
+                Log.i(TAG, "Progress: Processed $processedCount/$totalCount notes ($skippedCount skipped, $failedCount failed). Avg Confidence: ${"%.2f".format(avg * 100)}%")
+
+                setProgress(androidx.work.workDataOf(
+                    "statusMessage" to "Transcribing ($modelName)... ($processedCount / $totalCount)\nSkipped: $skippedCount, Failed: $failedCount",
+                    "totalCount" to totalCount,
+                    "processedCount" to processedCount,
+                    "skippedCount" to skippedCount,
+                    "failedCount" to failedCount,
+                    "averageConfidence" to avg
+                ))
+            }
+        }
+
+        cursor.close()
+
+        if (isStoppedCheck() || !coroutineContext.isActive) {
+            Log.d(TAG, "Transcription batch cancelled. Processed: $processedCount, Skipped: $skippedCount, Failed: $failedCount")
+            return Result.success()
+        }
+
+        setProgress(androidx.work.workDataOf(
+            "statusMessage" to "Finished ($modelName). Processed: $processedCount, Skipped: $skippedCount, Failed: $failedCount.",
+            "totalCount" to totalCount,
+            "processedCount" to processedCount,
+            "skippedCount" to skippedCount,
+            "failedCount" to failedCount
+        ))
+
+        Log.d(TAG, "Finished transcription batch ($modelName). Processed: $processedCount, Skipped: $skippedCount, Failed: $failedCount")
+        return Result.success()
     }
 
     private fun createForegroundInfo(): androidx.work.ForegroundInfo {

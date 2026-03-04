@@ -53,6 +53,14 @@ public class AbstractNote {
 	public static final String ANSWER_TRANSCRIPT_CONFIDENCE = "answer_transcript_confidence";
 	public static final String QUESTION_TRANSCRIPT_ATTEMPTED = "question_transcript_attempted";
 	public static final String ANSWER_TRANSCRIPT_ATTEMPTED = "answer_transcript_attempted";
+	public static final String QUESTION_TRANSCRIPT_FAIL_COUNT = "question_transcript_fail_count";
+	public static final String ANSWER_TRANSCRIPT_FAIL_COUNT = "answer_transcript_fail_count";
+	public static final String QUESTION_TRANSCRIPT_GENERATED_AT = "question_transcript_generated_at";
+	public static final String ANSWER_TRANSCRIPT_GENERATED_AT = "answer_transcript_generated_at";
+	public static final String QUESTION_TRANSCRIPT_MODEL = "question_transcript_model";
+	public static final String ANSWER_TRANSCRIPT_MODEL = "answer_transcript_model";
+	public static final String QUESTION_AUDIO_UPDATED_AT = "question_audio_updated_at";
+	public static final String ANSWER_AUDIO_UPDATED_AT = "answer_audio_updated_at";
 	protected int grade;
 
 	// TODO did you ever do the population of one of these from the database.
@@ -75,6 +83,14 @@ public class AbstractNote {
 	protected float answerTranscriptConfidence;
 	protected long questionTranscriptAttempted;
 	protected long answerTranscriptAttempted;
+	protected int questionTranscriptFailCount;
+	protected int answerTranscriptFailCount;
+	protected long questionTranscriptGeneratedAt;
+	protected long answerTranscriptGeneratedAt;
+	protected String questionTranscriptModel;
+	protected String answerTranscriptModel;
+	protected long questionAudioUpdatedAt;
+	protected long answerAudioUpdatedAt;
 
 	protected int categoryAkaDeckId;
 	protected boolean unseen;
@@ -164,6 +180,70 @@ public class AbstractNote {
 
 	public void setAnswerTranscriptAttempted(long answerTranscriptAttempted) {
 		this.answerTranscriptAttempted = answerTranscriptAttempted;
+	}
+
+	public int getQuestionTranscriptFailCount() {
+		return questionTranscriptFailCount;
+	}
+
+	public void setQuestionTranscriptFailCount(int questionTranscriptFailCount) {
+		this.questionTranscriptFailCount = questionTranscriptFailCount;
+	}
+
+	public int getAnswerTranscriptFailCount() {
+		return answerTranscriptFailCount;
+	}
+
+	public void setAnswerTranscriptFailCount(int answerTranscriptFailCount) {
+		this.answerTranscriptFailCount = answerTranscriptFailCount;
+	}
+
+	public long getQuestionTranscriptGeneratedAt() {
+		return questionTranscriptGeneratedAt;
+	}
+
+	public void setQuestionTranscriptGeneratedAt(long questionTranscriptGeneratedAt) {
+		this.questionTranscriptGeneratedAt = questionTranscriptGeneratedAt;
+	}
+
+	public long getAnswerTranscriptGeneratedAt() {
+		return answerTranscriptGeneratedAt;
+	}
+
+	public void setAnswerTranscriptGeneratedAt(long answerTranscriptGeneratedAt) {
+		this.answerTranscriptGeneratedAt = answerTranscriptGeneratedAt;
+	}
+
+	public String getQuestionTranscriptModel() {
+		return questionTranscriptModel;
+	}
+
+	public void setQuestionTranscriptModel(String questionTranscriptModel) {
+		this.questionTranscriptModel = questionTranscriptModel;
+	}
+
+	public String getAnswerTranscriptModel() {
+		return answerTranscriptModel;
+	}
+
+	public void setAnswerTranscriptModel(String answerTranscriptModel) {
+		this.answerTranscriptModel = answerTranscriptModel;
+	}
+
+	public long getQuestionAudioUpdatedAt() {
+		return questionAudioUpdatedAt;
+	}
+
+	public void setQuestionAudioUpdatedAt(long questionAudioUpdatedAt) {
+		this.questionAudioUpdatedAt = questionAudioUpdatedAt;
+	}
+
+	public long getAnswerAudioUpdatedAt() {
+		return answerAudioUpdatedAt;
+	}
+
+	public void setAnswerAudioUpdatedAt(long answerAudioUpdatedAt) {
+		this.answerAudioUpdatedAt = answerAudioUpdatedAt;
 	}
 
 	public int getCategoryAkaDeckId() {

@@ -20,7 +20,9 @@ data class TranscriptionStats(
     val transcribedQuestions: Int,
     val transcribedAnswers: Int,
     val averageQuestionConfidence: Float,
-    val averageAnswerConfidence: Float
+    val averageAnswerConfidence: Float,
+    val failedQuestions: Int = 0,
+    val failedAnswers: Int = 0
 )
 
 /**
@@ -95,6 +97,14 @@ class DbNoteEditor {
         values.put(AbstractNote.ANSWER_TRANSCRIPT_CONFIDENCE, note.answerTranscriptConfidence)
         values.put(AbstractNote.QUESTION_TRANSCRIPT_ATTEMPTED, note.questionTranscriptAttempted)
         values.put(AbstractNote.ANSWER_TRANSCRIPT_ATTEMPTED, note.answerTranscriptAttempted)
+        values.put(AbstractNote.QUESTION_TRANSCRIPT_FAIL_COUNT, note.questionTranscriptFailCount)
+        values.put(AbstractNote.ANSWER_TRANSCRIPT_FAIL_COUNT, note.answerTranscriptFailCount)
+        values.put(AbstractNote.QUESTION_TRANSCRIPT_GENERATED_AT, note.questionTranscriptGeneratedAt)
+        values.put(AbstractNote.ANSWER_TRANSCRIPT_GENERATED_AT, note.answerTranscriptGeneratedAt)
+        values.put(AbstractNote.QUESTION_TRANSCRIPT_MODEL, note.questionTranscriptModel)
+        values.put(AbstractNote.ANSWER_TRANSCRIPT_MODEL, note.answerTranscriptModel)
+        values.put(AbstractNote.QUESTION_AUDIO_UPDATED_AT, note.questionAudioUpdatedAt)
+        values.put(AbstractNote.ANSWER_AUDIO_UPDATED_AT, note.answerAudioUpdatedAt)
         values.put(AbstractNote.CATEGORY, note.categoryAkaDeckId)
         values.put(AbstractNote.EASINESS, note.easiness)
         values.put(AbstractNote.ACQ_REPS, note.acq_reps)
@@ -268,6 +278,40 @@ class DbNoteEditor {
             note!!.answerTranscriptAttempted = query.getLong(answerTranscriptAttemptedIndex)
         }
         
+        val questionTranscriptFailCountIndex = query.getColumnIndex(Note.QUESTION_TRANSCRIPT_FAIL_COUNT)
+        if (questionTranscriptFailCountIndex != -1) {
+            note!!.questionTranscriptFailCount = query.getInt(questionTranscriptFailCountIndex)
+        }
+        val answerTranscriptFailCountIndex = query.getColumnIndex(Note.ANSWER_TRANSCRIPT_FAIL_COUNT)
+        if (answerTranscriptFailCountIndex != -1) {
+            note!!.answerTranscriptFailCount = query.getInt(answerTranscriptFailCountIndex)
+        }
+
+        val questionTranscriptGeneratedAtIndex = query.getColumnIndex(Note.QUESTION_TRANSCRIPT_GENERATED_AT)
+        if (questionTranscriptGeneratedAtIndex != -1) {
+            note!!.questionTranscriptGeneratedAt = query.getLong(questionTranscriptGeneratedAtIndex)
+        }
+        val answerTranscriptGeneratedAtIndex = query.getColumnIndex(Note.ANSWER_TRANSCRIPT_GENERATED_AT)
+        if (answerTranscriptGeneratedAtIndex != -1) {
+            note!!.answerTranscriptGeneratedAt = query.getLong(answerTranscriptGeneratedAtIndex)
+        }
+        val questionTranscriptModelIndex = query.getColumnIndex(Note.QUESTION_TRANSCRIPT_MODEL)
+        if (questionTranscriptModelIndex != -1) {
+            note!!.questionTranscriptModel = query.getString(questionTranscriptModelIndex)
+        }
+        val answerTranscriptModelIndex = query.getColumnIndex(Note.ANSWER_TRANSCRIPT_MODEL)
+        if (answerTranscriptModelIndex != -1) {
+            note!!.answerTranscriptModel = query.getString(answerTranscriptModelIndex)
+        }
+        val questionAudioUpdatedAtIndex = query.getColumnIndex(Note.QUESTION_AUDIO_UPDATED_AT)
+        if (questionAudioUpdatedAtIndex != -1) {
+            note!!.questionAudioUpdatedAt = query.getLong(questionAudioUpdatedAtIndex)
+        }
+        val answerAudioUpdatedAtIndex = query.getColumnIndex(Note.ANSWER_AUDIO_UPDATED_AT)
+        if (answerAudioUpdatedAtIndex != -1) {
+            note!!.answerAudioUpdatedAt = query.getLong(answerAudioUpdatedAtIndex)
+        }
+        
         val unseenString = query
                 .getString(query.getColumnIndex(Note.UNSEEN))
         var unseen = false
@@ -414,8 +458,10 @@ class DbNoteEditor {
         var qConfCount = 0
         var aConfSum = 0f
         var aConfCount = 0
+        var failedQuestions = 0
+        var failedAnswers = 0
 
-        val queryString = "SELECT ${Note.QUESTION}, ${Note.ANSWER}, ${Note.QUESTION_TRANSCRIPT}, ${Note.ANSWER_TRANSCRIPT}, ${Note.QUESTION_TRANSCRIPT_CONFIDENCE}, ${Note.ANSWER_TRANSCRIPT_CONFIDENCE} FROM ${NotesProvider.NOTES_TABLE_NAME}"
+        val queryString = "SELECT ${Note.QUESTION}, ${Note.ANSWER}, ${Note.QUESTION_TRANSCRIPT}, ${Note.ANSWER_TRANSCRIPT}, ${Note.QUESTION_TRANSCRIPT_CONFIDENCE}, ${Note.ANSWER_TRANSCRIPT_CONFIDENCE}, ${Note.QUESTION_TRANSCRIPT_FAIL_COUNT}, ${Note.ANSWER_TRANSCRIPT_FAIL_COUNT} FROM ${NotesProvider.NOTES_TABLE_NAME}"
         val result = rawQuery(queryString) ?: return TranscriptionStats(0, 0, 0, 0, 0, 0f, 0f)
         val query = result.cursor
 
@@ -425,6 +471,8 @@ class DbNoteEditor {
         val atIdx = query.getColumnIndex(Note.ANSWER_TRANSCRIPT)
         val qtcIdx = query.getColumnIndex(Note.QUESTION_TRANSCRIPT_CONFIDENCE)
         val atcIdx = query.getColumnIndex(Note.ANSWER_TRANSCRIPT_CONFIDENCE)
+        val qfcIdx = query.getColumnIndex(Note.QUESTION_TRANSCRIPT_FAIL_COUNT)
+        val afcIdx = query.getColumnIndex(Note.ANSWER_TRANSCRIPT_FAIL_COUNT)
 
         while (query.moveToNext()) {
             totalNotes++
@@ -442,6 +490,15 @@ class DbNoteEditor {
 
             if (hasQAudio && !qTrans.isNullOrBlank()) transcribedQuestions++
             if (hasAAudio && !aTrans.isNullOrBlank()) transcribedAnswers++
+
+            if (qfcIdx != -1 && hasQAudio) {
+                val qfc = query.getInt(qfcIdx)
+                if (qfc >= 3) failedQuestions++
+            }
+            if (afcIdx != -1 && hasAAudio) {
+                val afc = query.getInt(afcIdx)
+                if (afc >= 3) failedAnswers++
+            }
 
             if (qtcIdx != -1) {
                 val qConf = query.getFloat(qtcIdx)
@@ -473,7 +530,9 @@ class DbNoteEditor {
             transcribedQuestions = transcribedQuestions,
             transcribedAnswers = transcribedAnswers,
             averageQuestionConfidence = avgQConf,
-            averageAnswerConfidence = avgAConf
+            averageAnswerConfidence = avgAConf,
+            failedQuestions = failedQuestions,
+            failedAnswers = failedAnswers
         )
     }
 

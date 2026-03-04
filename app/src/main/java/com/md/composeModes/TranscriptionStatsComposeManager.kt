@@ -24,7 +24,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.md.DbNoteEditor
 import com.md.TranscriptionStats
@@ -75,6 +74,7 @@ class TranscriptionStatsComposeManager @Inject constructor() {
             } else {
                 val totalAudioItems = currentStats.totalAudioQuestions + currentStats.totalAudioAnswers
                 val totalTranscribedItems = currentStats.transcribedQuestions + currentStats.transcribedAnswers
+                val totalFailedItems = currentStats.failedQuestions + currentStats.failedAnswers
                 val percentComplete = if (totalAudioItems > 0) {
                     (totalTranscribedItems.toFloat() / totalAudioItems.toFloat()) * 100f
                 } else {
@@ -95,6 +95,12 @@ class TranscriptionStatsComposeManager @Inject constructor() {
                         Text("Total Notes: ${currentStats.totalNotes}")
                         Text("Audio Items Found: $totalAudioItems")
                         Text("Items Transcribed: $totalTranscribedItems")
+                        if (totalFailedItems > 0) {
+                            Text(
+                                "Permanently Failed: $totalFailedItems",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = String.format("%.1f%% Complete", percentComplete),

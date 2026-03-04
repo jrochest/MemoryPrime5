@@ -48,8 +48,10 @@ class AudioDecoder {
 
         extractor.selectTrack(trackIndex)
         val mime = format.getString(MediaFormat.KEY_MIME)!!
-        val originalSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
-        val channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+        // These are the input format values — may differ from actual output
+        // (e.g. HE-AAC SBR doubles sample rate and can change channels)
+        var actualSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+        var actualChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
 
         val codec = MediaCodec.createDecoderByType(mime)
         codec.configure(format, null, null, 0)
@@ -81,7 +83,12 @@ class AudioDecoder {
 
             val outputBufferIndex = codec.dequeueOutputBuffer(info, timeoutUs)
             if (outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                // Ignore format change
+                // Codec output format may differ from input (HE-AAC SBR, etc.)
+                // Use the ACTUAL output format for resampling and channel conversion.
+                val outputFormat = codec.outputFormat
+                actualSampleRate = outputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+                actualChannels = outputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+                android.util.Log.d("AudioDecoder", "Output format changed: sampleRate=$actualSampleRate, channels=$actualChannels")
             } else if (outputBufferIndex >= 0) {
                 val outputBuffer = codec.getOutputBuffer(outputBufferIndex)
                 if (outputBuffer != null && info.size > 0) {
@@ -107,19 +114,26 @@ class AudioDecoder {
         codec.release()
         extractor.release()
 
+        android.util.Log.d("AudioDecoder", "Decoded ${pcmData.size} samples at ${actualSampleRate}Hz, ${actualChannels}ch. Target: ${targetSampleRate}Hz mono.")
+
         val floatData = FloatArray(pcmData.size) { pcmData[it].toFloat() }
-        val monoData = if (channels == 2) {
-            val mono = FloatArray(floatData.size / 2)
+        val monoData = if (actualChannels >= 2) {
+            val mono = FloatArray(floatData.size / actualChannels)
             for (i in mono.indices) {
-                mono[i] = (floatData[i * 2] + floatData[i * 2 + 1]) / 2f
+                var sum = 0f
+                for (ch in 0 until actualChannels) {
+                    sum += floatData[i * actualChannels + ch]
+                }
+                mono[i] = sum / actualChannels
             }
             mono
         } else {
             floatData
         }
 
-        // Resample
-        val resampledData = resample(monoData, originalSampleRate, targetSampleRate)
+        // Resample from actual output rate to target rate
+        val resampledData = resample(monoData, actualSampleRate, targetSampleRate)
+        android.util.Log.d("AudioDecoder", "After downmix+resample: ${resampledData.size} samples (${resampledData.size / targetSampleRate}s at ${targetSampleRate}Hz)")
         return ShortArray(resampledData.size) { resampledData[it].toInt().toShort() }
     }
 

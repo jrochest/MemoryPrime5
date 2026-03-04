@@ -12,8 +12,9 @@ data class TranscriptionResult(
 interface SttEngine {
     /**
      * Initializes the engine. This may involve loading ML models from disk.
+     * @param useSmallModel If true, force use of the smaller bundled model instead of the high-fidelity downloaded model.
      */
-    suspend fun initialize(): Boolean
+    suspend fun initialize(useSmallModel: Boolean = false): Boolean
 
     /**
      * Transcribes the given 16-bit PCM array into text.
