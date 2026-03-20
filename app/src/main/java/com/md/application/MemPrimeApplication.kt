@@ -56,20 +56,11 @@ class MemPrimeApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        
-        val workRequest = androidx.work.PeriodicWorkRequestBuilder<com.md.workers.TranscriptionWorker>(
-            1, java.util.concurrent.TimeUnit.DAYS
-        ).setConstraints(
-            androidx.work.Constraints.Builder()
-                .setRequiresDeviceIdle(true)
-                .setRequiresCharging(true)
-                .build()
-        ).build()
-        
-        androidx.work.WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            "TranscriptionWorker",
-            androidx.work.ExistingPeriodicWorkPolicy.KEEP,
-            workRequest
-        )
+        // Cancel any previously-scheduled automatic transcription work.
+        // The Vosk speech-to-text model consumes hundreds of MB of RAM when loaded,
+        // which causes the system to repeatedly kill the app due to LOW_MEMORY pressure.
+        // Transcription is now only triggered manually by the user via the UI.
+        androidx.work.WorkManager.getInstance(this)
+            .cancelUniqueWork("TranscriptionWorker")
     }
 }
