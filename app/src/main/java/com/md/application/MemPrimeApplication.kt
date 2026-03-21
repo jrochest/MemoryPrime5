@@ -56,11 +56,14 @@ class MemPrimeApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        // Cancel any previously-scheduled automatic transcription work.
+        // Cancel any previously-scheduled transcription work on startup.
         // The Vosk speech-to-text model consumes hundreds of MB of RAM when loaded,
         // which causes the system to repeatedly kill the app due to LOW_MEMORY pressure.
-        // Transcription is now only triggered manually by the user via the UI.
-        androidx.work.WorkManager.getInstance(this)
-            .cancelUniqueWork("TranscriptionWorker")
+        // WorkManager persists work across app restarts, so a previously-triggered
+        // manual transcription will re-run on the next launch if not cancelled here.
+        // Transcription should only run when explicitly triggered by the user via the UI.
+        val workManager = androidx.work.WorkManager.getInstance(this)
+        workManager.cancelUniqueWork("TranscriptionWorker")  // legacy name
+        workManager.cancelUniqueWork("ManualTranscription")  // current name from UI
     }
 }
