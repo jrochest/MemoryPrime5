@@ -312,25 +312,26 @@ class PracticeModeComposerManager @Inject constructor(
                 .padding(4.dp)
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                val buttonModifier = bottomButtonModifier.weight(1f)
+
                 // BOTTOM LEFT BUTTON
-                val bottomLeftButtonModifier = bottomButtonModifier.fillMaxWidth(fraction = .5f)
                 when (practiceMode) {
                     PracticeMode.Deleting -> {
                         FilledTonalButton(
-                            modifier = bottomLeftButtonModifier,
+                            modifier = buttonModifier,
                             shape = RoundedCornerShape(28.dp),
                             colors = ButtonStyles.MediumImportanceButtonColor(),
                             onClick = {
                                 practiceModeViewModel.practiceStateFlow.value =
                                     PracticeMode.Practicing
                             }) {
-                            Text(text = "Exit delete mode")
+                            Text(text = "Exit delete mode", textAlign = TextAlign.Center)
                         }
                     }
 
                     PracticeMode.Recording -> {
                         UnlockRecordButton(
-                            modifier = bottomLeftButtonModifier,
+                            modifier = buttonModifier,
                             onModeChange = {
                                 notePart.pendingRecorder?.stop()
                                 notePart.pendingRecorder?.deleteFile()
@@ -343,18 +344,47 @@ class PracticeModeComposerManager @Inject constructor(
 
                     PracticeMode.Practicing -> {
                         UnlockRecordButton(
-                            modifier = bottomLeftButtonModifier,
+                            modifier = buttonModifier,
                             onModeChange = onEnableRecordMode,
                             modeDescription = "(Locked) - Double tap to record",
                         )
                     }
                 }
+
+                // MIDDLE BUTTON (POSTPONE)
+                when (practiceMode) {
+                    PracticeMode.Practicing -> {
+                        NTapButton(
+                            modifier = buttonModifier,
+                            onNTap = {
+                                // "postpone pending" => double tap to postpone the current note
+                                stateModel.postponeNote(shouldQueue = true)
+                            },
+                            colors = ButtonStyles.MediumImportanceButtonColor()
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = "Postpone",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(
+                                    text = "Double tap to postpone",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+                    else -> {
+                        androidx.compose.foundation.layout.Spacer(modifier = buttonModifier)
+                    }
+                }
+
                 // BOTTOM RIGHT BUTTON
-                val bottomRightButtonModifier = bottomButtonModifier.fillMaxWidth(fraction = 1f)
                 when (practiceMode) {
                     PracticeMode.Recording -> {
                         SaveButtonForPendingNotePartRecording(
-                            modifier = bottomRightButtonModifier,
+                            modifier = buttonModifier,
                             onSaveTap = {
                                 currentNotePartManager.saveNewAudio()
                                 practiceModeViewModel.practiceStateFlow.value =
@@ -366,7 +396,7 @@ class PracticeModeComposerManager @Inject constructor(
 
                     PracticeMode.Deleting,
                     PracticeMode.Practicing -> {
-                        DeleteButton(bottomRightButtonModifier, onDeleteTap, practiceMode)
+                        DeleteButton(buttonModifier, onDeleteTap, practiceMode)
                     }
                 }
             }
@@ -452,7 +482,7 @@ class PracticeModeComposerManager @Inject constructor(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = "Delete",
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleMedium
                 )
                 Text(
                     text = if (mode == PracticeMode.Deleting) "Double tap for delete mode" else "Double tap to delete!",

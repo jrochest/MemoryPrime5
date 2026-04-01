@@ -21,7 +21,7 @@ fun UnlockRecordButton(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = "Record mode",
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleMedium
                 )
                 Text(
                     text = modeDescription,
