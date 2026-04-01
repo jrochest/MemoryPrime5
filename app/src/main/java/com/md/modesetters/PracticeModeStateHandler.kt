@@ -95,6 +95,12 @@ class PracticeModeStateHandler @Inject constructor(
 
                             val part = noteState.notePart
                             val note = checkNotNull(noteState.currentNote)
+                            
+                            val enableProceedJob = launch {
+                                delay(3000)
+                                practiceModeViewModel.hasPlayedCurrentNotePartOrIgnoredAProceed.value = true
+                            }
+
                             if (part.partIsAnswer) {
                                 audioPlayer.suspendPlayReturningTrueIfLoadedFileChanged(
                                     note.answer
@@ -111,6 +117,7 @@ class PracticeModeStateHandler @Inject constructor(
                                     )
                                 }
                             }
+                            enableProceedJob.cancel()
                             practiceModeViewModel.hasPlayedCurrentNotePartOrIgnoredAProceed.value =
                                 true
 
