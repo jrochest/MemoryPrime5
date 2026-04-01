@@ -202,8 +202,22 @@ class AudioPlayer @Inject constructor(
             mediaPlayer.setOnCompletionListener(callback)
         }
 
-        awaitCompletion()
-        localCurrentPlayer.hasCompletedPlaybackSinceBecomingPrimary = true
+        try {
+            awaitCompletion()
+            localCurrentPlayer.hasCompletedPlaybackSinceBecomingPrimary = true
+        } catch (e: Exception) {
+            // Android MediaPlayer Error -38 typically indicates an Invalid State Exception
+            // from the native multimedia framework. This happens if an operation (like start
+            // or seekTo) is called when the MediaPlayer isn't properly prepared, or if it
+            // has already encountered a fatal error. Catching it here stops the app from crashing.
+            e.printStackTrace()
+            val now = System.currentTimeMillis()
+            if (now - lastCrashTtsTime > 60_000) {
+                lastCrashTtsTime = now
+                TtsSpeaker.speak("Audio player crash prevented")
+            }
+            return false
+        }
         return fileNeededToBeFreshlyLoaded
     }
 
@@ -217,6 +231,7 @@ class AudioPlayer @Inject constructor(
 
     companion object {
         private const val NUMBER_OF_DIRS = 100
+        private var lastCrashTtsTime = 0L
 
         @JvmStatic
         fun getAudioDirectory(filename: String): String {
