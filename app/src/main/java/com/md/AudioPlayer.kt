@@ -210,12 +210,8 @@ class AudioPlayer @Inject constructor(
             // from the native multimedia framework. This happens if an operation (like start
             // or seekTo) is called when the MediaPlayer isn't properly prepared, or if it
             // has already encountered a fatal error. Catching it here stops the app from crashing.
+            println("AudioPlayer exception captured: type=${e.javaClass.name}, message=${e.message}")
             e.printStackTrace()
-            val now = System.currentTimeMillis()
-            if (now - lastCrashTtsTime > 60_000) {
-                lastCrashTtsTime = now
-                TtsSpeaker.speak("Audio player crash prevented")
-            }
             return false
         }
         return fileNeededToBeFreshlyLoaded
@@ -231,7 +227,6 @@ class AudioPlayer @Inject constructor(
 
     companion object {
         private const val NUMBER_OF_DIRS = 100
-        private var lastCrashTtsTime = 0L
 
         @JvmStatic
         fun getAudioDirectory(filename: String): String {
