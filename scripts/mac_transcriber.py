@@ -90,45 +90,53 @@ def process_transcriptions():
         has_update = False
         now_ms = int(time.time() * 1000)
         
-        if question and not note['question_transcript']:
-            audio_path = sanitize_audio_path(question)
-            if not audio_path.endswith(".m4a"):
-                audio_path += ".m4a"
-                
-            if os.path.exists(audio_path):
-                print(f"Transcribing Question for Note ID {n_id}: {audio_path}")
-                result = audio_model.transcribe(audio_path)
-                raw_text = result['text']
-                if raw_text.strip():
-                    refined_text = analyze_with_gemma(client, raw_text)
-                    update_obj["questionTranscript"] = refined_text
-                    update_obj["questionTranscriptConfidence"] = 1.0 # Pseudo confidence
-                    update_obj["questionTranscriptModel"] = "gemma-4-26b-moe-mac"
-                    update_obj["questionTranscriptGeneratedAt"] = now_ms
-                    has_update = True
-                    print(f"  -> Q: {refined_text}")
-            else:
-                print(f"Warning: Audio file not found: {audio_path}")
-                
-        if answer and not note['answer_transcript']:
-            audio_path = sanitize_audio_path(answer)
-            if not audio_path.endswith(".m4a"):
-                audio_path += ".m4a"
-                
-            if os.path.exists(audio_path):
-                print(f"Transcribing Answer for Note ID {n_id}: {audio_path}")
-                result = audio_model.transcribe(audio_path)
-                raw_text = result['text']
-                if raw_text.strip():
-                    refined_text = analyze_with_gemma(client, raw_text)
-                    update_obj["answerTranscript"] = refined_text
-                    update_obj["answerTranscriptConfidence"] = 1.0
-                    update_obj["answerTranscriptModel"] = "gemma-4-26b-moe-mac"
-                    update_obj["answerTranscriptGeneratedAt"] = now_ms
-                    has_update = True
-                    print(f"  -> A: {refined_text}")
-            else:
-                print(f"Warning: Audio file not found: {audio_path}")
+        try:
+            if question and not note['question_transcript']:
+                audio_path = sanitize_audio_path(question)
+                if not audio_path.endswith(".m4a"):
+                    audio_path += ".m4a"
+                    
+                if os.path.exists(audio_path):
+                    print(f"Transcribing Question for Note ID {n_id}: {audio_path}")
+                    result = audio_model.transcribe(audio_path)
+                    raw_text = result['text']
+                    if raw_text.strip():
+                        print(f"  [Whisper Q]: {raw_text}")
+                        refined_text = analyze_with_gemma(client, raw_text)
+                        update_obj["questionTranscript"] = refined_text
+                        update_obj["questionTranscriptConfidence"] = 1.0 # Pseudo confidence
+                        update_obj["questionTranscriptModel"] = "gemma-4-26b-moe-mac"
+                        update_obj["questionTranscriptGeneratedAt"] = now_ms
+                        has_update = True
+                        print(f"  [Gemma Q]  : {refined_text}")
+                else:
+                    print(f"Warning: Audio file not found: {audio_path}")
+                    
+            if answer and not note['answer_transcript']:
+                audio_path = sanitize_audio_path(answer)
+                if not audio_path.endswith(".m4a"):
+                    audio_path += ".m4a"
+                    
+                if os.path.exists(audio_path):
+                    print(f"Transcribing Answer for Note ID {n_id}: {audio_path}")
+                    result = audio_model.transcribe(audio_path)
+                    raw_text = result['text']
+                    if raw_text.strip():
+                        print(f"  [Whisper A]: {raw_text}")
+                        refined_text = analyze_with_gemma(client, raw_text)
+                        update_obj["answerTranscript"] = refined_text
+                        update_obj["answerTranscriptConfidence"] = 1.0
+                        update_obj["answerTranscriptModel"] = "gemma-4-26b-moe-mac"
+                        update_obj["answerTranscriptGeneratedAt"] = now_ms
+                        has_update = True
+                        print(f"  [Gemma A]  : {refined_text}")
+                else:
+                    print(f"Warning: Audio file not found: {audio_path}")
+        except KeyboardInterrupt:
+            print("\nReceived stop signal! Saving progress so far...")
+            if has_update:
+                updates.append(update_obj)
+            break
                 
         if has_update:
             updates.append(update_obj)
@@ -155,9 +163,26 @@ def push_and_trigger():
     print("Done!")
 
 if __name__ == "__main__":
+    import sys
     try:
-        pull_data_from_device()
-        if process_transcriptions():
-            push_and_trigger()
+        if len(sys.argv) > 1:
+            cmd = sys.argv[1].lower()
+            if cmd == "pull":
+                pull_data_from_device()
+            elif cmd == "transcribe":
+                process_transcriptions()
+            elif cmd == "push":
+                push_and_trigger()
+            elif cmd == "all":
+                pull_data_from_device()
+                if process_transcriptions():
+                    push_and_trigger()
+            else:
+                print("Usage: python3 scripts/mac_transcriber.py [pull | transcribe | push | all]")
+        else:
+            # Default behavior: pull and transcribe, but do NOT push.
+            pull_data_from_device()
+            process_transcriptions()
+            print("\nTranscription complete! Reconnect your device and run `python3 scripts/mac_transcriber.py push` to sync.")
     except Exception as e:
         print(f"Pipeline failed: {e}")

@@ -17,10 +17,22 @@ To run the pipeline and sync transcripts back to Memory Prime, follow these step
    source .venv/bin/activate
    ```
 
-2. **Run the Script**:
-   ```bash
-   python3 scripts/mac_transcriber.py
-   ```
+2. **Run the Script Commands**:
+   The script is broken down into modular steps so you don't have to keep your phone plugged in for hours!
+
+   * **Pull & Transcribe** (Default): Pulls data from your phone and starts processing. You can unplug your phone once transcribing begins.
+     ```bash
+     python3 scripts/mac_transcriber.py
+     ```
+   * **Push**: Pushes the generated `update_transcripts.json` back to your phone.
+     ```bash
+     python3 scripts/mac_transcriber.py push
+     ```
+
+   *Optional Commands*:
+   * `python3 scripts/mac_transcriber.py pull` (Only extract data)
+   * `python3 scripts/mac_transcriber.py transcribe` (Only process local data)
+   * `python3 scripts/mac_transcriber.py all` (Pull, Transcribe, and Push continuously)
 
 ### What happens under the hood?
 1. **Extraction**: Uses ADB to pull the `memory_droid.db` and audio `.m4a` files directly from the app's internal storage.
