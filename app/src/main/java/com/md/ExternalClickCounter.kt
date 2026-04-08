@@ -11,24 +11,8 @@ import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.*
 import javax.inject.Inject
 
-/**
- * Click interaction modes for the two-mode system.
- *
- * Default: Normal practice mode with FSRS-style ratings.
- * Secondary: Dangerous actions (postpone, delete) requiring confirmation.
- * PendingPostpone: Awaiting triple-click confirmation to postpone.
- * PendingDelete: Awaiting triple-click confirmation to delete.
- */
-enum class ClickMode {
-    Default,
-    Secondary,
-    PendingPostpone,
-    PendingDelete
-}
-
 @ActivityScoped
 class ExternalClickCounter
-
     @Inject
     constructor(
         private val practiceModeHandler: PracticeModeStateHandler,
@@ -55,21 +39,17 @@ class ExternalClickCounter
     private var pressGroupInstanceData: PressGroupInstanceData? = null
 
     private var currentJob: Job? = null
-    private var previousPressGroupGapMillis: Long = 0
+    
+    // Accumulates slow clicks to determine which command to execute
+    val pendingCommandCountFlow = kotlinx.coroutines.flow.MutableStateFlow(0)
+    var pendingCommandCount: Int
+        get() = pendingCommandCountFlow.value
+        set(value) { pendingCommandCountFlow.value = value }
 
-    /** Current interaction mode, exposed as a flow for UI observation. */
-    val clickModeFlow = kotlinx.coroutines.flow.MutableStateFlow(ClickMode.Default)
-    private var clickMode: ClickMode
-        get() = clickModeFlow.value
-        set(value) { clickModeFlow.value = value }
+    // Using 500ms for mapping rapid clicks, based on user input
+    private val rapidClickGapMs = 500L
 
-    /**
-     * Rapid-succession gap for triple-click confirmation in pending modes.
-     * Clicks must be within this window to count as a rapid group.
-     */
-    private val confirmationRapidClickGapMs = 300L
-
-    fun handleRhythmUiTaps(eventTimeMs: Long, pressGroupMaxGapMs: Long): Boolean {
+    fun handleRhythmUiTaps(eventTimeMs: Long, ignoredMaxGapMs: Long): Boolean {
         val handler = practiceModeHandler
         currentJob?.cancel()
         currentJob = null
@@ -78,8 +58,9 @@ class ExternalClickCounter
         if (pressGroupInstanceDataLocal == null) {
             pressGroupInstanceDataLocal = PressGroupInstanceData()
             this.pressGroupInstanceData = pressGroupInstanceDataLocal
-        } else if (pressGroupLastPressEventMs + previousPressGroupGapMillis < eventTimeMs) {
-            // Large gap. Reset count.
+        } else if (pressGroupLastPressEventMs + rapidClickGapMs < eventTimeMs) {
+            // Gap larger than 500ms means previous tap group ended.
+            // Reset tap count for the new rapid click group.
             pressGroupInstanceDataLocal = PressGroupInstanceData()
             this.pressGroupInstanceData = pressGroupInstanceDataLocal
         } else {
@@ -90,19 +71,11 @@ class ExternalClickCounter
 
         val pressGroupCount = pressGroupInstanceDataLocal.pressGroupCount
 
-        // Determine gap based on mode and click count.
-        val pressGroupMaxGapMsOverride: Long = when (clickMode) {
-            ClickMode.Default -> getDefaultModeGap(pressGroupCount, pressGroupMaxGapMs)
-            ClickMode.Secondary -> getSecondaryModeGap(pressGroupCount)
-            ClickMode.PendingPostpone, ClickMode.PendingDelete -> confirmationRapidClickGapMs
-        }
-
-        previousPressGroupGapMillis = pressGroupMaxGapMsOverride
         currentJob = activity.lifecycleScope.launch(Dispatchers.Main) {
             @Suppress("DeferredResultUnused")
             async { activity.lowVolumeClickTone() }
 
-            delay(pressGroupMaxGapMsOverride)
+            delay(rapidClickGapMs)
 
             if (!isActive) return@launch
 
@@ -113,148 +86,85 @@ class ExternalClickCounter
                 return@launch
             }
 
-            when (clickMode) {
-                ClickMode.Default -> handleDefaultMode(pressGroupCount, handler)
-                ClickMode.Secondary -> handleSecondaryMode(pressGroupCount)
-                ClickMode.PendingPostpone -> handlePendingConfirmation(
-                    pressGroupCount, handler,
-                    onConfirm = {
-                        handler.postponeNote(true)
-                        TtsSpeaker.speak("postponed")
-                    },
-                    actionName = "postpone"
-                )
-                ClickMode.PendingDelete -> handlePendingConfirmation(
-                    pressGroupCount, handler,
-                    onConfirm = {
-                        handler.deleteNote()
-                        TtsSpeaker.speak("deleted, tap to continue")
-                    },
-                    actionName = "delete"
-                )
-            }
+            processTapGroup(pressGroupCount, handler)
         }
 
         return true
     }
 
-    /**
-     * Default mode: FSRS-style ratings.
-     * 1=Good, 2=Again, 3=Back, 4=Easy, 5=Hard, 6+=Secondary
-     */
-    private fun handleDefaultMode(pressGroupCount: Int, handler: PracticeModeStateHandler) {
-        val message: String?
-        when (pressGroupCount) {
+    private fun processTapGroup(tapCount: Int, handler: PracticeModeStateHandler) {
+        when {
+            tapCount == 1 -> {
+                // Single tap -> increment current slow click count, and voice it
+                pendingCommandCount++
+                announcePendingCommand()
+            }
+            tapCount == 2 -> {
+                // Double tap -> enact command
+                if (pendingCommandCount == 0) {
+                    pendingCommandCount = 1
+                }
+                executePendingCommand(handler)
+            }
+            tapCount >= 3 -> {
+                // Triple tap -> reset
+                pendingCommandCount = 0
+                TtsSpeaker.speak("cancelled")
+            }
+        }
+    }
+
+    private fun announcePendingCommand() {
+        val message = when (pendingCommandCount) {
+            1 -> "good"
+            2 -> "again"
+            3 -> "back"
+            4 -> "easy"
+            5 -> "hard"
+            6 -> "postpone"
+            7 -> "delete"
+            else -> "unknown command"
+        }
+        TtsSpeaker.speak(message)
+    }
+
+    private fun executePendingCommand(handler: PracticeModeStateHandler) {
+        val count = pendingCommandCount
+        pendingCommandCount = 0 // Reset after execution
+
+        val message: String? = when (count) {
             1 -> {
-                // Good — normal recall (grade 4)
-                message = null
                 handler.proceedWithGrade(4)
+                null
             }
             2 -> {
-                // Again — failed to recall (grade 1)
-                message = "again"
                 handler.proceedWithGrade(1)
+                "again"
             }
             3 -> {
-                // Back/Undo
-                message = "back"
                 handler.undo()
+                "back"
             }
             4 -> {
-                // Easy — effortless recall (grade 5)
-                message = "easy"
                 handler.proceedWithGrade(5)
+                "easy"
             }
             5 -> {
-                // Hard — difficult recall (grade 2)
-                message = "hard"
                 handler.proceedWithGrade(2)
+                "hard"
+            }
+            6 -> {
+                handler.postponeNote(true)
+                "postponed"
+            }
+            7 -> {
+                handler.deleteNote()
+                "deleted, tap to continue"
             }
             else -> {
-                // 6 or more clicks: enter secondary mode
-                clickMode = ClickMode.Secondary
-                message = "secondary mode"
+                null
             }
         }
         message?.let { TtsSpeaker.speak(it) }
-    }
-
-    /**
-     * Secondary mode: dangerous actions requiring confirmation.
-     * 1=Pending Postpone, 2=Pending Delete, others=no-op
-     */
-    private fun handleSecondaryMode(pressGroupCount: Int) {
-        when (pressGroupCount) {
-            1 -> {
-                clickMode = ClickMode.PendingPostpone
-                TtsSpeaker.speak("postpone pending triple tap to confirm")
-            }
-            2 -> {
-                clickMode = ClickMode.PendingDelete
-                TtsSpeaker.speak("delete pending triple tap to confirm")
-            }
-            else -> {
-                // 3 or more clicks: back to default mode
-                clickMode = ClickMode.Default
-                TtsSpeaker.speak("back to default")
-            }
-        }
-    }
-
-    /**
-     * Pending confirmation mode.
-     * 1 click = cancel and return to default.
-     * 3 rapid clicks = confirm and execute.
-     * Other counts = no-op, stay in pending state.
-     */
-    private fun handlePendingConfirmation(
-        pressGroupCount: Int,
-        handler: PracticeModeStateHandler,
-        onConfirm: () -> Unit,
-        actionName: String
-    ) {
-        when (pressGroupCount) {
-            1 -> {
-                // Cancel — return to default mode
-                clickMode = ClickMode.Default
-                TtsSpeaker.speak("cancelled")
-            }
-            3 -> {
-                // Triple click confirms the action
-                onConfirm()
-                clickMode = ClickMode.Default
-            }
-            else -> {
-                // 2, 4, 5 clicks do nothing in pending mode.
-                // Stay in pending state.
-            }
-        }
-    }
-
-    /** Gap timing for default mode. Larger counts get longer windows. */
-    private fun getDefaultModeGap(pressGroupCount: Int, baseGapMs: Long): Long {
-        return when {
-            pressGroupCount >= 6 -> {
-                TtsSpeaker.speak(pressGroupCount.toString())
-                2000L
-            }
-            pressGroupCount >= 4 -> {
-                TtsSpeaker.speak(pressGroupCount.toString())
-                1500L
-            }
-            pressGroupCount == 3 -> {
-                TtsSpeaker.speak(pressGroupCount.toString())
-                1000L
-            }
-            else -> baseGapMs
-        }
-    }
-
-    /** Gap timing for secondary mode. */
-    private fun getSecondaryModeGap(pressGroupCount: Int): Long {
-        return when {
-            pressGroupCount <= 2 -> 1000L
-            else -> 500L
-        }
     }
 }

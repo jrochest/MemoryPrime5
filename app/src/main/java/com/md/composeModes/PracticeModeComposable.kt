@@ -37,7 +37,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.md.AudioRecorder
-import com.md.ClickMode
 import com.md.ExternalClickCounter
 import com.md.SpacedRepeaterActivity
 import com.md.modesetters.PracticeModeStateHandler
@@ -61,19 +60,20 @@ object WorkingMemoryScreen {
     const val MAX_FONT_SIZE = 36
     const val MAX_TAP_GAP_DURATION_TO_DELETE_MILLIS = 300
     val LARGE_TAP_AREA_LABEL = """
-Tap counts (Default Mode)
-1: Good (normal recall)
+Tap Navigation Guide:
+• Immediate Double Tap = Good / proceed
+• Single tap slowly to cycle through options (voice will confirm)
+• Double tap to execute selected option
+• Triple tap to cancel anytime
+
+Options (counted by slow taps):
+1: Good / proceed (normal recall)
 2: Again (failed recall)
 3: Back / Undo
 4: Easy (effortless recall)
 5: Hard (difficult recall)
-6+: Secondary Mode
-
-Secondary Mode
-1: Postpone (triple click to confirm)
-2: Delete (triple click to confirm)
-3+: Exit Secondary Mode
-
+6: Postpone (until future session)
+7: Delete
 """.trimMargin()
 }
 
@@ -126,7 +126,7 @@ class PracticeModeComposerManager @Inject constructor(
 
     @Composable
     fun compose() {
-        val clickMode = externalClickCounter.clickModeFlow.collectAsState().value
+        val pendingCommandCount = externalClickCounter.pendingCommandCountFlow.collectAsState().value
         PracticeModeComposable(
             onEnableRecordMode = {
                 activity.lifecycleScope.launch {
@@ -158,7 +158,7 @@ class PracticeModeComposerManager @Inject constructor(
                 )
             },
             practiceMode = practiceModeViewModel.practiceStateFlow.collectAsState().value,
-            clickMode = clickMode,
+            pendingCommandCount = pendingCommandCount,
             currentNotePartManager = currentNotePartManager
         )
     }
@@ -171,7 +171,7 @@ class PracticeModeComposerManager @Inject constructor(
         onDeleteTap: () -> Unit = {},
         onMiddleButtonTapInPracticeMode: () -> Unit = {},
         practiceMode: PracticeMode,
-        clickMode: ClickMode = ClickMode.Default,
+        pendingCommandCount: Int = 0,
         currentNotePartManager: CurrentNotePartManager
     ) {
 
@@ -179,11 +179,11 @@ class PracticeModeComposerManager @Inject constructor(
         val notePart = noteState.value?.notePart
 
         // Choose button color based on click mode for visual feedback
-        val modeColor = when (clickMode) {
-            ClickMode.Default -> ButtonStyles.MediumImportanceButtonColor()
-            ClickMode.Secondary -> ButtonStyles.SecondaryModeButtonColor()
-            ClickMode.PendingPostpone -> ButtonStyles.SecondaryModeButtonColor()
-            ClickMode.PendingDelete -> ButtonStyles.DangerButtonColor()
+        val modeColor = when (pendingCommandCount) {
+            0, 1, 3, 4 -> ButtonStyles.MediumImportanceButtonColor()
+            2, 5, 6 -> ButtonStyles.SecondaryModeButtonColor()
+            7 -> ButtonStyles.DangerButtonColor()
+            else -> ButtonStyles.MediumImportanceButtonColor()
         }
 
         Column(
