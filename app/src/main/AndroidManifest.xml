@@ -56,6 +56,13 @@
             android:name="androidx.work.impl.foreground.SystemForegroundService"
             android:foregroundServiceType="dataSync"
             tools:node="merge" />
+            
+        <receiver android:name=".receivers.TranscriptImportReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.md.IMPORT_TRANSCRIPTS" />
+            </intent-filter>
+        </receiver>
 
-        </application>
+    </application>
 </manifest>

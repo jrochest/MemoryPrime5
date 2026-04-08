@@ -4616,3 +4616,8 @@
 /.gradle_local/wrapper/dists/gradle-8.13-bin/5xuhj0ry160q40clulazy9h7d/gradle-8.13-bin.zip.lck
 /.gradle_local/wrapper/dists/gradle-8.13-bin/5xuhj0ry160q40clulazy9h7d/gradle-8.13-bin.zip.ok
 /.gradle_local/wrapper/dists/CACHEDIR.TAG
+
+# Mac Audio Transcriber Pipeline
+.venv/
+Mac_MemoryPrimeData/
+update_transcripts.json
