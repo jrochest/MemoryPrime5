@@ -17,10 +17,7 @@ To run the pipeline and sync transcripts back to Memory Prime, follow these step
    source .venv/bin/activate
    ```
 
-2. **Run the Script Commands**:
-   The script is broken down into modular steps so you don't have to keep your phone plugged in for hours!
-
-   * **Pull & Transcribe** (Default): Pulls data from your phone and starts processing. You can unplug your phone once transcribing begins.
+   * **Pull & Transcribe** (Default): Pulls data from your phone and starts processing the audio using Whisper. You can unplug your phone once transcribing begins.
      ```bash
      python3 scripts/mac_transcriber.py
      ```
@@ -29,7 +26,8 @@ To run the pipeline and sync transcripts back to Memory Prime, follow these step
      python3 scripts/mac_transcriber.py push
      ```
 
-   *Optional Commands*:
+   *Optional Commands & Flags*:
+   * Add `--gemma` to the end of your run command if you want to route the transcriptions through LM Studio for refinement (e.g. `python3 scripts/mac_transcriber.py --gemma`).
    * `python3 scripts/mac_transcriber.py pull` (Only extract data)
    * `python3 scripts/mac_transcriber.py transcribe` (Only process local data)
    * `python3 scripts/mac_transcriber.py all` (Pull, Transcribe, and Push continuously)

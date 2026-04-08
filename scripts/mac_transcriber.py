@@ -59,10 +59,13 @@ def analyze_with_gemma(client: OpenAI, transcript: str) -> str:
     )
     return response.choices[0].message.content.strip()
 
-def process_transcriptions():
+def process_transcriptions(use_gemma=False):
     print("Loading Whisper Model...")
     audio_model = whisper.load_model("base")
-    client = OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")
+    if use_gemma:
+        client = OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")
+    else:
+        client = None
     
     conn = sqlite3.connect(LOCAL_DB)
     conn.row_factory = sqlite3.Row
@@ -102,13 +105,19 @@ def process_transcriptions():
                     raw_text = result['text']
                     if raw_text.strip():
                         print(f"  [Whisper Q]: {raw_text}")
-                        refined_text = analyze_with_gemma(client, raw_text)
-                        update_obj["questionTranscript"] = refined_text
-                        update_obj["questionTranscriptConfidence"] = 1.0 # Pseudo confidence
-                        update_obj["questionTranscriptModel"] = "gemma-4-26b-moe-mac"
+                        if use_gemma:
+                            refined_text = analyze_with_gemma(client, raw_text)
+                            update_obj["questionTranscript"] = refined_text
+                            update_obj["questionTranscriptConfidence"] = 1.0 # Pseudo confidence
+                            update_obj["questionTranscriptModel"] = "gemma-4-26b-moe-mac"
+                            print(f"  [Gemma Q]  : {refined_text}")
+                        else:
+                            update_obj["questionTranscript"] = raw_text
+                            update_obj["questionTranscriptConfidence"] = 1.0 # Pseudo confidence
+                            update_obj["questionTranscriptModel"] = "whisper-base-mac"
+
                         update_obj["questionTranscriptGeneratedAt"] = now_ms
                         has_update = True
-                        print(f"  [Gemma Q]  : {refined_text}")
                 else:
                     print(f"Warning: Audio file not found: {audio_path}")
                     
@@ -123,13 +132,19 @@ def process_transcriptions():
                     raw_text = result['text']
                     if raw_text.strip():
                         print(f"  [Whisper A]: {raw_text}")
-                        refined_text = analyze_with_gemma(client, raw_text)
-                        update_obj["answerTranscript"] = refined_text
-                        update_obj["answerTranscriptConfidence"] = 1.0
-                        update_obj["answerTranscriptModel"] = "gemma-4-26b-moe-mac"
+                        if use_gemma:
+                            refined_text = analyze_with_gemma(client, raw_text)
+                            update_obj["answerTranscript"] = refined_text
+                            update_obj["answerTranscriptConfidence"] = 1.0
+                            update_obj["answerTranscriptModel"] = "gemma-4-26b-moe-mac"
+                            print(f"  [Gemma A]  : {refined_text}")
+                        else:
+                            update_obj["answerTranscript"] = raw_text
+                            update_obj["answerTranscriptConfidence"] = 1.0
+                            update_obj["answerTranscriptModel"] = "whisper-base-mac"
+                            
                         update_obj["answerTranscriptGeneratedAt"] = now_ms
                         has_update = True
-                        print(f"  [Gemma A]  : {refined_text}")
                 else:
                     print(f"Warning: Audio file not found: {audio_path}")
         except KeyboardInterrupt:
@@ -165,24 +180,26 @@ def push_and_trigger():
 if __name__ == "__main__":
     import sys
     try:
-        if len(sys.argv) > 1:
-            cmd = sys.argv[1].lower()
-            if cmd == "pull":
-                pull_data_from_device()
-            elif cmd == "transcribe":
-                process_transcriptions()
-            elif cmd == "push":
+        use_gemma = "--gemma" in sys.argv
+        args = [a for a in sys.argv[1:] if a != "--gemma"]
+        cmd = args[0].lower() if args else None
+
+        if cmd == "pull":
+            pull_data_from_device()
+        elif cmd == "transcribe":
+            process_transcriptions(use_gemma)
+        elif cmd == "push":
+            push_and_trigger()
+        elif cmd == "all":
+            pull_data_from_device()
+            if process_transcriptions(use_gemma):
                 push_and_trigger()
-            elif cmd == "all":
-                pull_data_from_device()
-                if process_transcriptions():
-                    push_and_trigger()
-            else:
-                print("Usage: python3 scripts/mac_transcriber.py [pull | transcribe | push | all]")
+        elif cmd:
+            print("Usage: python3 scripts/mac_transcriber.py [pull | transcribe | push | all] [--gemma]")
         else:
             # Default behavior: pull and transcribe, but do NOT push.
             pull_data_from_device()
-            process_transcriptions()
+            process_transcriptions(use_gemma)
             print("\nTranscription complete! Reconnect your device and run `python3 scripts/mac_transcriber.py push` to sync.")
     except Exception as e:
         print(f"Pipeline failed: {e}")
