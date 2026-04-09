@@ -28,6 +28,7 @@ To run the pipeline and sync transcripts back to Memory Prime, follow these step
 
    *Optional Commands & Flags*:
    * Add `--gemma` to the end of your run command if you want to route the transcriptions through LM Studio for refinement (e.g. `python3 scripts/mac_transcriber.py --gemma`).
+   * `python3 scripts/mac_transcriber.py update-legacy` (Finds and re-transcribes up to 15000 older flashcards that were originally transcribed using the old on-device engine)
    * `python3 scripts/mac_transcriber.py pull` (Only extract data)
    * `python3 scripts/mac_transcriber.py transcribe` (Only process local data)
    * `python3 scripts/mac_transcriber.py all` (Pull, Transcribe, and Push continuously)

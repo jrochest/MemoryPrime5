@@ -59,7 +59,7 @@ def analyze_with_gemma(client: OpenAI, transcript: str) -> str:
     )
     return response.choices[0].message.content.strip()
 
-def process_transcriptions(use_gemma=False):
+def process_transcriptions(use_gemma=False, update_legacy=False):
     print("Loading Whisper Model...")
     audio_model = whisper.load_model("base")
     if use_gemma:
@@ -71,20 +71,33 @@ def process_transcriptions(use_gemma=False):
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
-    # Grab notes where transcript is null
-    cursor.execute('''
-        SELECT _id, question, answer, question_transcript, answer_transcript 
-        FROM notes 
-        WHERE (question IS NOT NULL AND question != '' AND question_transcript IS NULL)
-           OR (answer IS NOT NULL AND answer != '' AND answer_transcript IS NULL)
-    ''')
+    if update_legacy:
+        cursor.execute('''
+            SELECT _id, question, answer, question_transcript, answer_transcript, question_transcript_model, answer_transcript_model 
+            FROM notes 
+            WHERE (question IS NOT NULL AND question != '' AND question_transcript IS NOT NULL AND (question_transcript_model IS NULL OR question_transcript_model NOT LIKE '%mac%'))
+               OR (answer IS NOT NULL AND answer != '' AND answer_transcript IS NOT NULL AND (answer_transcript_model IS NULL OR answer_transcript_model NOT LIKE '%mac%'))
+            LIMIT 15000
+        ''')
+    else:
+        # Grab notes where transcript is null
+        cursor.execute('''
+            SELECT _id, question, answer, question_transcript, answer_transcript, question_transcript_model, answer_transcript_model 
+            FROM notes 
+            WHERE (question IS NOT NULL AND question != '' AND question_transcript IS NULL)
+               OR (answer IS NOT NULL AND answer != '' AND answer_transcript IS NULL)
+        ''')
     
     notes = cursor.fetchall()
-    print(f"Found {len(notes)} notes needing transcription.")
+    if update_legacy:
+        print(f"Found {len(notes)} legacy notes needing an update.")
+    else:
+        print(f"Found {len(notes)} notes needing transcription.")
     
     updates = []
+    total_notes = len(notes)
     
-    for note in notes:
+    for idx, note in enumerate(notes, 1):
         n_id = note['_id']
         question = note['question']
         answer = note['answer']
@@ -92,15 +105,31 @@ def process_transcriptions(use_gemma=False):
         update_obj = {"id": n_id}
         has_update = False
         now_ms = int(time.time() * 1000)
+        percent_done = (idx / total_notes) * 100
+        progress_str = f"[{idx}/{total_notes} | {percent_done:.1f}%]"
         
+        question_needs_update = False
+        if question:
+            if not note['question_transcript']:
+                question_needs_update = True
+            elif update_legacy and (not note['question_transcript_model'] or 'mac' not in note['question_transcript_model'].lower()):
+                question_needs_update = True
+                
+        answer_needs_update = False
+        if answer:
+            if not note['answer_transcript']:
+                answer_needs_update = True
+            elif update_legacy and (not note['answer_transcript_model'] or 'mac' not in note['answer_transcript_model'].lower()):
+                answer_needs_update = True
+
         try:
-            if question and not note['question_transcript']:
+            if question_needs_update:
                 audio_path = sanitize_audio_path(question)
                 if not audio_path.endswith(".m4a"):
                     audio_path += ".m4a"
                     
                 if os.path.exists(audio_path):
-                    print(f"Transcribing Question for Note ID {n_id}: {audio_path}")
+                    print(f"{progress_str} Transcribing Question for Note ID {n_id}")
                     result = audio_model.transcribe(audio_path)
                     raw_text = result['text']
                     if raw_text.strip():
@@ -121,13 +150,13 @@ def process_transcriptions(use_gemma=False):
                 else:
                     print(f"Warning: Audio file not found: {audio_path}")
                     
-            if answer and not note['answer_transcript']:
+            if answer_needs_update:
                 audio_path = sanitize_audio_path(answer)
                 if not audio_path.endswith(".m4a"):
                     audio_path += ".m4a"
                     
                 if os.path.exists(audio_path):
-                    print(f"Transcribing Answer for Note ID {n_id}: {audio_path}")
+                    print(f"{progress_str} Transcribing Answer for Note ID {n_id}")
                     result = audio_model.transcribe(audio_path)
                     raw_text = result['text']
                     if raw_text.strip():
@@ -168,12 +197,25 @@ def process_transcriptions(use_gemma=False):
         return False
 
 def push_and_trigger():
-    print("Pushing JSON to device...")
-    device_path = f"/sdcard/Download/{OUTPUT_JSON}"
-    run_cmd(f"adb push {OUTPUT_JSON} {device_path}")
+    print("Pushing JSON directly to app's secure internal storage...")
+    tmp_path = f"/data/local/tmp/{OUTPUT_JSON}"
+    internal_dir = f"/data/user/0/{APP_PACKAGE}/files"
+    internal_path = f"{internal_dir}/{OUTPUT_JSON}"
+    
+    # Push to shell temp folder first (handles the 11MB file much more reliably than a local bash pipe)
+    run_cmd(f"adb push {OUTPUT_JSON} {tmp_path}")
+    
+    # Ensure absolute dir exists inside sandbox
+    run_cmd(f"adb shell run-as {APP_PACKAGE} mkdir -p {internal_dir}")
+    
+    # Copy from shell into run-as context to bypass SELinux file restrictions
+    run_cmd(f"adb shell \"cat {tmp_path} | run-as {APP_PACKAGE} sh -c 'cat > {internal_path}'\"")
+    
+    # Cleanup
+    run_cmd(f"adb shell rm {tmp_path}")
     
     print("Triggering Android intent to ingest recordings...")
-    intent_cmd = f'adb shell am broadcast -a com.md.IMPORT_TRANSCRIPTS --es filePath "{device_path}"'
+    intent_cmd = f'adb shell am broadcast -p {APP_PACKAGE} -a com.md.IMPORT_TRANSCRIPTS --es filePath "{internal_path}"'
     run_cmd(intent_cmd)
     print("Done!")
 
@@ -188,6 +230,10 @@ if __name__ == "__main__":
             pull_data_from_device()
         elif cmd == "transcribe":
             process_transcriptions(use_gemma)
+        elif cmd == "update-legacy":
+            pull_data_from_device()
+            if process_transcriptions(use_gemma, update_legacy=True):
+                push_and_trigger()
         elif cmd == "push":
             push_and_trigger()
         elif cmd == "all":
@@ -195,7 +241,7 @@ if __name__ == "__main__":
             if process_transcriptions(use_gemma):
                 push_and_trigger()
         elif cmd:
-            print("Usage: python3 scripts/mac_transcriber.py [pull | transcribe | push | all] [--gemma]")
+            print("Usage: python3 scripts/mac_transcriber.py [pull | transcribe | update-legacy | push | all] [--gemma]")
         else:
             # Default behavior: pull and transcribe, but do NOT push.
             pull_data_from_device()
