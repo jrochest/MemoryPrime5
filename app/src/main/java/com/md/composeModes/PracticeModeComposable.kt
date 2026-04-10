@@ -70,10 +70,10 @@ Options (counted by slow taps):
 1: Good / proceed (normal recall)
 2: Again (failed recall)
 3: Back / Undo
-4: Easy (effortless recall)
-5: Hard (difficult recall)
-6: Postpone (until future session)
-7: Delete
+4: Postpone (until future session)
+5: Delete
+6: Easy (effortless recall)
+7: Hard (difficult recall)
 """.trimMargin()
 }
 
@@ -180,9 +180,9 @@ class PracticeModeComposerManager @Inject constructor(
 
         // Choose button color based on click mode for visual feedback
         val modeColor = when (pendingCommandCount) {
-            0, 1, 3, 4 -> ButtonStyles.MediumImportanceButtonColor()
-            2, 5, 6 -> ButtonStyles.SecondaryModeButtonColor()
-            7 -> ButtonStyles.DangerButtonColor()
+            0, 1, 3, 6 -> ButtonStyles.MediumImportanceButtonColor()
+            2, 4, 7 -> ButtonStyles.SecondaryModeButtonColor()
+            5 -> ButtonStyles.DangerButtonColor()
             else -> ButtonStyles.MediumImportanceButtonColor()
         }
 

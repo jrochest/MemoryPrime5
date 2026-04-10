@@ -119,10 +119,10 @@ class ExternalClickCounter
             1 -> "good"
             2 -> "again"
             3 -> "back"
-            4 -> "easy"
-            5 -> "hard"
-            6 -> "postpone"
-            7 -> "delete"
+            4 -> "postpone"
+            5 -> "delete"
+            6 -> "easy"
+            7 -> "hard"
             else -> "unknown command"
         }
         TtsSpeaker.speak(message)
@@ -146,20 +146,20 @@ class ExternalClickCounter
                 "back"
             }
             4 -> {
-                handler.proceedWithGrade(5)
-                "easy"
-            }
-            5 -> {
-                handler.proceedWithGrade(2)
-                "hard"
-            }
-            6 -> {
                 handler.postponeNote(true)
                 "postponed"
             }
-            7 -> {
+            5 -> {
                 handler.deleteNote()
                 "deleted, double tap to continue"
+            }
+            6 -> {
+                handler.proceedWithGrade(5)
+                "easy"
+            }
+            7 -> {
+                handler.proceedWithGrade(2)
+                "hard"
             }
             else -> {
                 null
