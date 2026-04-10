@@ -96,7 +96,9 @@ class ExternalClickCounter
         when {
             tapCount == 1 -> {
                 // Single tap -> increment current slow click count, and voice it
-                pendingCommandCount++
+                var newCount = pendingCommandCount + 1
+                if (newCount > 7) newCount = 1
+                pendingCommandCount = newCount
                 announcePendingCommand()
             }
             tapCount == 2 -> {
