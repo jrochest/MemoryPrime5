@@ -159,7 +159,7 @@ class ExternalClickCounter
             }
             7 -> {
                 handler.deleteNote()
-                "deleted, tap to continue"
+                "deleted, double tap to continue"
             }
             else -> {
                 null
